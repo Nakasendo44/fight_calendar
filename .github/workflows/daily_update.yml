@@ -1,0 +1,40 @@
+name: Actualisation Quotidienne du Calendrier
+
+on:
+  schedule:
+    # Exécution programmée tous les matins à 05h00 UTC
+    - cron: '0 5 * * *'
+  # Permet également de forcer manuellement la mise à jour via un bouton sur GitHub
+  workflow_dispatch:
+
+jobs:
+  build-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupération du code source
+        uses: actions/checkout@v4
+
+      - name: Configuration de Python
+        uses: setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Installation des dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Exécution du script de génération
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python main.py
+
+      - name: Sauvegarde et publication des modifications
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Bot"
+          git add index.html
+          git commit -m "Mise à jour automatique : $(date '+%Y-%m-%d %H:%M')" || echo "Aucune modification à publier"
+          git push
