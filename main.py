@@ -94,7 +94,7 @@ Génère UNIQUEMENT le fragment HTML des rubriques du calendrier. N'inclus aucun
 
 print("Collecte et analyse des actualités en cours...")
 response_actus = client.models.generate_content(
-    model="gemini-2.5-flash",
+    model="gemini-3.8-flash",
     contents=prompt_actus,
     config=types.GenerateContentConfig(
         tools=[types.Tool(google_search=types.GoogleSearch())],
@@ -105,7 +105,7 @@ response_actus = client.models.generate_content(
 
 print("Génération du calendrier hebdomadaire en cours...")
 response_calendrier = client.models.generate_content(
-    model="gemini-2.5-flash",
+    model="gemini-3.8-flash",
     contents=prompt_calendrier,
     config=types.GenerateContentConfig(
         tools=[types.Tool(google_search=types.GoogleSearch())],
