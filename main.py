@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from datetime import datetime
 import pytz
 from google import genai
@@ -92,9 +93,11 @@ Consignes impératives d'affichage :
 Génère UNIQUEMENT le fragment HTML des rubriques du calendrier. N'inclus aucune balise ```html ou ```.
 """
 
-print("Collecte et analyse des actualités en cours...")
+MODEL_NAME = "gemini-2.0-flash"
+
+print(f"Collecte et analyse des actualités en cours (Modèle : {MODEL_NAME})...")
 response_actus = client.models.generate_content(
-    model="gemini-3.8-flash",
+    model=MODEL_NAME,
     contents=prompt_actus,
     config=types.GenerateContentConfig(
         tools=[types.Tool(google_search=types.GoogleSearch())],
@@ -103,9 +106,12 @@ response_actus = client.models.generate_content(
     ),
 )
 
-print("Génération du calendrier hebdomadaire en cours...")
+print("Attente de 60 secondes pour respecter les limites du forfait gratuit API...")
+time.sleep(60)
+
+print(f"Génération du calendrier hebdomadaire en cours (Modèle : {MODEL_NAME})...")
 response_calendrier = client.models.generate_content(
-    model="gemini-3.8-flash",
+    model=MODEL_NAME,
     contents=prompt_calendrier,
     config=types.GenerateContentConfig(
         tools=[types.Tool(google_search=types.GoogleSearch())],
