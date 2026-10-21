@@ -3,6 +3,7 @@ import sys
 import time
 import re
 import html
+import urllib.parse
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import pytz
@@ -10,6 +11,7 @@ import requests
 from google import genai
 from google.genai import types
 
+# 1. Vérification de la clé API
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
     print("Erreur critique : GEMINI_API_KEY introuvable.")
@@ -17,379 +19,256 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
+# 2. Fuseau horaire de Paris
 paris_tz = pytz.timezone("Europe/Paris")
 now_paris = datetime.now(paris_tz)
 date_str = now_paris.strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
-# Collecte de sources fraîches en temps réel
-RSS_FEEDS = [
-    ("Boxe Mondiale", "https://news.google.com/rss/search?q=boxing+(WBA+OR+WBC+OR+IBF+OR+WBO+OR+Matchroom+OR+Queensberry+OR+%22Top+Rank%22+OR+PBC+OR+%22Golden+Boy%22+OR+%22Riyadh+Season%22+OR+%22The+Ring%22)+when:3d&hl=en-US&gl=US&ceid=US:en"),
-    ("Boxe France", "https://news.google.com/rss/search?q=%22boxe+anglaise%22+OR+boxeur+when:4d&hl=fr&gl=FR&ceid=FR:fr"),
-    ("Boxe Japon", "https://news.google.com/rss/search?q=%E3%83%9C%E3%82%AF%E3%82%B7%E3%83%B3%E3%82%B0+(%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB+OR+%E4%B8%96%E7%95%8C%E6%88%A6+OR+JBC)+when:4d&hl=ja&gl=JP&ceid=JP:ja"),
-    ("Calendrier Combats", "https://news.google.com/rss/search?q=(%22fight+card%22+OR+%22main+event%22+OR+%22full+card%22)+(boxing+OR+UFC+OR+BKFC+OR+Glory+OR+Rizin)+when:6d&hl=en-US&gl=US&ceid=US:en"),
-    ("Bad Left Hook", "https://www.badlefthook.com/rss/current.xml"),
-    ("MMA Fighting", "https://www.mmafighting.com/rss/current.xml"),
+HEADERS = {
+    "User-Agent": "FightCalendarApp/2.0 (https://github.com/Nakasendo44/fight_calendar; contact@github.com)"
+}
+
+# ==============================================================================
+# ÉTAPE 1 : EXTRACTION DIRECTE DES CALENDRIERS OFFICIELS (ANTI-HALLUCINATION)
+# ==============================================================================
+DIRECT_SCHEDULE_SOURCES = [
+    ("Calendrier Boxe Officiel (Box.live)", "https://r.jina.ai/https://box.live/upcoming-fights-schedule/"),
+    ("Matchroom Boxing Events", "https://r.jina.ai/https://www.matchroomboxing.com/events/"),
+    ("Tapology Fightcenter (MMA & Boxe)", "https://r.jina.ai/https://www.tapology.com/fightcenter"),
+    ("UFC Events Officiel", "https://r.jina.ai/https://www.ufc.com/events"),
 ]
 
-def clean_text(raw_text):
-    if not raw_text:
+RSS_SCHEDULE_SOURCES = [
+    ("Programmes & Fight Cards (Global)", "https://news.google.com/rss/search?q=(%22fight+card%22+OR+%22undercard%22+OR+%22main+event%22+OR+%22start+time%22)+(boxing+OR+Matchroom+OR+Queensberry+OR+UFC+OR+BKFC+OR+Glory)+when:7d&hl=en-US&gl=US&ceid=US:en"),
+    ("Boxe Japon & Korakuen Hall", "https://news.google.com/rss/search?q=%E3%83%9C%E3%82%AF%E3%82%B7%E3%83%B3%E3%82%B0+(%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB+OR+%E8%88%88%E8%A1%8C+OR+%E6%97%A5%E7%A8%8B+OR+%E5%AF%BE%E6%88%A6%E3%82%AB%E3%83%BC%E3%83%89)+when:7d&hl=ja&gl=JP&ceid=JP:ja"),
+    ("Rizin & Kickboxing Japonais (RISE, K-1, Krush)", "https://news.google.com/rss/search?q=(RIZIN+OR+RISE+OR+K-1+OR+Krush)+(%E5%AF%BE%E6%88%A6%E3%82%AB%E3%83%BC%E3%83%89+OR+%E5%A4%A7%E4%BC%9A+OR+%E9%96%8B%E5%82%AC)+when:7d&hl=ja&gl=JP&ceid=JP:ja"),
+    ("RAF Wrestling & Glory Kickboxing", "https://news.google.com/rss/search?q=%22Real+American+Freestyle%22+OR+%22Glory+Kickboxing%22+when:10d&hl=en-US&gl=US&ceid=US:en"),
+]
+
+def clean_text(raw):
+    if not raw:
         return ""
-    t = html.unescape(raw_text)
+    t = html.unescape(raw)
     t = re.sub(r"<[^>]+>", " ", t)
     return re.sub(r"\s+", " ", t).strip()
 
-def collect_feeds():
-    lines = []
-    headers = {"User-Agent": "Mozilla/5.0"}
-    for cat, url in RSS_FEEDS:
+def gather_verified_schedules():
+    print("Extraction des calendriers officiels en cours...")
+    chunks = []
+
+    # 1. Lecture des pages de calendriers via lecteur Markdown
+    for label, url in DIRECT_SCHEDULE_SOURCES:
         try:
-            r = requests.get(url, headers=headers, timeout=8)
-            if r.status_code == 200:
-                root = ET.fromstring(r.content)
-                for item in root.findall(".//item")[:8]:
+            resp = requests.get(url, headers=HEADERS, timeout=12)
+            if resp.status_code == 200 and len(resp.text) > 200:
+                snippet = resp.text[:6000]
+                chunks.append(f"\n=== SOURCE DIRECTE : {label} ===\n{snippet}")
+                print(f"  [OK] {label}")
+        except Exception as e:
+            print(f"  [Info] Source directe ignorée ({label}) : {e}")
+
+    # 2. Lecture des flux RSS de programmation
+    for label, url in RSS_SCHEDULE_SOURCES:
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=10)
+            if resp.status_code == 200:
+                root = ET.fromstring(resp.content)
+                items = root.findall(".//item")[:12]
+                if items:
+                    chunks.append(f"\n=== FLUX PROGRAMMATION : {label} ===")
+                for item in items:
                     title = clean_text(item.findtext("title", ""))
                     pub = clean_text(item.findtext("pubDate", ""))
-                    desc = clean_text(item.findtext("description", ""))[:200]
+                    desc = clean_text(item.findtext("description", ""))[:250]
                     if title:
-                        lines.append(f"[{cat}] {pub} - {title}: {desc}")
+                        chunks.append(f"- [{pub}] {title} | {desc}")
+        except Exception as e:
+            print(f"  [Info] Flux ignoré ({label}) : {e}")
+
+    return "\n".join(chunks)
+
+verified_raw_data = gather_verified_schedules()
+
+# ==============================================================================
+# ÉTAPE 2 : RÉCUPÉRATION AUTOMATIQUE DES PHOTOS DES COMBATTANTS (WIKIPÉDIA EN/JA)
+# ==============================================================================
+PHOTO_CACHE = {}
+
+def fetch_fighter_photo(fighter_name):
+    name = fighter_name.strip()
+    if not name or name.upper() in ["TBA", "TBD", "INCONNU"]:
+        return None
+    if name in PHOTO_CACHE:
+        return PHOTO_CACHE[name]
+
+    # Recherche sur Wikipédia Anglais puis Japonais
+    for lang in ["en", "ja", "fr"]:
+        try:
+            # 1. Recherche du titre exact de la page du combattant
+            search_url = (
+                f"https://{lang}.wikipedia.org/w/api.php?action=query&list=search"
+                f"&srsearch={urllib.parse.quote(name)}&srlimit=1&format=json"
+            )
+            r_search = requests.get(search_url, headers=HEADERS, timeout=5).json()
+            search_results = r_search.get("query", {}).get("search", [])
+            if not search_results:
+                continue
+
+            page_title = search_results[0]["title"]
+
+            # 2. Récupération de l'image miniature haute qualité (largeur 400px)
+            img_url = (
+                f"https://{lang}.wikipedia.org/w/api.php?action=query"
+                f"&titles={urllib.parse.quote(page_title)}&prop=pageimages"
+                f"&piprop=thumbnail&pithumbsize=400&format=json"
+            )
+            r_img = requests.get(img_url, headers=HEADERS, timeout=5).json()
+            pages = r_img.get("query", {}).get("pages", {})
+            for _, page_data in pages.items():
+                thumb = page_data.get("thumbnail", {}).get("source")
+                if thumb and not any(ext in thumb.lower() for ext in [".svg", "flag_of", "icon", "replace_this"]):
+                    PHOTO_CACHE[name] = thumb
+                    return thumb
         except Exception:
-            pass
-    return "\n".join(lines)
+            continue
 
-feed_data = collect_feeds()
+    PHOTO_CACHE[name] = None
+    return None
 
-# Modèle et configuration de base
-def get_best_model():
+def get_initials(name):
+    parts = [p for p in re.split(r"[\s\-]+", name.strip()) if p]
+    if not parts:
+        return "🥊"
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return (parts[0][0] + parts[-1][0]).upper()
+
+def build_faceoff_banner(match):
+    f1 = html.unescape(match.group(1)).strip()
+    f2 = html.unescape(match.group(2)).strip()
+    belt_label = html.unescape(match.group(3)).strip()
+
+    img1 = fetch_fighter_photo(f1)
+    img2 = fetch_fighter_photo(f2)
+
+    init1 = get_initials(f1)
+    init2 = get_initials(f2)
+
+    avatar1_html = (
+        f'<img src="{img1}" alt="{html.escape(f1)}" class="fighter-img" '
+        f'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">'
+        f'<div class="fighter-fallback" style="display:none;">{init1}</div>'
+        if img1 else f'<div class="fighter-fallback">{init1}</div>'
+    )
+
+    avatar2_html = (
+        f'<img src="{img2}" alt="{html.escape(f2)}" class="fighter-img" '
+        f'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">'
+        f'<div class="fighter-fallback" style="display:none;">{init2}</div>'
+        if img2 else f'<div class="fighter-fallback">{init2}</div>'
+    )
+
+    belt_badge = f'<div class="faceoff-belt">👑 {html.escape(belt_label)}</div>' if belt_label else ""
+
+    return f"""
+    <div class="faceoff-banner">
+        {belt_badge}
+        <div class="faceoff-grid">
+            <div class="fighter-col">
+                <div class="avatar-wrap">{avatar1_html}</div>
+                <span class="fighter-name">{html.escape(f1)}</span>
+            </div>
+            <div class="vs-col">
+                <span class="vs-badge">VS</span>
+            </div>
+            <div class="fighter-col">
+                <div class="avatar-wrap">{avatar2_html}</div>
+                <span class="fighter-name">{html.escape(f2)}</span>
+            </div>
+        </div>
+    </div>
+    """
+
+def inject_fighter_photos(raw_html):
+    print("Recherche et intégration des photos des combattants principaux...")
+    pattern = r'<div\s+class="faceoff-slot"\s+data-f1="([^"]*)"\s+data-f2="([^"]*)"\s+data-label="([^"]*)"\s*>\s*</div>'
+    return re.sub(pattern, build_faceoff_banner, raw_html)
+
+# ==============================================================================
+# ÉTAPE 3 : PROMPT STRICT DE GÉNÉRATION DU CALENDRIER
+# ==============================================================================
+CALENDAR_PROMPT = f"""Tu es un rédacteur en chef et documentaliste sportif spécialisé en Boxe Anglaise, MMA, Kickboxing et Lutte.
+Date actuelle de référence : {date_str} (Fuseau horaire : Europe/Paris).
+Ton unique mission est de générer le CALENDRIER HEBDOMADAIRE ULTRA-FIABLE des combats prévus sur les 7 prochains jours (du {date_str} à J+7).
+
+RÈGLES ABSOLUES DE FIABILITÉ (ZÉRO HALLUCINATION) :
+1. Vérifie chaque gala, chaque palmarès (Victoires-Défaites-Nuls, KOs) et chaque carte complète (undercard) en croisant ta recherche Google en direct avec les données brutes ci-dessous.
+2. INTERDICTION STRICTE d'inventer des combats sur une sous-carte ou d'écrire des "vs TBA" fictifs. Affiche la vraie carte dévoilée par le promoteur (ex: pour un gala Matchroom, Queensberry, Top Rank, UFC, Rizin, affiche les vrais combats officiels de la carte).
+3. Langue et style : Français journalistique élégant, dynamique et agréable à lire. Conserve les termes techniques du noble art (puncher, out-boxer, brawler, southpaw, jab, uppercut, hook, knockdown, KO, TKO, main event, co-main event, undercard, contender, undisputed).
+4. Unités : Tous les poids doivent être convertis en kilogrammes (ex: -63,5 kg) et toutes les tailles en mètres (ex: 1m78).
+5. Horaires : Toutes les heures (début du gala et heure du combat principal) doivent être converties à l'heure de Paris (CET/CEST).
+6. Mise en forme riche : Utilise des émojis pertinents (👑, 📍, ⏰, 📺, 🥊, 🔥, 📊) et mets en **gras** (`<strong>`) les éléments importants (noms, records, enjeux, chaînes).
+
+STRUCTURE EXACTE DES 8 RUBRIQUES À PRODUIRE :
+Utilise exactement ces identifiants HTML pour chaque section :
+1. <section id="boxe-monde" class="sport-section"><h2>🥊 1. Boxe Anglaise — Galas Internationaux</h2> ... </section>
+2. <section id="boxe-japon" class="sport-section"><h2>🇯🇵 2. Boxe Anglaise — Galas au Japon (Korakuen Hall & Arènes)</h2> ... </section>
+3. <section id="ufc" class="sport-section"><h2>🔥 3. UFC</h2> ... </section>
+4. <section id="rizin" class="sport-section"><h2>🌸 4. Rizin Fighting Federation</h2> ... </section>
+5. <section id="bkfc" class="sport-section"><h2>👊 5. BKFC (Bare Knuckle)</h2> ... </section>
+6. <section id="kick-japon" class="sport-section"><h2>🦵 6. Kickboxing Japonais (RISE, K-1, Krush)</h2> ... </section>
+7. <section id="glory" class="sport-section"><h2>🏆 7. Glory Kickboxing</h2> ... </section>
+8. <section id="raf" class="sport-section"><h2>🤼 8. RAF (Real American Freestyle Wrestling)</h2> ... </section>
+
+MODÈLE OBLIGATOIRE POUR CHAQUE ÉVÉNEMENT (<article class="event-card">) :
+À l'intérieur de chaque `<article class="event-card">`, insère OBLIGATOIREMENT en toute première ligne cette balise exacte (le script Python l'utilisera pour afficher les photos des 2 combattants du Main Event) :
+<div class="faceoff-slot" data-f1="Prénom Nom du Combattant 1" data-f2="Prénom Nom du Combattant 2" data-label="Catégorie en kg & Ceinture en jeu"></div>
+
+Puis affiche :
+- <h3 class="event-title">Nom officiel du Gala : Combattant 1 vs. Combattant 2</h3>
+- <div class="meta-grid">
+    <div class="meta-item">📍 <strong>Lieu :</strong> Salle, Ville, Pays</div>
+    <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début à <strong>XXhXX</strong> | Main Event vers <strong>XXhXX</strong></div>
+    <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : Nom Chaîne</span> <span class="badge-tv badge-fr">France : Nom Chaîne</span></div>
+  </div>
+- <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Présentation claire et percutante de l'événement et des combats principaux en 2 à 3 phrases.</p>
+- <details>
+    <summary>📊 Développer la carte complète, palmarès et analyse des combats</summary>
+    <div class="fight-list">
+      Pour chaque combat confirmé de la carte (du Main Event jusqu'aux préliminaires connus), crée un bloc `<div class="bout-item">` contenant :
+      * 🥊 <strong>Nom A (Record V-D-N, X KOs | 1mXX) vs. Nom B (Record V-D-N, Y KOs | 1mXX)</strong> — <span class="weight-pill">Catégorie (XX,X kg)</span>
+      * Courte présentation stylistique et enjeu du combat en 1 à 2 phrases.
+    </div>
+  </details>
+
+Si aucun événement n'est programmé cette semaine dans un sport secondaire, affiche dans la section :
+<div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette catégorie.</div>
+(Rappel : pour la boxe anglaise internationale et japonaise, il y a toujours des réunions chaque semaine ; répertorie les galas continentaux, nationaux ou du Korakuen Hall).
+
+DONNÉES BRUTES DE RÉFÉRENCE COLLECTÉES AUJOURD'HUI :
+{verified_raw_data}
+
+Renvoie UNIQUEMENT le code HTML des 8 sections (`<section ...>...</section>`). N'inclus jamais de balises Markdown ```html ou ```.
+"""
+
+# ==============================================================================
+# ÉTAPE 4 : APPEL API GEMINI AVEC REPLI AUTOMATIQUE
+# ==============================================================================
+def get_available_models():
+    preferred = ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-3.5-flash"]
+    found = []
     try:
-        models = [m.name.replace("models/", "") for m in client.models.list()]
-        for target in ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-3.5-flash"]:
-            if target in models:
-                return target
+        for m in client.models.list():
+            name = getattr(m, "name", "").replace("models/", "")
+            if "gemini" in name and not any(x in name for x in ["embedding", "vision", "imagen", "audio", "tts"]):
+                found.append(name)
     except Exception:
         pass
-    return "gemini-3.8-flash"
+    ordered = [p for p in preferred if not found or p in found]
+    for f in found:
+        if f not in ordered:
+            ordered.append(f)
+    return ordered or ["gemini-3.8-flash"]
 
-ACTIVE_MODEL = get_best_model()
-
-# ==============================================================================
-# CSS ÉDITORIAL MODERNE (BEIGE & MARRON CHAUD)
-# ==============================================================================
-SHARED_CSS = """
-    :root {
-        --bg-main: #F9F6F0;
-        --card-bg: #FFFFFF;
-        --card-alt: #F4EFE6;
-        --text-main: #2C221E;
-        --text-muted: #6B5B52;
-        --accent-brown: #8A4B29;
-        --accent-dark: #4A2E1B;
-        --border-color: #E6DFD3;
-        --font-serif: 'Georgia', 'Cambria', serif;
-        --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    }
-    * { box-sizing: border-box; }
-    body {
-        margin: 0;
-        padding: 0;
-        background-color: var(--bg-main);
-        color: var(--text-main);
-        font-family: var(--font-sans);
-        line-height: 1.65;
-        font-size: 16px;
-    }
-    .wrapper {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 2.5rem 1.25rem;
-    }
-    header {
-        text-align: center;
-        margin-bottom: 2rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 2px solid var(--border-color);
-    }
-    h1 {
-        font-family: var(--font-serif);
-        font-size: 2.3rem;
-        color: var(--accent-dark);
-        margin: 0 0 0.5rem 0;
-        letter-spacing: -0.5px;
-    }
-    .subtitle {
-        color: var(--text-muted);
-        font-size: 1rem;
-        margin-bottom: 0.8rem;
-    }
-    .badge-date {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        font-size: 0.85rem;
-        background-color: var(--card-alt);
-        color: var(--accent-dark);
-        border: 1px solid var(--border-color);
-        border-radius: 20px;
-        font-weight: 500;
-    }
-    /* Barre de navigation moderne */
-    nav.main-nav {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-bottom: 2.5rem;
-    }
-    nav.main-nav a {
-        text-decoration: none;
-        padding: 0.65rem 1.4rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.2s ease;
-        border: 1px solid var(--border-color);
-        background-color: var(--card-bg);
-        color: var(--text-muted);
-    }
-    nav.main-nav a.active {
-        background-color: var(--accent-brown);
-        color: #FFFFFF;
-        border-color: var(--accent-brown);
-    }
-    nav.main-nav a:hover:not(.active) {
-        background-color: var(--card-alt);
-        color: var(--accent-dark);
-    }
-    /* Typographie des articles */
-    h2 {
-        font-family: var(--font-serif);
-        color: var(--accent-dark);
-        font-size: 1.7rem;
-        margin-top: 2rem;
-        margin-bottom: 1.2rem;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 0.4rem;
-    }
-    h3 {
-        font-family: var(--font-serif);
-        color: var(--accent-brown);
-        font-size: 1.35rem;
-        margin-top: 1.5rem;
-        margin-bottom: 0.6rem;
-    }
-    p { margin-top: 0; margin-bottom: 1.1rem; }
-    article.news-item {
-        background-color: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1.6rem;
-        box-shadow: 0 2px 6px rgba(74, 46, 27, 0.03);
-    }
-    blockquote {
-        margin: 1.2rem 0;
-        padding: 1rem 1.3rem;
-        background-color: var(--card-alt);
-        border-left: 4px solid var(--accent-brown);
-        border-radius: 0 8px 8px 0;
-        font-style: italic;
-        color: var(--accent-dark);
-    }
-    /* Cartes du calendrier */
-    .event-card {
-        background-color: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 6px rgba(74, 46, 27, 0.03);
-    }
-    .event-card .meta-info {
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        margin-bottom: 0.8rem;
-    }
-    .meta-tag {
-        display: inline-block;
-        background: var(--card-alt);
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        margin-right: 0.4rem;
-        font-weight: 500;
-        color: var(--accent-dark);
-    }
-    details {
-        margin-top: 1.2rem;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 0.8rem 1.2rem;
-        background-color: var(--card-alt);
-    }
-    summary {
-        font-weight: 600;
-        color: var(--accent-brown);
-        cursor: pointer;
-        outline: none;
-    }
-    details ul {
-        margin-top: 1rem;
-        padding-left: 1.2rem;
-    }
-    details li {
-        margin-bottom: 0.8rem;
-    }
-    footer {
-        text-align: center;
-        margin-top: 3.5rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--border-color);
-        color: var(--text-muted);
-        font-size: 0.85rem;
-    }
-"""
-
-def build_html(page_title, active_tab, main_content):
-    actus_active = "active" if active_tab == "actus" else ""
-    cal_active = "active" if active_tab == "cal" else ""
-    return f"""<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{page_title} - Le QG des Sports de Combat</title>
-    <style>{SHARED_CSS}</style>
-</head>
-<body>
-    <div class="wrapper">
-        <header>
-            <h1>🥊 Le QG des Sports de Combat</h1>
-            <div class="subtitle">L'actualité décryptée & le radar complet des galas de la semaine</div>
-            <span class="badge-date">Édition du {date_str} à {heure_str} (Heure de Paris)</span>
-        </header>
-
-        <nav class="main-nav">
-            <a href="index.html" class="{actus_active}">📰 Actualités & Décryptages</a>
-            <a href="calendrier.html" class="{cal_active}">📅 Calendrier des Combats</a>
-        </nav>
-
-        <main>
-            {main_content}
-        </main>
-
-        <footer>
-            <p>Rédaction & Veille automatique multilingue. Unités standardisées (kg, m) et heures calées sur Paris (CET/CEST).</p>
-        </footer>
-    </div>
-</body>
-</html>
-"""
-
-# ==============================================================================
-# PROMPT 1 : ACTUALITÉS EN PROFONDEUR
-# ==============================================================================
-prompt_actus = f"""Tu es un grand reporter et éditorialiste spécialisé dans les sports de combat.
-Date : {date_str}. Rédige la page des actualités en français irréprochable et journalistique.
-
-DIRECTIVES DE PROFONDEUR :
-- Ne sois PAS succint. Chaque actualité de boxe doit être un article approfondi composé de 2 à 3 paragraphes détaillés (contexte sportif, enjeux de carrière, coulisses politiques ou financières, impact sur les ceintures et les classements mondiaux).
-- Poids impérativement convertis en kg (ex: 63,5 kg) et tailles en mètres (ex: 1m78).
-- Conserve les termes techniques du métier (puncher, out-boxer, clinch, southpaw, pound-for-pound, etc.).
-
-STRUCTURE ATTENDUE :
-1. "Grand Format : Boxe Anglaise Internationale" (3 à 4 grands articles détaillés sur les ceintures WBA, WBC, IBF, WBO, The Ring, et les promoteurs Matchroom, Queensberry, Top Rank, PBC, Riyadh Season). Encapsule chaque fait dans un <article class="news-item">.
-2. "Focus Asie & Japon" (Actualités détaillées sur les champions japonais et les événements au Korakuen Hall).
-3. "Scène Française" (Boxeurs tricolores, championnats EBU ou France).
-4. "En Bref : MMA, Kickboxing & Lutte" (UFC, Rizin, BKFC, RISE, K-1, Glory, RAF : une synthèse propre mais substantielle).
-5. Rumeurs / Déclarations : doivent être insérées dans un <blockquote><strong>[Rumeur / En négociation]</strong> ...</blockquote>.
-
-Voici les dépêches de veille récentes :
-{feed_data}
-
-Renvoie STRICTEMENT le contenu HTML interne à insérer dans la page. Pas de balises ```html.
-"""
-
-# ==============================================================================
-# PROMPT 2 : CALENDRIER FIABLE SANS HALLUCINATIONS
-# ==============================================================================
-prompt_cal = f"""Tu es un documentaliste rigoureux spécialisé dans les programmes de sports de combat.
-Date de référence : {date_str}. Analyse les 7 prochains jours.
-
-RÈGLE D'OR CONTRE LES ERREURS (ANTI-HALLUCINATION) :
-- INTERDICTION FORMELLE D'INVENTER DES COMBATS, DES ADVERSAIRES INCONNUS (« TBA ») OU D'ANCIENS RECORDS.
-- Pour chaque combat cité, les palmarès doivent être vérifiés et fidèles à la réalité actuelle (ex: Dalton Smith est invaincu à 19-0 et non un ancien record à 16-0). Si l'undercard n'est pas encore rendue publique, écris simplement : "Reste de la carte en cours de finalisation par l'organisation". N'invente pas des boxeurs qui ne boxent pas sur cette carte.
-- Heures obligatoirement calées sur le fuseau horaire de Paris.
-- Poids en kg et tailles en mètres.
-
-STRUCTURE DU CALENDRIER (avec <div class="event-card">) :
-Rubriques (<h3>) :
-1. Boxe anglaise - Galas Internationaux
-2. Boxe anglaise - Galas au Japon (Korakuen Hall inclus)
-3. UFC
-4. Rizin
-5. BKFC
-6. Kickboxing Japonais (RISE, K-1, Krush)
-7. Glory Kickboxing
-8. RAF (Real American Freestyle wrestling)
-
-Pour chaque gala :
-- Titre du gala & Lieu précis
-- Heures : Début du gala & Heure estimée du combat principal (Heure de Paris)
-- Diffuseurs : Origine + Diffusion officielle en France (ex: DAZN France, RMC Sport, etc.)
-- Présentation percutante du choc principal
-- <details><summary>Développer la carte complète des combats</summary>
-    <ul>
-      <!-- Liste exacte et factuelle des combats confirmés avec palmarès réels (V-D-N, KOs) et catégories en kg -->
-    </ul>
-  </details>
-Si aucun gala n'a lieu dans une discipline secondaire, mentionne : <p><em>Aucun événement majeur programmé cette semaine.</em></p>.
-
-Voici les données collectées :
-{feed_data}
-
-Renvoie STRICTEMENT le fragment HTML interne. Pas de balises ```html.
-"""
-
-def generate_section(prompt_text, title_log):
-    print(f"Génération : {title_log}...")
-    try:
-        # Essai avec Grounding Search pour garantir des palmarès réels et des cartes vérifiées
-        resp = client.models.generate_content(
-            model=ACTIVE_MODEL,
-            contents=prompt_text,
-            config=types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearch())],
-                temperature=0.1
-            )
-        )
-        if resp and resp.text:
-            return resp.text.replace("```html", "").replace("```", "").strip()
-    except Exception as e:
-        print(f"Repli sans tool Google Search ({e})...")
-        try:
-            resp = client.models.generate_content(
-                model=ACTIVE_MODEL,
-                contents=prompt_text,
-                config=types.GenerateContentConfig(temperature=0.1)
-            )
-            if resp and resp.text:
-                return resp.text.replace("```html", "").replace("```", "").strip()
-        except Exception as e2:
-            print(f"Erreur définitive de génération : {e2}")
-    return "<p><em>Contenu en cours de synchronisation. Veuillez réactualiser dans quelques instants.</em></p>"
-
-# 1. Génération des Actus (index.html)
-actus_body = generate_section(prompt_actus, "Page Actualités Approfondies")
-page_actus_html = build_html("Actualités & Décryptages", "actus", actus_body)
-with open("index.html", "w", encoding="utf-8") as f:
-    f.write(page_actus_html)
-print("-> Fichier index.html écrit.")
-
-# Pause de sécurité pour préserver le quota gratuit
-time.sleep(10)
-
-# 2. Génération du Calendrier (calendrier.html)
-cal_body = generate_section(prompt_cal, "Page Calendrier & Fight Cards")
-page_cal_html = build_html("Calendrier des Combats", "cal", cal_body)
-with open("calendrier.html", "w", encoding="utf-8") as f:
-    f.write(page_cal_html)
-print("-> Fichier calendrier.html écrit.")
-
-print("Les deux pages ont été générées avec succès !")
+models_to_try = get_available_models
