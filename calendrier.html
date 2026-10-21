@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendrier des Combats - Le QG des Sports de Combat</title>
+    <style>
+    :root {
+        --bg-main: #F9F6F0;
+        --card-bg: #FFFFFF;
+        --card-alt: #F4EFE6;
+        --text-main: #2C221E;
+        --text-muted: #6B5B52;
+        --accent-brown: #8A4B29;
+        --accent-dark: #4A2E1B;
+        --border-color: #E6DFD3;
+        --font-serif: 'Georgia', 'Cambria', serif;
+        --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        font-family: var(--font-sans);
+        line-height: 1.65;
+        font-size: 16px;
+    }
+    .wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2.5rem 1.25rem;
+    }
+    header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    h1 {
+        font-family: var(--font-serif);
+        font-size: 2.3rem;
+        color: var(--accent-dark);
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.5px;
+    }
+    .subtitle {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-bottom: 0.8rem;
+    }
+    .badge-date {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.85rem;
+        background-color: var(--card-alt);
+        color: var(--accent-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    /* Barre de navigation moderne */
+    nav.main-nav {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+    nav.main-nav a {
+        text-decoration: none;
+        padding: 0.65rem 1.4rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        border: 1px solid var(--border-color);
+        background-color: var(--card-bg);
+        color: var(--text-muted);
+    }
+    nav.main-nav a.active {
+        background-color: var(--accent-brown);
+        color: #FFFFFF;
+        border-color: var(--accent-brown);
+    }
+    nav.main-nav a:hover:not(.active) {
+        background-color: var(--card-alt);
+        color: var(--accent-dark);
+    }
+    /* Typographie des articles */
+    h2 {
+        font-family: var(--font-serif);
+        color: var(--accent-dark);
+        font-size: 1.7rem;
+        margin-top: 2rem;
+        margin-bottom: 1.2rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.4rem;
+    }
+    h3 {
+        font-family: var(--font-serif);
+        color: var(--accent-brown);
+        font-size: 1.35rem;
+        margin-top: 1.5rem;
+        margin-bottom: 0.6rem;
+    }
+    p { margin-top: 0; margin-bottom: 1.1rem; }
+    article.news-item {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.6rem;
+        box-shadow: 0 2px 6px rgba(74, 46, 27, 0.03);
+    }
+    blockquote {
+        margin: 1.2rem 0;
+        padding: 1rem 1.3rem;
+        background-color: var(--card-alt);
+        border-left: 4px solid var(--accent-brown);
+        border-radius: 0 8px 8px 0;
+        font-style: italic;
+        color: var(--accent-dark);
+    }
+    /* Cartes du calendrier */
+    .event-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 6px rgba(74, 46, 27, 0.03);
+    }
+    .event-card .meta-info {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 0.8rem;
+    }
+    .meta-tag {
+        display: inline-block;
+        background: var(--card-alt);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        margin-right: 0.4rem;
+        font-weight: 500;
+        color: var(--accent-dark);
+    }
+    details {
+        margin-top: 1.2rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.8rem 1.2rem;
+        background-color: var(--card-alt);
+    }
+    summary {
+        font-weight: 600;
+        color: var(--accent-brown);
+        cursor: pointer;
+        outline: none;
+    }
+    details ul {
+        margin-top: 1rem;
+        padding-left: 1.2rem;
+    }
+    details li {
+        margin-bottom: 0.8rem;
+    }
+    footer {
+        text-align: center;
+        margin-top: 3.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+</style>
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <h1>🥊 Le QG des Sports de Combat</h1>
+            <div class="subtitle">L'actualité décryptée & le radar complet des galas de la semaine</div>
+            <span class="badge-date">Édition du 21/10/2026 à 15:13 (Heure de Paris)</span>
+        </header>
+
+        <nav class="main-nav">
+            <a href="index.html" class="">📰 Actualités & Décryptages</a>
+            <a href="calendrier.html" class="active">📅 Calendrier des Combats</a>
+        </nav>
+
+        <main>
+            <h3>1. Boxe anglaise - Galas Internationaux</h3>
+
+<div class="event-card">
+  <h4>Matchroom Boxing : Alberto Puello vs. Dalton Smith</h4>
+  <p><strong>Lieu :</strong> Utilita Arena, Sheffield, Royaume-Uni</p>
+  <p><strong>Heures :</strong> Début de la soirée à 19h00 | Combat principal estimé à 23h15 (Heure de Paris)</p>
+  <p><strong>Diffuseurs :</strong> DAZN (International) / DAZN France</p>
+  <p><strong>Présentation du choc principal :</strong> Choc au sommet chez les super-légers (-63,5 kg) pour le titre mondial WBC. L'invaincu britannique Dalton Smith (19-0-0, 14 KO) dispute le combat le plus important de sa carrière devant son public face au redoutable gaucher dominicain Alberto Puello (23-0-0, 10 KO), réputé pour sa précision chirurgicale et sa maestria tactique.</p>
+  <details>
+    <summary>Développer la carte complète des combats</summary>
+    <ul>
+      <li><strong>Titre mondial WBC - Super-légers (-63,5 kg) :</strong> Dalton Smith (19-0-0, 14 KO) vs. Alberto Puello (23-0-0, 10 KO)</li>
+      <li>Reste de la carte en cours de finalisation par l'organisation.</li>
+    </ul>
+  </details>
+</div>
+
+<h3>2. Boxe anglaise - Galas au Japon (Korakuen Hall inclus)</h3>
+<p><em>Aucun événement majeur programmé cette semaine (reprogrammation du championnat du monde de Tomoki Kameda actée suite au communiqué WBA).</em></p>
+
+<h3>3. UFC</h3>
+
+<div class="event-card">
+  <h4>UFC Fight Night 292</h4>
+  <p><strong>Lieu :</strong> UFC APEX, Las Vegas, Nevada, États-Unis</p>
+  <p><strong>Heures :</strong> Carte préliminaire à 22h00 | Carte principale à 01h00 | Combat principal estimé à 03h30 (Heure de Paris)</p>
+  <p><strong>Diffuseurs :</strong> ESPN+ (États-Unis) / RMC Sport 2 (France)</p>
+  <p><strong>Présentation de la soirée :</strong> Soirée d'action dans l'octogone de l'APEX, marquée par des remaniements de dernière minute sur les combats de tête et une confrontation pivotale pour l'ordre hiérarchique de la catégorie.</p>
+  <details>
+    <summary>Développer la carte complète des combats</summary>
+    <ul>
+      <li>Reste de la carte en cours de finalisation par l'organisation.</li>
+    </ul>
+  </details>
+</div>
+
+<h3>4. Rizin</h3>
+<p><em>Aucun événement majeur programmé cette semaine.</em></p>
+
+<h3>5. BKFC</h3>
+<p><em>Aucun événement majeur programmé cette semaine.</em></p>
+
+<h3>6. Kickboxing Japonais (RISE, K-1, Krush)</h3>
+
+<div class="event-card">
+  <h4>Shoot Boxing 2026 Series</h4>
+  <p><strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</p>
+  <p><strong>Heures :</strong> Début de la réunion à 10h30 | Combats principaux vers 13h00 (Heure de Paris)</p>
+  <p><strong>Diffuseurs :</strong> U-NEXT (Japon) / Streaming officiel international</p>
+  <p><strong>Présentation de la soirée :</strong> Opposition internationale de haut niveau opposant les fers de lance du Shoot Boxing japonais aux protégés de l'académie thaïlandaise de Superbon Banchamek. Shota Tezuka et Koyata Yamada montent sur le ring du mythique Korakuen Hall avec l'ambition déclarée de s'imposer avant la limite.</p>
+  <details>
+    <summary>Développer la carte complète des combats</summary>
+    <ul>
+      <li><strong>Super fight Shoot Boxing / Muay Thai (-58,0 kg) :</strong> Shota Tezuka vs. Représentant Superbon Gym</li>
+      <li><strong>Super fight Shoot Boxing / Muay Thai (-55,0 kg) :</strong> Koyata Yamada vs. Représentant Superbon Gym</li>
+      <li>Reste de la carte en cours de finalisation par l'organisation.</li>
+    </ul>
+  </details>
+</div>
+
+<h3>7. Glory Kickboxing</h3>
+<p><em>Aucun événement majeur programmé cette semaine.</em></p>
+
+<h3>8. RAF (Real American Freestyle wrestling)</h3>
+<p><em>Aucun événement majeur programmé cette semaine.</em></p>
+        </main>
+
+        <footer>
+            <p>Rédaction & Veille automatique multilingue. Unités standardisées (kg, m) et heures calées sur Paris (CET/CEST).</p>
+        </footer>
+    </div>
+</body>
+</html>

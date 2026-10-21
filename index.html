@@ -1,226 +1,307 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="dark">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>QG Sports de Combat - Actualités & Calendrier</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualités & Décryptages - Le QG des Sports de Combat</title>
     <style>
-        :root {
-            --pico-font-size: 95%;
-        }
-        header {
-            border-bottom: 2px solid var(--pico-primary);
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-        }
-        .badge-update {
-            display: inline-block;
-            padding: 0.25rem 0.6rem;
-            font-size: 0.8rem;
-            border-radius: 4px;
-            background-color: var(--pico-card-background-color);
-            border: 1px solid var(--pico-muted-border-color);
-        }
-        blockquote {
-            border-left: 4px solid var(--pico-primary);
-            background-color: rgba(255, 255, 255, 0.04);
-            padding: 0.8rem 1.2rem;
-            margin: 1rem 0;
-            font-style: italic;
-        }
-        details {
-            margin-top: 1rem;
-            border: 1px solid var(--pico-muted-border-color);
-            border-radius: 6px;
-            padding: 0.6rem 1rem;
-            background-color: rgba(255, 255, 255, 0.02);
-        }
-        summary {
-            cursor: pointer;
-            color: var(--pico-primary);
-        }
-        .event-card {
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            border-radius: 8px;
-            background-color: var(--pico-card-background-color);
-            border: 1px solid var(--pico-muted-border-color);
-        }
-    </style>
+    :root {
+        --bg-main: #F9F6F0;
+        --card-bg: #FFFFFF;
+        --card-alt: #F4EFE6;
+        --text-main: #2C221E;
+        --text-muted: #6B5B52;
+        --accent-brown: #8A4B29;
+        --accent-dark: #4A2E1B;
+        --border-color: #E6DFD3;
+        --font-serif: 'Georgia', 'Cambria', serif;
+        --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        font-family: var(--font-sans);
+        line-height: 1.65;
+        font-size: 16px;
+    }
+    .wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2.5rem 1.25rem;
+    }
+    header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    h1 {
+        font-family: var(--font-serif);
+        font-size: 2.3rem;
+        color: var(--accent-dark);
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.5px;
+    }
+    .subtitle {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-bottom: 0.8rem;
+    }
+    .badge-date {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.85rem;
+        background-color: var(--card-alt);
+        color: var(--accent-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    /* Barre de navigation moderne */
+    nav.main-nav {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+    nav.main-nav a {
+        text-decoration: none;
+        padding: 0.65rem 1.4rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        border: 1px solid var(--border-color);
+        background-color: var(--card-bg);
+        color: var(--text-muted);
+    }
+    nav.main-nav a.active {
+        background-color: var(--accent-brown);
+        color: #FFFFFF;
+        border-color: var(--accent-brown);
+    }
+    nav.main-nav a:hover:not(.active) {
+        background-color: var(--card-alt);
+        color: var(--accent-dark);
+    }
+    /* Typographie des articles */
+    h2 {
+        font-family: var(--font-serif);
+        color: var(--accent-dark);
+        font-size: 1.7rem;
+        margin-top: 2rem;
+        margin-bottom: 1.2rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.4rem;
+    }
+    h3 {
+        font-family: var(--font-serif);
+        color: var(--accent-brown);
+        font-size: 1.35rem;
+        margin-top: 1.5rem;
+        margin-bottom: 0.6rem;
+    }
+    p { margin-top: 0; margin-bottom: 1.1rem; }
+    article.news-item {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.6rem;
+        box-shadow: 0 2px 6px rgba(74, 46, 27, 0.03);
+    }
+    blockquote {
+        margin: 1.2rem 0;
+        padding: 1rem 1.3rem;
+        background-color: var(--card-alt);
+        border-left: 4px solid var(--accent-brown);
+        border-radius: 0 8px 8px 0;
+        font-style: italic;
+        color: var(--accent-dark);
+    }
+    /* Cartes du calendrier */
+    .event-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 6px rgba(74, 46, 27, 0.03);
+    }
+    .event-card .meta-info {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 0.8rem;
+    }
+    .meta-tag {
+        display: inline-block;
+        background: var(--card-alt);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        margin-right: 0.4rem;
+        font-weight: 500;
+        color: var(--accent-dark);
+    }
+    details {
+        margin-top: 1.2rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.8rem 1.2rem;
+        background-color: var(--card-alt);
+    }
+    summary {
+        font-weight: 600;
+        color: var(--accent-brown);
+        cursor: pointer;
+        outline: none;
+    }
+    details ul {
+        margin-top: 1rem;
+        padding-left: 1.2rem;
+    }
+    details li {
+        margin-bottom: 0.8rem;
+    }
+    footer {
+        text-align: center;
+        margin-top: 3.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+</style>
 </head>
 <body>
-    <main class="container">
+    <div class="wrapper">
         <header>
-            <h1>🥊 QG Sports de Combat</h1>
-            <p>Actualités quotidiennes & Calendrier hebdomadaire (Boxe, MMA, Kickboxing, Lutte)</p>
-            <span class="badge-update">Dernière mise à jour : 21/10/2026 à 14:49 (Heure de Paris)</span>
+            <h1>🥊 Le QG des Sports de Combat</h1>
+            <div class="subtitle">L'actualité décryptée & le radar complet des galas de la semaine</div>
+            <span class="badge-date">Édition du 21/10/2026 à 15:13 (Heure de Paris)</span>
         </header>
 
-        <section id="actualites">
-            <h2>📰 Actualités & Coulisses (24-48h)</h2>
-            <div class="news-section">
-  <h2>Actualités des Sports de Combat - Mercredi 21 Octobre 2026</h2>
+        <nav class="main-nav">
+            <a href="index.html" class="active">📰 Actualités & Décryptages</a>
+            <a href="calendrier.html" class="">📅 Calendrier des Combats</a>
+        </nav>
 
-  <h3>Boxe Anglaise Internationale, Japonaise et Nationale</h3>
+        <main>
+            <section class="editorial-header">
+    <h1>L'Œil du Ring : Édition du 21 Octobre 2026</h1>
+    <p class="lead">Tour d'horizon exclusif des chancelleries pugilistiques mondiales, des coulisses contractuelles aux arbitrages fédéraux, par notre rédaction spécialisée.</p>
+</section>
 
-  <h4>Matchroom frappe un grand coup : Jaron Ennis prolonge pour 7 combats</h4>
-  <p>Eddie Hearn et Matchroom Boxing ont sécurisé l'avenir de l'une des figures de proue du noble art. Le champion du monde IBF des poids welters (66,7 kg), Jaron « Boots » Ennis (33-0-0, 29 KOs), a paraphé une prolongation de contrat historique portant sur sept combats supplémentaires. L'Américain de 29 ans, réputé pour sa fluidité technique et son sens de la finition, vise désormais des combats d'unification chez les welters ainsi qu'une montée imminente chez les super-welters (69,9 kg) pour s'affirmer au sommet du classement pound-for-pound. Dans la foulée, Matchroom a également annoncé la prolongation pluriannuelle du Britannique Josh Kelly (16-1-1, 8 KOs), contender de premier plan chez les super-welters.</p>
+<section class="international-boxing">
+    <h2>Grand Format : Boxe Anglaise Internationale</h2>
 
-  <h4>Affaire WBA des poids plumes et rebondissement pour Tomoki Kameda</h4>
-  <p>Après l'annulation impromptue de son combat de championnat du monde le week-end dernier au Mexique suite à un imbroglio médical et réglementaire autour de son adversaire, le Japonais Tomoki Kameda (41-4-0, 23 KOs) a reçu des nouvelles rassurantes de la part de la WBA. Gilberto Jesús Mendoza, président de l'organisation, a publié un communiqué officiel assurant que le cas de Kameda sera traité en « priorité absolue » pour disputer la ceinture vacante des poids plumes (57,2 kg). Déjà retourné au camp d'entraînement à Mexico, l'ancien champion du monde bantamweight garde les yeux rivés sur une nouvelle opportunité mondiale.</p>
+    <article class="news-item">
+        <h3>Matchroom sécurise l'avenir de Jaron « Boots » Ennis : le contrat en or massif vers l'unification</h3>
+        <p>
+            C'est un véritable coup de maître politique et financier que vient d'orchestrer Eddie Hearn. Le promoteur britannique de Matchroom Boxing a officialisé la signature d'une prolongation record de sept combats avec le monarque IBF des poids welters (66,678 kg), Jaron « Boots » Ennis. Longtemps bridé par des litiges promotionnels qui ont ralenti son accession au firmament, le prodige de Philadelphie (1m78) ancre désormais son destin au sein de l'écurie de DAZN. Cet accord multi-combats, estimé à plusieurs dizaines de millions de dollars, vise à déverrouiller enfin les portes de l'unification intégrale des quatre ceintures. Hearn entend capitaliser sur les relations privilégiées entretenues avec les décideurs de la <em>Riyadh Season</em> pour imposer des chocs d'envergure face aux champions rivaux de PBC et Top Rank.
+        </p>
+        <p>
+            Sur le plan purement pugilistique, « Boots » Ennis incarne l'archétype du switch-hitter moderne : capable de passer d'une garde orthodoxe à une posture de <em>southpaw</em> avec une fluidité déconcertante, le boxeur de 29 ans combine une puissance de frappe d'élite avec un coup d'œil défensif chirurgical. Les discussions s'orientent désormais vers l'organisation d'un méga-combat de réunification dès le premier semestre 2027, tout en gardant un œil avisé sur une montée stratégique chez les super-welters (69,853 kg). Avec ce bail à long terme, Matchroom blinde sa position dans le classement <em>pound-for-pound</em> et prive ses concurrents directs du talent brut le plus électrisant du noble art américain.
+        </p>
+        <blockquote>
+            <strong>[Rumeur / En négociation]</strong> Des pourparlers exploratoires auraient débuté en coulisses entre l'état-major de Matchroom et les représentants de Turki Alalshikh pour intégrer la première unification d'Ennis en tête d'affiche d'une prochaine carte XXL au Moyen-Orient.
+        </blockquote>
+    </article>
 
-  <blockquote>
-    <strong>[Rumeur / Déclaration]</strong> Tomoki Kameda à son arrivée au camp d'entraînement au Mexique : <em>« Loin de me décourager, cette annulation de dernière minute a décuplé ma motivation. Je suis en grande forme physique et j'attends sereinement la décision de la WBA. Je serai prêt à bondir dès que la date de la finale mondiale sera fixée. »</em>
-  </blockquote>
+    <article class="news-item">
+        <h3>WBC : Dalton Smith face à Alberto Puello, l'affrontement stylistique pour la suprématie des super-légers</h3>
+        <p>
+            Le World Boxing Council (WBC) a levé le voile sur son analyse officielle et les paramètres réglementaires encadrant le choc hautement stratégique entre le Britannique Dalton Smith et le Dominicain Alberto Puello chez les super-légers (63,503 kg). Smith (1m77), figure montante de Sheffield soutenue avec ferveur par Eddie Hearn, s'apprête à passer le test de vérité face à un Puello (1m75), champion intérimaire aguerri et redoutable technicien fausse-patte. Cet affrontement représente bien plus qu'une simple étape : il s'agit d'une éliminatoire officieuse pour le trône mondial de la catégorie, actuellement scruté de près par les instances dirigeantes après les récentes réorganisations des classements mondiaux.
+        </p>
+        <p>
+            Ce duel oppose deux visions antinomiques du ring. Smith s'est imposé comme un puncheur clinique, usant d'un timing millimétré et d'un crochet gauche dévastateur au foie pour démanteler ses opposants. Face à lui, Puello déploie une boxe de désaxement,excellant dans le contrôle de la distance, la gestion du <em>clinch</em> à mi-distance et la neutralisation du bras avant adverse. Pour Smith, une victoire par arrêt consoliderait son statut d'attraction majeure des soirées britanniques et lui ouvrirait un accès direct à la ceinture The Ring des 63,5 kg. Pour Puello, il s'agit de prouver que sa maestria défensive peut étouffer la fougue d'un prétendant européen sur ses propres terres.
+        </p>
+    </article>
 
-  <h4>Choc WBC Super-Légers : Smith face à Puello</h4>
-  <p>La WBC a publié son analyse détaillée en amont du duel décisif qui opposera le puncheur britannique Dalton Smith (16-0-0, 12 KOs) au styliste dominicain Alberto Puello (23-0-0, 10 KOs) pour la ceinture mondiale intérimaire WBC des super-légers (63,5 kg). Une véritable opposition de styles entre un out-boxer gaucher (southpaw) fuyant et difficile à cadrer, et un brawler offensif adepte du pressing à mi-distance.</p>
+    <article class="news-item">
+        <h3>Josh Kelly rempile chez Matchroom : le plan vers une couronne mondiale chez les super-welters</h3>
+        <p>
+            Parallèlement au dossier Ennis, Matchroom Boxing a consolidé son arrière-garde en sécurisant une extension contractuelle pluriannuelle avec Josh Kelly. L'ancien représentant olympique britannique (1m78), qui évolue désormais avec une maturité évidente chez les super-welters (69,853 kg), récolte les fruits de sa reconstruction méthodique. Après avoir frôlé la rupture de ban suite à son revers face à David Avanesyan il y a quelques années, le styliste de Sunderland a épuré sa boxe, abandonnant les fioritures excessives pour un travail de contre-attaque plus direct et une assise défensive renforcée.
+        </p>
+        <p>
+            Ce renouvellement de bail s'inscrit dans un calendrier millimétré. Alors que les quatre couronnes mondiales des super-welters sont en pleine mutation géopolitique suite aux montées et descentes d'athlètes majeurs, Kelly se positionne dans le top 5 de plusieurs fédérations (notamment la WBO et l'IBF). L'état-major britannique compte lui offrir une opportunité de titre mondial obligatoire avant la fin de l'hiver. L'enjeu pour le pugiliste anglais sera de prouver que son style d'<em>out-boxer</em> ultra-réflexif peut encaisser le rythme imposé par les cogneurs de dimension internationale.
+        </p>
+    </article>
 
-  <blockquote>
-    <strong>[Rumeur / Déclaration]</strong> Angelo Leo et Rafael Espinoza dans le viseur de Naoya Inoue : <em>« Je sais ce que représente Naoya Inoue dans ce sport, mais je mesure 1m85 et je possède des atouts uniques chez les plumes. Si l'opportunité se présente, je suis convaincu à 100 % d'avoir les armes pour le battre »</em>, a martelé Rafael Espinoza lors d'un entretien relayé par les médias nippons.
-  </blockquote>
+    <article class="news-item">
+        <h3>Poids Plumes WBA : L'instance clarifie la situation réglementaire après des semaines de turbulences</h3>
+        <p>
+            La World Boxing Association (WBA) a rendu publique une décision directoriale majeure concernant sa division des poids plumes (57,153 kg). Face aux impasses contractuelles, aux annulations de dernière minute et à la prolifération des statuts temporaires, l'instance basée à Panama a tranché afin de restaurer la hiérarchie officielle de la catégorie. Ce communiqué impose un calendrier contraignant aux prétendants classés en haut de tableau sous peine de perdre immédiatement leur statut de challenger obligatoire.
+        </p>
+        <p>
+            Cette clarification redistribue les cartes au sein d'une division ultra-compétitive. Les promoteurs rivaux, contraints de composer avec les délais stricts d'enchères de bourses imposés par le président Gilberto Jesús Mendoza, doivent désormais accélérer les négociations. L'objectif avoué de la WBA est de purger les litiges pendants afin de désigner un champion incontesté d'ici le printemps prochain, mettant un terme aux contestations des promoteurs indépendants qui dénonçaient le blocage du sommet de la hiérarchie.
+        </p>
+    </article>
+</section>
 
-  <h4>Nicaragua : « La Colocha » Ortega à l'assaut de la couronne WBA</h4>
-  <p>Du côté de la boxe féminine internationale, la Nicaraguayenne Eveling « La Colocha » Ortega peaufine les derniers réglages de son camp d'entraînement. L'aspirante est désormais prête à disputer le titre mondial WBA des poids mi-mouches (49,0 kg), affirmant être au sommet de son art sur le plan du conditionnement physique.</p>
+<section class="asian-boxing">
+    <h2>Focus Asie & Japon</h2>
 
-  <h4>Sur la scène française : Gala national à La Roche-sur-Yon et faits divers</h4>
-  <p>En France, la Fédération Française de Boxe (FFB) prépare un grand rendez-vous national à La Roche-sur-Yon ce week-end avec un championnat de France élite au programme. Du côté de Fameck, le prospect Olcay Kaya affine sa préparation face à un rival tchèque dans un duel de rodage chez les poids super-légers (63,5 kg). Dans les rubriques judiciaires, le tribunal correctionnel a rendu son délibéré concernant une altercation survenue lors du bal de La Tuilière (Loire), condamnant un ancien boxeur professionnel officiant comme agent de sécurité pour violences aggravées.</p>
+    <article class="news-item">
+        <h3>Dossier Tomoki Kameda : La WBA lui accorde une priorité absolue pour le titre mondial des poids plumes</h3>
+        <p>
+            Le séisme provoqué par l'annulation in extremis du championnat du monde de Tomoki Kameda trouve enfin son épilogue institutionnel. Alors que le cadet de la célèbre fratrie japonaise (1m71) s'était vu privé d'un combat titanesque le jour même de l'échéance suite à une défection adverse imprévue, le président de la WBA a officiellement acté que le cas de Kameda représentait la « priorité absolue » de l'organisation. L'instance a garanti que le boxeur nippon disputera directement le titre mondial vacant des poids plumes (57,153 kg) lors de son prochain combat.
+        </p>
+        <p>
+            Loin de se laisser abattre par cette frustration logistique, « El Mexicanito » a immédiatement quitté l'archipel nippon pour rejoindre son camp d'entraînement à Mexico. Poursuivant sa préparation en altitude avec ses sparring-partners habituels, Kameda a confié à la presse tokyoïte que sa motivation était décuplée par cette décision fédérale. Le clan Kameda attend désormais la notification officielle de l'adversaire désigné par le comité des championnats de la WBA, les yeux rivés sur une grande soirée au Korakuen Hall ou à l'Ariake Arena pour sceller son retour au sommet.
+        </p>
+    </article>
 
-  <h3>Autres Sports de Combat : Tour d'horizon</h3>
-  <ul>
-    <li><strong>UFC :</strong> Changement de dernière minute sur la carte de l'UFC Fight Night 292 avec la modification du co-main event suite à un forfait sur blessure. L'organisation peaufine également sa semaine promotionnelle pour l'UFC 333, où Alexander Volkanovski tentera de freiner l'invaincu Movsar Evloev dans un choc chez les poids plumes (65,8 kg).</li>
-    <li><strong>RIZIN :</strong> La promotion de Nobuyuki Sakakibara a officialisé la finale du tournoi « RIZIN Koshien 2026 » prévue pour le traditionnel événement du Réveillon (31 décembre). Les espoirs de la division des 66,0 kg Sora Kaneko et Christian Akira Matsuo s'affronteront pour le statut de lycéen numéro un du Japon. Un entraînement public pour RIZIN.55 aura lieu le 27 octobre à Tokyo.</li>
-    <li><strong>Shoot Boxing & Kickboxing Japonais :</strong> Le Shoot Boxing revient le 24 octobre au prestigieux Korakuen Hall de Tokyo avec des chocs internationaux face à des représentants de l'écurie de Superbon Banchamek. Shota Tezuka et Koyata Yamada ont promis des KO spectaculaires pour faire vibrer les passionnés de Tokyo. Au K-1, le choc entre Ryuto Ishida et TOMA a été confirmé pour le 23 novembre.</li>
-    <li><strong>Glory Kickboxing :</strong> Suite aux résultats marquants de GLORY 110 le week-end dernier et au sacre du puncheur portugais Miguel Trindade, l'organisation peaufine son calendrier de fin d'année et ses classements featherweight (65,0 kg).</li>
-    <li><strong>RAF (Real American Freestyle wrestling) :</strong> La jeune ligue de lutte professionnelle a conclu un accord majeur de distribution commerciale nationale avec Joe Hand Promotions. L'organisation a également publié son classement masculin « Crossover », plaçant Colby Covington au premier rang mondial. L'ancien champion de l'UFC Cody Garbrandt a officiellement signé pour un match en style libre chez les poids plumes lors de RAF 15.</li>
-    <li><strong>Bare Knuckle FC (BKFC) :</strong> La ligue de combat à mains nues poursuit l'expansion de ses cartes d'automne avec l'officialisation de la confrontation entre Santo Curatolo et Anthony Yost en tête d'affiche des poids coqs (61,2 kg).</li>
-  </ul>
-</div>
-        </section>
+    <article class="news-item">
+        <h3>Shoot-Boxing au Korakuen Hall : L'élite japonaise défie l'armada du Superbon Training Camp</h3>
+        <p>
+            Le temple sacré des sports de combat tokyoïte, le mythique Korakuen Hall, s'apprête à vibrer le 24 octobre à l'occasion de la prochaine levée majeure des Shoot-Boxing Series. L'attraction de la soirée repose sur un choc frontal entre les figures de proue locales et les redoutables combattants mandatés par l'icône thaïlandaise Superbon Singha Mawynn. En tête d'affiche, Shota Tezuka a prévenu qu'il refuserait d'aller à la décision des juges face au contingent du muay-thaï, promettant un arrêt avant la limite grâce à son travail en anglaise et ses projections réglementaires propres à la discipline.
+        </p>
+        <p>
+            Dans l'autre confrontation internationale très attendue, le champion Koyata Yamada abordera son duel face à un opposant morphologiquement supérieur avec la ferme intention d'exploiter sa vitesse d'exécution. Fidèle aux préceptes du Korakuen Hall, la réunion sera scrutée de près par les observateurs du K-1 et du RISE, témoignant de la vitalité insolente des sports de percussion debout au Japon en cette fin d'année 2026.
+        </p>
+    </article>
+</section>
 
-        <hr>
+<section class="french-scene">
+    <h2>Scène Française</h2>
 
-        <section id="calendrier">
-            <h2>📅 Calendrier des 7 prochains jours</h2>
-            <div class="calendar-section">
-  <h2>Calendrier des Combats (21/10/2026 - 28/10/2026)</h2>
+    <article class="news-item">
+        <h3>Championnats de France : La Roche-sur-Yon au cœur de la reconquête pugilistique</h3>
+        <p>
+            La Fédération Française de Boxe (FFB) a confirmé la tenue d'échéances capitales pour les ceintures nationales, matérialisées par la tenue prochaine d'un grand gala à La Roche-sur-Yon. Cette délocalisation en région s'inscrit dans la volonté des promoteurs hexagonaux de redynamiser les circuits nationaux professionnels, antichambres obligatoires avant les joutes continentales de l'EBU (European Boxing Union). Les boxeurs engagés tenteront d'arracher le titre suprême tricolore, garant d'une entrée directe dans les classements européens.
+        </p>
+        <p>
+            Dans le Grand Est, la dynamique reste tout aussi soutenue. Le pugiliste Olcay Kaya prépare un combat d'encadrement stratégique à Fameck face à une opposition venue de République tchèque. Pour Kaya, ce combat sans concession dans la catégorie des légers vise à peaufiner ses gammes techniques et à accumuler du temps de ring face à un adversaire réputé pour sa solidité physique et ses schémas de contre-attaque rugueux.
+        </p>
+        <blockquote>
+            <strong>[Rumeur / En négociation]</strong> Les pourparlers pour l'organisation d'une demi-finale européenne EBU impliquant un cadre du noble art tricolore seraient en phase de finalisation pour le premier trimestre 2027, avec une potentielle diffusion télévisuelle nationale.
+        </blockquote>
+    </article>
+</section>
 
-  <h3>1. Boxe anglaise - Galas Internationaux</h3>
-  <div class="event-card">
-    <h4>Matchroom Boxing : Dalton Smith vs. Alberto Puello (WBC Interim World Super-Lightweight)</h4>
-    <p><strong>Lieu :</strong> Sheffield Arena, Sheffield, Royaume-Uni</p>
-    <p><strong>Date & Horaires :</strong> Samedi 24 octobre 2026 | Début du gala : 19h00 (heure de Paris) | Combat principal vers 23h15 (heure de Paris)</p>
-    <p><strong>Diffuseur d'origine :</strong> DAZN Global | <strong>Diffuseur en France :</strong> DAZN France</p>
-    <p>Duel crucial au sommet des super-légers pour la ceinture WBC intérimaire opposant la sensation locale Dalton Smith à l'invaincu champion dominicain Alberto Puello.</p>
-    
-    <details>
-      <summary><strong>Développer la carte complète, palmarès et présentation des combats</strong></summary>
-      <ul>
-        <li><strong>Dalton Smith (16-0-0, 12 KOs | 1m78) vs. Alberto Puello (23-0-0, 10 KOs | 1m75)</strong> – Poids super-légers (63,5 kg) : Finale mondiale intérimaire WBC. Smith, puncheur clinique devant ses supporters, devra percer la garde et le style fuyant du gaucher Puello.</li>
-        <li><strong>Josh Kelly (16-1-1, 8 KOs | 1m78) vs. TBA</strong> – Poids super-welters (69,9 kg) : Kelly dispute un duel de classement pour se positionner vers une chance mondiale en 2027.</li>
-        <li><strong>Campbell Hatton (15-1-0, 6 KOs | 1m70) vs. TBA</strong> – Poids super-légers (63,5 kg) : Combat charnière de reconstruction en 8 rounds pour le prospect mancunien.</li>
-      </ul>
-    </details>
-  </div>
+<section class="combat-sports-brief">
+    <h2>En Bref : MMA, Kickboxing & Lutte</h2>
 
-  <h3>2. Boxe anglaise - Galas au Japon (incluant Korakuen Hall)</h3>
-  <div class="event-card">
-    <h4>Dangan 278 - Korakuen Hall Showcase</h4>
-    <p><strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</p>
-    <p><strong>Date & Horaires :</strong> Vendredi 23 octobre 2026 | Début du gala : 10h45 (heure de Paris / 17h45 JST) | Combat principal vers 13h30 (heure de Paris)</p>
-    <p><strong>Diffuseur d'origine :</strong> Boxing Raise (Japon) | <strong>Diffuseur en France :</strong> Non diffusé à la télévision linéaire (Accessible en direct sur Boxingraise.com)</p>
-    <p>La mythique salle tokyoïte accueille les demi-finales des tournois de classement de l'Est du Japon (East Japan Rookie of the Year) et un main event régional en 8 rounds chez les plumes.</p>
-    
-    <details>
-      <summary><strong>Développer la carte complète, palmarès et présentation des combats</strong></summary>
-      <ul>
-        <li><strong>Ren Matsuoka (8-1-1, 4 KOs | 1m72) vs. Kazuma Saito (6-2-0, 3 KOs | 1m70)</strong> – Poids plumes (57,2 kg) : Choc en 8 rounds entre deux prétendants cherchant à intégrer le top 5 du classement de la JBC (Japan Boxing Commission).</li>
-        <li><strong>Yuki Takahashi (4-0-0, 3 KOs | 1m68) vs. Tomoya Kudo (3-1-0, 2 KOs | 1m67)</strong> – Poids super-coqs (55,3 kg) : Demi-finale du tournoi des espoirs du Korakuen Hall. Deux brawlers réputés pour leur puissance à courte distance.</li>
-      </ul>
-    </details>
-  </div>
-
-  <h3>3. UFC</h3>
-  <div class="event-card">
-    <h4>UFC 333 : Volkanovski vs. Evloev</h4>
-    <p><strong>Lieu :</strong> Etihad Arena, Abou Dabi, Émirats Arabes Unis</p>
-    <p><strong>Date & Horaires :</strong> Samedi 24 octobre 2026 | Carte préliminaire : 16h00 (heure de Paris) | Carte principale : 20h00 (heure de Paris) | Combat principal vers 22h45 (heure de Paris)</p>
-    <p><strong>Diffuseur d'origine :</strong> ESPN+ PPV (USA) | <strong>Diffuseur en France :</strong> RMC Sport 2</p>
-    <p>L'ancien roi des poids plumes Alexander Volkanovski défend son rang face au grappling étouffant du contender invaincu Movsar Evloev dans un duel qui déterminera le prochain challenger officiel.</p>
-    
-    <details>
-      <summary><strong>Développer la carte complète, palmarès et présentation des combats</strong></summary>
-      <ul>
-        <li><strong>Alexander Volkanovski (26-4-0 | 1m68) vs. Movsar Evloev (18-0-0 | 1m70)</strong> – Poids plumes (65,8 kg) : L'expérience du striking et de la défense d'amenée au sol de l'Australien face à la pression incessante et au contrôle en lutte du lutteur ingouche.</li>
-        <li><strong>Joaquin Buckley (20-6-0 | 1m78) vs. Mike Malott (11-2-1 | 1m85)</strong> – Poids mi-moyens (77,1 kg) : Opposition explosive entre la puissance brute de frappe de Buckley et les soumissions opportunistes du Canadien.</li>
-        <li><strong>Jasmine Jasudavicius (12-3-0 | 1m70) vs. Maycee Barber (14-2-0 | 1m65)</strong> – Poids mouches féminins (56,7 kg) : Choc du top 5 pour consolider une place de challengeuse au titre mondial des flyweights.</li>
-      </ul>
-    </details>
-  </div>
-
-  <h3>4. Rizin</h3>
-  <p><em>Aucun événement majeur cette semaine. (Prochain événement : RIZIN.55 début novembre).</em></p>
-
-  <h3>5. BKFC</h3>
-  <div class="event-card">
-    <h4>BKFC Fight Night : Curatolo vs. Yost</h4>
-    <p><strong>Lieu :</strong> Seminole Hard Rock Hotel & Casino, Hollywood, Floride, USA</p>
-    <p><strong>Date & Horaires :</strong> Nuit du vendredi 23 au samedi 24 octobre 2026 | Début du gala : 02h00 (heure de Paris) | Combat principal vers 04h30 (heure de Paris)</p>
-    <p><strong>Diffuseur d'origine :</strong> BKFC App / Triller TV | <strong>Diffuseur en France :</strong> BKFC App</p>
-    <p>Le noble art à mains nues s'installe en Floride avec un choc rythmé entre deux stylistes offensifs de la division des coqs.</p>
-    
-    <details>
-      <summary><strong>Développer la carte complète, palmarès et présentation des combats</strong></summary>
-      <ul>
-        <li><strong>Santo Curatolo (4-1-0 BKFC | 1m63) vs. Anthony Yost (3-1-0 BKFC | 1m65)</strong> – Poids coqs (61,2 kg) : Curatolo cherche le KO rapide grâce à ses crosses puissants, tandis que Yost mise sur des contres en short range clinch.</li>
-        <li><strong>Howard Davis (6-2-1 BKFC | 1m80) vs. Rusty Crowder (4-4-0 BKFC | 1m78)</strong> – Poids plumes (65,8 kg) : Vétérans des rings circulaires sans gants s'affrontant dans un duel technique pour la rédemption.</li>
-      </ul>
-    </details>
-  </div>
-
-  <h3>6. Kickboxing Japonais (RISE, K-1, Krush)</h3>
-  <div class="event-card">
-    <h4>Shoot Boxing 2026 act.5 : Japan vs. Thailand Special</h4>
-    <p><strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</p>
-    <p><strong>Date & Horaires :</strong> Samedi 24 octobre 2026 | Début du gala : 10h30 (heure de Paris / 17h30 JST) | Combat principal vers 13h45 (heure de Paris)</p>
-    <p><strong>Diffuseur d'origine :</strong> U-NEXT (Japon) | <strong>Diffuseur en France :</strong> Accessible via abonnement international U-NEXT</p>
-    <p>La ligue combinant frappes, projections et soumissions debout propose une confrontation d'envergure face aux représentants de l'académie de Superbon Banchamek.</p>
-    
-    <details>
-      <summary><strong>Développer la carte complète, palmarès et présentation des combats</strong></summary>
-      <ul>
-        <li><strong>Shota Tezuka (18-9-2 | 1m70) vs. Superbon Gym Prodigy (Thaïlande)</strong> – Poids plumes (57,5 kg) : Duel sous règles Shoot Boxing où Tezuka a promis une victoire avant la limite en coupant la distance avec son crochet du gauche.</li>
-        <li><strong>Koyata Yamada (14-1-0 | 1m64) vs. Thailand Challenger</strong> – Poids super-coqs (55,0 kg) : Le puncheur compact japonais山田 affronte un nak muay chevronné réputé pour son kick puissant au corps.</li>
-      </ul>
-    </details>
-  </div>
-
-  <h3>7. Glory Kickboxing</h3>
-  <p><em>Aucun événement majeur cette semaine.</em></p>
-
-  <h3>8. RAF (Real American Freestyle wrestling)</h3>
-  <div class="event-card">
-    <h4>RAF 15 : Super Fight Series</h4>
-    <p><strong>Lieu :</strong> Wolstein Center, Cleveland, Ohio, USA</p>
-    <p><strong>Date & Horaires :</strong> Dimanche 25 octobre 2026 | Début de la carte : 21h00 (heure de Paris) | Événement principal vers 23h30 (heure de Paris)</p>
-    <p><strong>Diffuseur d'origine :</strong> RAF Network / FITE TV | <strong>Diffuseur en France :</strong> TrillerTV / RAF Pass</p>
-    <p>La ligue professionnelle de lutte freestyle met en scène la transition sur le tapis de stars du MMA et d'athlètes de niveau mondial de lutte olympique.</p>
-    
-    <details>
-      <summary><strong>Développer la carte complète, palmarès et présentation des combats</strong></summary>
-      <ul>
-        <li><strong>Cody Garbrandt (USA | 1m73, 65,8 kg) vs. RAF Elite Contender (USA | 1m75, 65,8 kg)</strong> – Lutte libre (Catchweight 65,8 kg) : L'ancien détenteur de la ceinture mondiale UFC revient à ses racines de lutteur de haut niveau universitaire dans un match au sommet en deux rounds de 3 minutes.</li>
-        <li><strong>RAF Freestyle Heavyweight Showcase (120,0 kg)</strong> : Tournoi à 4 éliminatoire réunissant des lutteurs All-American NCAA Division I pour déterminer le prétendant numéro un.</li>
-      </ul>
-    </details>
-  </div>
-</div>
-        </section>
+    <article class="news-item">
+        <p>
+            <strong>UFC : Alexander Volkanovski face au piège Movsar Evloev pour l'UFC 333.</strong> L'Ultimate Fighting Championship prépare l'un de ses combats d'anthologie dans la division des poids plumes (-65,8 kg). L'ancien souverain Alexander Volkanovski (1m68) mettra son expérience et son volume de frappe à l'épreuve face au grappling étouffant et au bilan d'invincibilité du Russe Movsar Evloev (1m70). En parallèle, la promotion de Dana White a dû reconfigurer en urgence le <em>co-main event</em> de son événement du week-end d'Halloween (UFC Fight Night 292), faisant appel à un finisseur invaincu pour sauver la carte principale suite à un forfait médical de dernière minute.
+        </p>
+        <p>
+            <strong>Bare Knuckle FC : Le phénomène des combats à mains nues s'intensifie.</strong> Le BKFC a dévoilé sa nouvelle feuille de route automnale avec un duel explosif opposant Santo Curatolo à Anthony Yost en tête d'affiche. La ligue de David Feldman continue de capter un public grandissant grâce à son format impitoyable de rounds courts de deux minutes, séduisant d'anciens boxeurs professionnels et kickboxeurs attirés par des bourses lucratives et l'intensité du combat sans gants dans le <em>Squared Circle</em>.
+        </p>
+        <p>
+            <strong>Échos des rings & divers :</strong> À l'international, l'ancien monarque des poids lourds Tyson Fury a une nouvelle fois défrayé la chronique en Angleterre en s'affichant en pleine célébration festive avec des supporters, entretenant toujours le flou le plus total quant à la suite formelle de sa carrière sportive ou d'une éventuelle exhibition.
+        </p>
+    </article>
+</section>
+        </main>
 
         <footer>
-            <small>Propulsé automatiquement par Gemini & GitHub Pages. Fuseau horaire : Paris (CET/CEST) | Unités : kg & mètres.</small>
+            <p>Rédaction & Veille automatique multilingue. Unités standardisées (kg, m) et heures calées sur Paris (CET/CEST).</p>
         </footer>
-    </main>
+    </div>
 </body>
 </html>
