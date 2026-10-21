@@ -26,6 +26,7 @@ now_paris = datetime.now(paris_tz)
 date_str = now_paris.strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
+# Génération explicite de la fenêtre des 7 prochains jours pour éviter toute erreur de date par l'IA
 valid_dates_fr = []
 valid_dates_iso = []
 for offset in range(8):
@@ -33,7 +34,7 @@ for offset in range(8):
     valid_dates_fr.append(d.strftime("%d/%m/%Y"))
     valid_dates_iso.append(d.strftime("%Y-%m-%d"))
 
-DATE_WINDOW_STR = f"du {valid_dates_fr[0]} au {valid_dates_fr[-1]} inclus (Dates ISO : {', '.join(valid_dates_iso)})"
+DATE_WINDOW_STR = f"du {valid_dates_fr[0]} au {valid_dates_fr[-1]} inclus (Dates ISO autorisées : {', '.join(valid_dates_iso)})"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
@@ -41,144 +42,37 @@ HEADERS = {
 }
 
 # ==============================================================================
-# 2. SÉLECTION RAPIDE DES MODÈLES (LIMITÉE À 2 MODÈLES MAX CONTRE LES BLOCAGES)
+# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES DISPONIBLES (VERSION FONCTIONNELLE RESTAURÉE)
 # ==============================================================================
-def get_fast_models():
+def get_available_models():
     preferred = [
-        "gemini-2.5-flash",
         "gemini-3.8-flash",
+        "gemini-3.8-flash-lite",
         "gemini-3.5-flash",
-        "gemini-2.0-flash",
+        "gemini-2.5-flash",
     ]
     discovered = []
     try:
         for m in client.models.list():
             short = getattr(m, "name", "").replace("models/", "")
-            if "flash" in short and not any(
-                ex in short for ex in ["embedding", "imagen", "veo", "tts", "audio", "vision", "8b"]
+            if "gemini" in short and not any(
+                ex in short for ex in ["embedding", "imagen", "veo", "tts", "audio", "vision", "aqa"]
             ):
                 discovered.append(short)
-    except Exception:
-        pass
+        print(f"Modèles actifs détectés : {discovered}")
+    except Exception as e:
+        print(f"Info liste modèles : {e}")
 
-    selected = [p for p in preferred if p in discovered]
+    final_list = [p for p in preferred if not discovered or p in discovered]
     for d in discovered:
-        if d not in selected:
-            selected.append(d)
+        if d not in final_list:
+            final_list.append(d)
+    return final_list or ["gemini-3.8-flash"]
 
-    # On garde strictement les 2 meilleurs modèles pour garantir une exécution < 2 min 30
-    final_models = (selected or ["gemini-2.5-flash"])[:2]
-    print(f"Modèles rapides retenus : {final_models}")
-    return final_models
-
-AVAILABLE_MODELS = get_fast_models()
+AVAILABLE_MODELS = get_available_models()
 
 # ==============================================================================
-# 3. FILTRAGE DES DOMAINES POUR LES AFFICHES OFFICIELLES (ANTI-IMAGES PARASITES)
-# ==============================================================================
-# Domaines bannis pour l'extraction d'image (renvoient des bannières génériques hors sujet)
-BLOCKED_IMAGE_DOMAINS = [
-    "ringwalks.com",
-    "box.live",
-    "tapology.com",
-    "sherdog.com",
-    "boxrec.com",
-    "fightnights.com",
-    "wikipedia.org",
-    "wikimedia.org",
-    "reddit.com",
-    "facebook.com",
-    "instagram.com",
-]
-
-# Domaines officiels prioritaires pour extraire le poster de l'événement
-TRUSTED_PROMOTER_DOMAINS = [
-    "matchroomboxing.com",
-    "queensberry.co.uk",
-    "ufc.com",
-    "ufcfightpass.com",
-    "bkfc.com",
-    "glorykickboxing.com",
-    "rizinff.com",
-    "k-1.co.jp",
-    "rise-rc.com",
-    "dazn.com",
-    "ringtv.com",
-    "toprank.com",
-    "goldenboy.com",
-    "premierboxingchampions.com",
-    "boxmob.jp",
-    "boxingnews.jp",
-    "ibu4gin.net",
-    "asianboxing.info",
-    "flowrestling.org",
-]
-
-POSTER_CACHE = {}
-
-def is_url_allowed_for_poster(url):
-    if not url or not url.startswith("http"):
-        return False
-    low = url.lower()
-    if any(blocked in low for blocked in BLOCKED_IMAGE_DOMAINS):
-        return False
-    return True
-
-def is_valid_poster_image_url(img_url):
-    if not img_url or not img_url.startswith("http"):
-        return False
-    low = img_url.lower()
-    bad_keywords = [
-        "ringwalks",
-        "favicon",
-        "logo",
-        "default",
-        "avatar",
-        "placeholder",
-        "icon",
-        "sprite",
-        "banner-ad",
-        ".svg",
-        "1x1",
-    ]
-    return not any(b in low for b in bad_keywords)
-
-def extract_og_image_from_url(page_url):
-    """Extrait l'affiche og:image uniquement si le domaine est autorisé et l'image valide."""
-    if not is_url_allowed_for_poster(page_url):
-        return None
-    if page_url in POSTER_CACHE:
-        return POSTER_CACHE[page_url]
-
-    try:
-        resp = requests.get(page_url, headers=HEADERS, timeout=6)
-        if resp.status_code == 200:
-            raw = resp.text
-            patterns = [
-                r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
-                r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
-                r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']',
-            ]
-            for pat in patterns:
-                m = re.search(pat, raw, flags=re.IGNORECASE)
-                if m:
-                    img = html.unescape(m.group(1).strip())
-                    if img.startswith("//"):
-                        img = "https:" + img
-                    elif img.startswith("/"):
-                        parsed = urllib.parse.urlparse(page_url)
-                        img = f"{parsed.scheme}://{parsed.netloc}{img}"
-                    if is_valid_poster_image_url(img):
-                        POSTER_CACHE[page_url] = img
-                        return img
-    except Exception:
-        pass
-
-    POSTER_CACHE[page_url] = None
-    return None
-
-# ==============================================================================
-# 4. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS
+# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS
 # ==============================================================================
 AGENTS_CONFIG = [
     {
@@ -193,10 +87,10 @@ AGENTS_CONFIG = [
             "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
         ),
         "specific_rules": (
-            "- Liste TOUS les combats officiels de la carte (Main Event, Co-Main Event et Undercard complète).\n"
-            "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs).\n"
+            "- Vérifie et liste TOUS les combats connus de la carte (Main Event, Co-Main Event et Undercard complète).\n"
+            "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) sur Box.live ou le site du promoteur.\n"
             "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, The Ring ou EBU est en jeu.\n"
-            "- Privilégie l'URL directe du promoteur (matchroomboxing.com, queensberry.co.uk, dazn.com, ringtv.com) pour le champ url_officielle."
+            "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
         ),
     },
     {
@@ -205,12 +99,12 @@ AGENTS_CONFIG = [
         "empty_msg": "Aucun gala professionnel japonais répertorié sur cette période de 7 jours.",
         "search_hint": (
             "Recherche le calendrier de boxe professionnelle japonaise (プロボクシング 日程 後楽園ホール) sur : "
-            "boxmob.jp (Boxing Mobile), boxingnews.jp, ibu4gin.net, asianboxing.info. "
+            "boxmob.jp (Boxing Mobile), boxingnews.jp, ibu4gin.net, asianboxing.info, box.live. "
             "Cherche les galas au Korakuen Hall (後楽園ホール), Ariake Arena, Yokohama, Osaka (Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next, etc.)."
         ),
         "specific_rules": (
             "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn).\n"
-            "- Convertis les horaires japonais (JST = UTC+9) en heure de Paris.\n"
+            "- Convertis les horaires japonais (JST = UTC+9) en heure de Paris (souvent entre 10h00 et 14h00 heure de Paris pour le Korakuen Hall).\n"
             "- Précise les diffuseurs japonais d'origine (Lemino, Boxing Raise, U-NEXT, ABEMA, Prime Video JP, WOWOW) et la disponibilité en France.\n"
             "- Mentionne les titres nationaux JBC, OPBF ou WBO Asia-Pacific en jeu."
         ),
@@ -226,7 +120,7 @@ AGENTS_CONFIG = [
         "specific_rules": (
             "- Liste la carte complète en séparant clairement le statut de chaque combat (Main Card, Prelims, Early Prelims).\n"
             "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur.\n"
-            "- Utilise le lien ufc.com/event/... comme url_officielle."
+            "- Convertis les heures du début des Prelims et de la Main Card à l'heure de Paris."
         ),
     },
     {
@@ -235,10 +129,10 @@ AGENTS_CONFIG = [
         "empty_msg": "Aucun événement Rizin programmé cette semaine.",
         "search_hint": (
             "Recherche le calendrier officiel RIZIN (RIZIN 大会日程 対戦カード) sur : "
-            "jp.rizinff.com/schedules, tapology.com/fightcenter."
+            "jp.rizinff.com/schedules, tapology.com/fightcenter, sherdog.com."
         ),
         "specific_rules": (
-            "- Vérifie strictement si un gala Rizin tombe dans la fenêtre des 7 prochains jours.\n"
+            "- Vérifie strictement si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre des 7 prochains jours.\n"
             "- Si aucun gala Rizin n'a lieu dans les 7 prochains jours, renvoie immédiatement une liste vide []."
         ),
     },
@@ -252,7 +146,7 @@ AGENTS_CONFIG = [
         ),
         "specific_rules": (
             "- Liste le Main Event, le Co-Main Event et les combats confirmés de la carte.\n"
-            "- Indique 'BKFC App / TrillerTV / DAZN' selon le diffuseur officiel."
+            "- Indique 'BKFC App / TrillerTV / DAZN' selon le diffuseur officiel de l'événement."
         ),
     },
     {
@@ -264,8 +158,8 @@ AGENTS_CONFIG = [
             "k-1.co.jp/schedule, rise-rc.com/schedule, tapology.com/fightcenter."
         ),
         "specific_rules": (
-            "- Identifie clairement s'il s'agit de K-1, Krush ou RISE et précise la salle.\n"
-            "- Indique ABEMA TV comme diffuseur d'origine lorsque applicable et convertis l'heure JST en heure de Paris."
+            "- Identifie clairement s'il s'agit de K-1, Krush ou RISE et précise la salle (ex: Korakuen Hall, Yoyogi).\n"
+            "- Indique ABEMA TV (格闘チャンネル) comme diffuseur d'origine lorsque applicable et convertis l'heure JST en heure de Paris."
         ),
     },
     {
@@ -289,15 +183,109 @@ AGENTS_CONFIG = [
             "flowrestling.org, themat.com et les communiqués officiels RAF."
         ),
         "specific_rules": (
-            "- Si aucun événement RAF n'a lieu exactement dans les 7 prochains jours, renvoie une liste vide []."
+            "- Applique une rigueur absolue : si aucun événement RAF n'a lieu exactement dans les 7 prochains jours, renvoie une liste vide []."
         ),
     },
 ]
 
 # ==============================================================================
-# 5. PARSING JSON & EXÉCUTION DES MICRO-AGENTS
+# 4. MOTEUR D'EXTRACTION D'AFFICHES OFFICIELLES FILTRÉ (ANTI-RINGWALKS)
 # ==============================================================================
+POSTER_CACHE = {}
+
+# Sites d'agrégation bannis UNIQUEMENT pour les images (renvoient de fausses affiches génériques)
+BLOCKED_IMAGE_DOMAINS = [
+    "ringwalks.com",
+    "box.live",
+    "tapology.com",
+    "sherdog.com",
+    "boxrec.com",
+    "fightnights.com",
+    "wikipedia.org",
+    "wikimedia.org",
+    "reddit.com",
+]
+
+# Sites officiels prioritaires pour la récupération d'affiches
+TRUSTED_PROMOTER_DOMAINS = [
+    "matchroomboxing.com",
+    "queensberry.co.uk",
+    "ufc.com",
+    "ufcfightpass.com",
+    "bkfc.com",
+    "glorykickboxing.com",
+    "rizinff.com",
+    "k-1.co.jp",
+    "rise-rc.com",
+    "dazn.com",
+    "ringtv.com",
+    "toprank.com",
+    "goldenboy.com",
+    "premierboxingchampions.com",
+    "boxmob.jp",
+    "boxingnews.jp",
+    "ibu4gin.net",
+    "asianboxing.info",
+    "flowrestling.org",
+]
+
+def is_url_allowed_for_poster(url):
+    if not url or not url.startswith("http"):
+        return False
+    low = url.lower()
+    return not any(b in low for b in BLOCKED_IMAGE_DOMAINS)
+
+def is_valid_poster_image(img_url):
+    if not img_url or not img_url.startswith("http"):
+        return False
+    low = img_url.lower()
+    bad_tokens = [
+        "ringwalks",
+        "favicon",
+        "logo.svg",
+        "default-share",
+        "placeholder",
+        "avatar",
+        ".svg",
+    ]
+    return not any(t in low for t in bad_tokens)
+
+def extract_og_image_from_url(url):
+    """Récupère l'image officielle (og:image / twitter:image) uniquement sur les domaines autorisés."""
+    if not is_url_allowed_for_poster(url):
+        return None
+    if url in POSTER_CACHE:
+        return POSTER_CACHE[url]
+
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=8)
+        if resp.status_code == 200:
+            raw = resp.text
+            patterns = [
+                r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+                r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
+                r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']',
+            ]
+            for pat in patterns:
+                m = re.search(pat, raw, flags=re.IGNORECASE)
+                if m:
+                    img = html.unescape(m.group(1).strip())
+                    if img.startswith("//"):
+                        img = "https:" + img
+                    elif img.startswith("/"):
+                        parsed = urllib.parse.urlparse(url)
+                        img = f"{parsed.scheme}://{parsed.netloc}{img}"
+                    if is_url_allowed_for_poster(img) and is_valid_poster_image(img):
+                        POSTER_CACHE[url] = img
+                        return img
+    except Exception:
+        pass
+
+    POSTER_CACHE[url] = None
+    return None
+
 def extract_grounding_urls(response):
+    """Extrait les URLs réelles visitées par Google Search depuis les métadonnées de la réponse."""
     urls = []
     try:
         candidates = getattr(response, "candidates", []) or []
@@ -315,6 +303,7 @@ def extract_grounding_urls(response):
     return urls
 
 def parse_agent_json(raw_text):
+    """Extrait et parse de manière ultra-tolérante le bloc JSON produit par un agent."""
     if not raw_text:
         return []
     cleaned = raw_text.replace("```json", "").replace("```", "").strip()
@@ -347,39 +336,12 @@ def parse_agent_json(raw_text):
 
     return []
 
-def resolve_best_poster(ev, grounding_urls):
-    """Sélectionne l'affiche officielle en filtrant les sites parasites."""
-    ev_url = (ev.get("url_officielle") or "").strip()
-    raw_poster = (ev.get("poster_url") or "").strip()
-
-    # 1. Si l'IA a fourni une URL d'image directe, on vérifie qu'elle n'appartient pas à un site banni
-    if is_url_allowed_for_poster(raw_poster) and is_valid_poster_image_url(raw_poster):
-        return raw_poster
-
-    # 2. On cherche d'abord dans l'URL officielle de l'événement (si autorisée)
-    if is_url_allowed_for_poster(ev_url):
-        found = extract_og_image_from_url(ev_url)
-        if found:
-            return found
-
-    # 3. On parcourt les URLs de Grounding en privilégiant les sites officiels de promoteurs
-    trusted_links = [
-        u for u in grounding_urls if any(t in u.lower() for t in TRUSTED_PROMOTER_DOMAINS)
-    ]
-    other_allowed_links = [
-        u for u in grounding_urls if u not in trusted_links and is_url_allowed_for_poster(u)
-    ]
-
-    for candidate_url in (trusted_links + other_allowed_links)[:4]:
-        found = extract_og_image_from_url(candidate_url)
-        if found:
-            return found
-
-    return ""
-
+# ==============================================================================
+# 5. EXÉCUTION D'UN MICRO-AGENT AVEC RECHERCHE GOOGLE & REPLI ANTI-429
+# ==============================================================================
 def run_micro_agent(agent_cfg):
     discipline_id = agent_cfg["id"]
-    print(f"\n--- Micro-Agent [{discipline_id}] ---")
+    print(f"\n--- Lancement Micro-Agent [{discipline_id}] ---")
 
     prompt = f"""Tu es un agent d'extraction de données factuelles spécialisé dans les sports de combat.
 Date actuelle : {date_str} (Fuseau horaire : Europe/Paris).
@@ -391,13 +353,13 @@ MISSION :
 CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
 - Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
-- ZÉRO HALLUCINATION : N'invente jamais de combat, d'adversaire 'TBA' fictif, ni de palmarès. Si inconnu, écris "N/C".
-- N'utilise JAMAIS d'image provenant de ringwalks.com. Laisse poster_url vide si tu n'as pas l'affiche officielle du promoteur.
+- ZÉRO HALLUCINATION : N'invente jamais de combat, d'adversaire 'TBA' fictif, ni de palmarès. Si tu n'es pas certain d'un palmarès ou d'une taille, mets "N/C".
 - Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
 - Convertis toutes les heures à l'heure de Paris (CET/CEST).
-- Rédige les présentations et analyses en français journalistique précis.
+- Rédige les présentations et analyses en français journalistique précis en conservant les termes techniques (puncher, out-boxer, southpaw, main event, undercard, KO, TKO, undisputed).
 
-FORMAT DE SORTIE OBLIGATOIRE (JSON pur uniquement) :
+FORMAT DE SORTIE OBLIGATOIRE :
+Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma, sans aucun texte avant ni après :
 {{
   "evenements": [
     {{
@@ -405,7 +367,7 @@ FORMAT DE SORTIE OBLIGATOIRE (JSON pur uniquement) :
       "date_paris": "Samedi 24/10/2026",
       "lieu": "Salle / Arène, Ville, Pays",
       "url_officielle": "https://...",
-      "poster_url": "",
+      "poster_url": "https://... (ou vide si inconnu)",
       "heure_debut_paris": "19h00",
       "heure_main_event_paris": "23h15",
       "diffuseur_origine": "DAZN Global",
@@ -434,7 +396,7 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
 
     for idx, model_name in enumerate(AVAILABLE_MODELS):
         try:
-            print(f"  Appel {model_name} (Google Search actif)...")
+            print(f"  Appel {model_name} avec Google Search Grounding...")
             response = client.models.generate_content(
                 model=model_name,
                 contents=prompt,
@@ -447,27 +409,54 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
                 events = parse_agent_json(response.text)
                 grounding_urls = extract_grounding_urls(response)
 
+                # Enrichissement des URLs et Posters (en filtrant les agrégateurs comme ringwalks.com)
                 for ev in events:
                     ev_url = (ev.get("url_officielle") or "").strip()
                     if (not ev_url or "google.com" in ev_url) and grounding_urls:
                         ev["url_officielle"] = grounding_urls[0]
-                    ev["poster_url"] = resolve_best_poster(ev, grounding_urls)
+                        ev_url = grounding_urls[0]
 
-                print(f"  -> {len(events)} événement(s) validé(s) pour [{discipline_id}].")
+                    poster = (ev.get("poster_url") or "").strip()
+                    if not is_url_allowed_for_poster(poster) or not is_valid_poster_image(poster):
+                        poster = ""
+
+                    if not poster:
+                        # 1. Essai sur l'URL officielle si elle n'est pas sur liste noire
+                        found_poster = extract_og_image_from_url(ev_url)
+                        # 2. Sinon on cherche en priorité dans les URLs de promoteurs officiels visitées par Google
+                        if not found_poster:
+                            trusted_urls = [
+                                u for u in grounding_urls if any(t in u.lower() for t in TRUSTED_PROMOTER_DOMAINS)
+                            ]
+                            other_urls = [
+                                u for u in grounding_urls if u not in trusted_urls and is_url_allowed_for_poster(u)
+                            ]
+                            for g_url in (trusted_urls + other_urls)[:4]:
+                                found_poster = extract_og_image_from_url(g_url)
+                                if found_poster:
+                                    break
+                        poster = found_poster or ""
+
+                    ev["poster_url"] = poster
+
+                print(f"  -> {len(events)} événement(s) vérifié(s) extrait(s) pour [{discipline_id}].")
                 return events
 
         except Exception as e:
             err_str = str(e)
-            print(f"  [Info] {model_name} sur [{discipline_id}] : {err_str[:140]}")
+            print(f"  [Avertissement] {model_name} sur [{discipline_id}] : {err_str[:160]}")
             if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                time.sleep(15)
+                wait_time = 35 if idx == 0 else 20
+                print(f"  Pause de sécurité de {wait_time}s (quota API) avant rotation de modèle...")
+                time.sleep(wait_time)
             else:
-                time.sleep(3)
+                time.sleep(4)
 
+    print(f"  [Info] Aucun résultat récupéré pour [{discipline_id}], affichage de l'état vide sécurisé.")
     return []
 
 # ==============================================================================
-# 6. CONSTRUCTION DU HTML PAR SECTION
+# 6. CONSTRUCTION DU HTML PAR SECTION À PARTIR DU JSON VÉRIFIÉ
 # ==============================================================================
 def render_event_card_html(ev):
     nom_gala = html.escape(ev.get("nom_gala") or "Événement Officiel")
@@ -571,6 +560,7 @@ def render_event_card_html(ev):
     </article>
     """
 
+# Exécution séquentielle des 8 Micro-Agents avec temporisation anti-quota
 sections_html = []
 for idx, cfg in enumerate(AGENTS_CONFIG):
     events_list = run_micro_agent(cfg)
@@ -587,9 +577,8 @@ for idx, cfg in enumerate(AGENTS_CONFIG):
     """
     sections_html.append(section_block)
 
-    # Pause courte de 6 secondes entre les agents pour fluidifier le workflow
     if idx < len(AGENTS_CONFIG) - 1:
-        time.sleep(6)
+        time.sleep(14)
 
 all_sections_content = "\n".join(sections_html)
 
@@ -763,11 +752,11 @@ FINAL_HTML = f"""<!DOCTYPE html>
             box-shadow: var(--shadow-soft);
             overflow: hidden;
         }}
-        /* Bannière Poster avec object-fit: contain (Zéro rognage des visages) */
+        /* Bannière Poster Officiel avec object-fit: contain (Zéro rognage des portraits ou affiches) */
         .poster-container {{
             position: relative;
             width: 100%;
-            height: 310px;
+            height: 320px;
             border-radius: 12px;
             overflow: hidden;
             margin-bottom: 1.25rem;
@@ -783,12 +772,12 @@ FINAL_HTML = f"""<!DOCTYPE html>
             object-fit: contain;
             object-position: center center;
             display: block;
-            padding-bottom: 2.2rem;
+            padding-bottom: 2rem;
         }}
         .poster-overlay {{
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(24, 12, 5, 0.95) 0%, rgba(24, 12, 5, 0.45) 32%, rgba(24, 12, 5, 0.0) 65%);
+            background: linear-gradient(to top, rgba(24, 12, 5, 0.95) 0%, rgba(24, 12, 5, 0.42) 32%, rgba(24, 12, 5, 0.0) 65%);
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -813,24 +802,24 @@ FINAL_HTML = f"""<!DOCTYPE html>
         }}
         .poster-belt {{
             display: inline-block;
-            background-color: rgba(196, 136, 43, 0.35);
+            background-color: rgba(196, 136, 43, 0.32);
             backdrop-filter: blur(4px);
             border: 1px solid #F7D388;
             color: #F7D388;
-            font-size: 0.76rem;
+            font-size: 0.78rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 0.18rem 0.7rem;
+            padding: 0.2rem 0.75rem;
             border-radius: 99px;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.45rem;
         }}
         .poster-dynamic-title {{
             font-family: 'Outfit', sans-serif;
-            font-size: 1.35rem;
+            font-size: 1.4rem;
             font-weight: 800;
             color: #FFFDF9;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.75);
             line-height: 1.25;
         }}
         .card-header-row {{
@@ -995,7 +984,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
         @media (max-width: 600px) {{
             header.hero h1 {{ font-size: 1.75rem; }}
             .poster-container {{ height: 250px; }}
-            .poster-dynamic-title {{ font-size: 1.15rem; }}
+            .poster-dynamic-title {{ font-size: 1.18rem; }}
         }}
     </style>
 </head>
