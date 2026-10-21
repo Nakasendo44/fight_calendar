@@ -1,358 +1,527 @@
 import os
 import sys
 import time
+import json
 import re
 import html
 import urllib.parse
-import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import requests
 from google import genai
 from google.genai import types
 
-# 1. Vérification de la clé API
+# ==============================================================================
+# 1. INITIALISATION & PARAMÈTRES TEMPORELS STRICTS (PARIS)
+# ==============================================================================
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
-    print("Erreur critique : GEMINI_API_KEY introuvable.")
+    print("Erreur critique : La variable GEMINI_API_KEY est absente.")
     sys.exit(1)
 
 client = genai.Client(api_key=api_key)
 
-# 2. Fuseau horaire de Paris
 paris_tz = pytz.timezone("Europe/Paris")
 now_paris = datetime.now(paris_tz)
 date_str = now_paris.strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
+# Génération explicite de la fenêtre des 7 prochains jours pour éviter toute erreur de date par l'IA
+valid_dates_fr = []
+valid_dates_iso = []
+for offset in range(8):
+    d = now_paris + timedelta(days=offset)
+    valid_dates_fr.append(d.strftime("%d/%m/%Y"))
+    valid_dates_iso.append(d.strftime("%Y-%m-%d"))
+
+DATE_WINDOW_STR = f"du {valid_dates_fr[0]} au {valid_dates_fr[-1]} inclus (Dates ISO autorisées : {', '.join(valid_dates_iso)})"
+
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9,fr;q=0.8,ja;q=0.7",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6",
 }
 
 # ==============================================================================
-# ÉTAPE 1 : EXPLORATION À 2 NIVEAUX (CALENDRIERS + SOUS-PAGES D'ÉVÉNEMENTS)
+# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES DISPONIBLES
 # ==============================================================================
-POSTER_REGISTRY = {}
-
-def clean_text(raw):
-    if not raw:
-        return ""
-    t = html.unescape(raw)
-    t = re.sub(r"<script.*?</script>", " ", t, flags=re.DOTALL | re.IGNORECASE)
-    t = re.sub(r"<style.*?</style>", " ", t, flags=re.DOTALL | re.IGNORECASE)
-    t = re.sub(r"<[^>]+>", " ", t)
-    return re.sub(r"\s+", " ", t).strip()
-
-def extract_og_image(raw_html, base_url=""):
-    """Extrait l'affiche officielle (og:image ou twitter:image) d'une page d'événement."""
-    patterns = [
-        r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
-        r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
-        r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']',
+def get_available_models():
+    preferred = [
+        "gemini-3.8-flash",
+        "gemini-3.8-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-2.5-flash",
     ]
-    for pat in patterns:
-        m = re.search(pat, raw_html, flags=re.IGNORECASE)
-        if m:
-            img_url = html.unescape(m.group(1).strip())
-            if img_url.startswith("//"):
-                img_url = "https:" + img_url
-            elif img_url.startswith("/") and base_url:
-                parsed = urllib.parse.urlparse(base_url)
-                img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
-            if img_url.startswith("http") and not any(bad in img_url.lower() for bad in ["logo", "favicon", "avatar", ".svg"]):
-                return img_url
+    discovered = []
+    try:
+        for m in client.models.list():
+            short = getattr(m, "name", "").replace("models/", "")
+            if "gemini" in short and not any(
+                ex in short for ex in ["embedding", "imagen", "veo", "tts", "audio", "vision", "aqa"]
+            ):
+                discovered.append(short)
+        print(f"Modèles actifs détectés : {discovered}")
+    except Exception as e:
+        print(f"Info liste modèles : {e}")
+
+    final_list = [p for p in preferred if not discovered or p in discovered]
+    for d in discovered:
+        if d not in final_list:
+            final_list.append(d)
+    return final_list or ["gemini-3.8-flash"]
+
+AVAILABLE_MODELS = get_available_models()
+
+# ==============================================================================
+# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS
+# ==============================================================================
+AGENTS_CONFIG = [
+    {
+        "id": "boxe-monde",
+        "title": "🥊 1. Boxe Anglaise — Galas Internationaux",
+        "empty_msg": "Aucun gala international majeur répertorié dans la fenêtre des 7 prochains jours.",
+        "search_hint": (
+            "Recherche les galas de boxe anglaise prévus cette semaine sur : "
+            "box.live, ringtv.com/schedule, matchroomboxing.com/events, queensberry.co.uk, "
+            "dazn.com, espn.com/boxing/schedule, fightnights.com, ufcfightpass.com. "
+            "Inclus impérativement les cartes Matchroom, Queensberry, Top Rank, PBC, Golden Boy, "
+            "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
+        ),
+        "specific_rules": (
+            "- Vérifie et liste TOUS les combats connus de la carte (Main Event, Co-Main Event et Undercard complète).\n"
+            "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) sur Box.live ou le site du promoteur.\n"
+            "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, The Ring ou EBU est en jeu.\n"
+            "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
+        ),
+    },
+    {
+        "id": "boxe-japon",
+        "title": "🇯🇵 2. Boxe Anglaise — Galas au Japon (Korakuen Hall & Arènes)",
+        "empty_msg": "Aucun gala professionnel japonais répertorié sur cette période de 7 jours.",
+        "search_hint": (
+            "Recherche le calendrier de boxe professionnelle japonaise (プロボクシング 日程 後楽園ホール) sur : "
+            "boxmob.jp (Boxing Mobile), boxingnews.jp, ibu4gin.net, asianboxing.info, box.live. "
+            "Cherche les galas au Korakuen Hall (後楽園ホール), Ariake Arena, Yokohama, Osaka (Phoenix Battle, Dynamic Glove, Who's Next, etc.)."
+        ),
+        "specific_rules": (
+            "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn).\n"
+            "- Convertis les horaires japonais (JST = UTC+9) en heure de Paris (souvent entre 10h00 et 14h00 heure de Paris pour le Korakuen Hall).\n"
+            "- Précise les diffuseurs japonais d'origine (Lemino, Boxing Raise, U-NEXT, ABEMA, Prime Video JP, WOWOW) et la disponibilité en France.\n"
+            "- Mentionne les titres nationaux JBC, OPBF ou WBO Asia-Pacific en jeu."
+        ),
+    },
+    {
+        "id": "ufc",
+        "title": "🔥 3. UFC",
+        "empty_msg": "Aucun événement UFC programmé cette semaine.",
+        "search_hint": (
+            "Recherche le prochain événement UFC prévu dans les 7 prochains jours sur : "
+            "ufc.com/events, tapology.com/fightcenter, sherdog.com/events."
+        ),
+        "specific_rules": (
+            "- Liste la carte complète en séparant clairement le statut de chaque combat (Main Card, Prelims, Early Prelims).\n"
+            "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur.\n"
+            "- Convertis les heures du début des Prelims et de la Main Card à l'heure de Paris."
+        ),
+    },
+    {
+        "id": "rizin",
+        "title": "🌸 4. Rizin Fighting Federation",
+        "empty_msg": "Aucun événement Rizin programmé cette semaine.",
+        "search_hint": (
+            "Recherche le calendrier officiel RIZIN (RIZIN 大会日程 対戦カード) sur : "
+            "jp.rizinff.com/schedules, tapology.com/fightcenter, sherdog.com."
+        ),
+        "specific_rules": (
+            "- Vérifie strictement si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre des 7 prochains jours.\n"
+            "- Si aucun gala Rizin n'a lieu dans les 7 prochains jours, renvoie immédiatement une liste vide []."
+        ),
+    },
+    {
+        "id": "bkfc",
+        "title": "👊 5. BKFC (Bare Knuckle)",
+        "empty_msg": "Aucun événement BKFC programmé cette semaine.",
+        "search_hint": (
+            "Recherche le calendrier officiel Bare Knuckle Fighting Championship sur : "
+            "bkfc.com/events, tapology.com/fightcenter."
+        ),
+        "specific_rules": (
+            "- Liste le Main Event, le Co-Main Event et les combats confirmés de la carte.\n"
+            "- Indique 'BKFC App / TrillerTV / DAZN' selon le diffuseur officiel de l'événement."
+        ),
+    },
+    {
+        "id": "kick-japon",
+        "title": "🦵 6. Kickboxing Japonais (RISE, K-1, Krush)",
+        "empty_msg": "Aucun gala majeur RISE, K-1 ou Krush programmé cette semaine.",
+        "search_hint": (
+            "Recherche les prochains événements K-1, Krush et RISE (K-1 Krush RISE 大会日程 対戦カード) sur : "
+            "k-1.co.jp/schedule, rise-rc.com/schedule, tapology.com/fightcenter."
+        ),
+        "specific_rules": (
+            "- Identifie clairement s'il s'agit de K-1, Krush ou RISE et précise la salle (ex: Korakuen Hall, Yoyogi).\n"
+            "- Indique ABEMA TV (格闘チャンネル) comme diffuseur d'origine lorsque applicable et convertis l'heure JST en heure de Paris."
+        ),
+    },
+    {
+        "id": "glory",
+        "title": "🏆 7. Glory Kickboxing",
+        "empty_msg": "Aucun événement Glory Kickboxing programmé cette semaine.",
+        "search_hint": (
+            "Recherche le calendrier officiel Glory Kickboxing sur : "
+            "glorykickboxing.com/events, tapology.com/fightcenter."
+        ),
+        "specific_rules": (
+            "- Liste tous les combats annoncés (tournois Grand Prix, championnats du monde Glory et Superfights)."
+        ),
+    },
+    {
+        "id": "raf",
+        "title": "🤼 8. RAF (Real American Freestyle Wrestling)",
+        "empty_msg": "Aucun événement RAF programmé cette semaine.",
+        "search_hint": (
+            "Recherche les événements officiels Real American Freestyle wrestling (RAF) et Joe Hand Promotions sur : "
+            "flowrestling.org, themat.com et les communiqués officiels RAF."
+        ),
+        "specific_rules": (
+            "- Applique une rigueur absolue : si aucun événement RAF n'a lieu exactement dans les 7 prochains jours, renvoie une liste vide []."
+        ),
+    },
+]
+
+# ==============================================================================
+# 4. MOTEUR D'EXTRACTION D'AFFICHES OFFICIELLES (POSTERS) & PARSING JSON
+# ==============================================================================
+POSTER_CACHE = {}
+
+def extract_og_image_from_url(url):
+    """Récupère l'image officielle (og:image / twitter:image) depuis une URL d'événement."""
+    if not url or not url.startswith("http"):
+        return None
+    if url in POSTER_CACHE:
+        return POSTER_CACHE[url]
+
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=8)
+        if resp.status_code == 200:
+            raw = resp.text
+            patterns = [
+                r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+                r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
+                r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']',
+            ]
+            for pat in patterns:
+                m = re.search(pat, raw, flags=re.IGNORECASE)
+                if m:
+                    img = html.unescape(m.group(1).strip())
+                    if img.startswith("//"):
+                        img = "https:" + img
+                    elif img.startswith("/"):
+                        parsed = urllib.parse.urlparse(url)
+                        img = f"{parsed.scheme}://{parsed.netloc}{img}"
+                    if img.startswith("http") and not any(
+                        bad in img.lower() for bad in ["favicon", "logo.svg", "default-share", ".svg"]
+                    ):
+                        POSTER_CACHE[url] = img
+                        return img
+    except Exception:
+        pass
+
+    POSTER_CACHE[url] = None
     return None
 
-def scrape_event_subpage(url, label):
-    """Visite la page dédiée d'un événement pour extraire son poster officiel et toute son undercard."""
+def extract_grounding_urls(response):
+    """Extrait les URLs réelles visitées par Google Search depuis les métadonnées de la réponse."""
+    urls = []
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=10)
-        if resp.status_code != 200:
-            return ""
-        raw_html = resp.text
-        poster_url = extract_og_image(raw_html, url)
-        if poster_url:
-            POSTER_REGISTRY[url] = poster_url
+        candidates = getattr(response, "candidates", []) or []
+        for cand in candidates:
+            gm = getattr(cand, "grounding_metadata", None)
+            if not gm:
+                continue
+            chunks = getattr(gm, "grounding_chunks", []) or []
+            for ch in chunks:
+                web = getattr(ch, "web", None)
+                if web and getattr(web, "uri", None):
+                    urls.append(web.uri)
+    except Exception:
+        pass
+    return urls
 
-        # Lecture structurée via Jina Reader pour capturer les tableaux de la carte complète
-        jina_resp = requests.get(f"https://r.jina.ai/{url}", headers=HEADERS, timeout=12)
-        if jina_resp.status_code == 200 and len(jina_resp.text) > 150:
-            content = jina_resp.text[:5500]
-        else:
-            content = clean_text(raw_html)[:5500]
+def parse_agent_json(raw_text):
+    """Extrait et parse de manière ultra-tolérante le bloc JSON produit par un agent."""
+    if not raw_text:
+        return []
+    cleaned = raw_text.replace("```json", "").replace("```", "").strip()
 
-        return (
-            f"\n--- PAGE OFFICIELLE D'ÉVÉNEMENT ({label}) ---\n"
-            f"URL_SOURCE: {url}\n"
-            f"POSTER_OFFICIEL: {poster_url or 'AUCUN'}\n"
-            f"CONTENU DE LA CARTE & PALMARÈS :\n{content}\n"
-        )
-    except Exception as e:
-        print(f"  [Info] Impossible de lire la sous-page {url} : {e}")
-        return ""
-
-def discover_and_crawl_events():
-    print("Collecte approfondie des calendriers et des cartes complètes (Niveau 1 & 2)...")
-    collected_blocks = []
-    discovered_event_urls = []
-
-    # 1. Scan direct de Matchroom Boxing pour extraire les liens des galas à venir
-    try:
-        r_mr = requests.get("https://www.matchroomboxing.com/events/", headers=HEADERS, timeout=10)
-        if r_mr.status_code == 200:
-            links = re.findall(r'https://www\.matchroomboxing\.com/events/[a-z0-9\-]+/', r_mr.text)
-            for l in dict.fromkeys(links):
-                if l.rstrip("/") != "https://www.matchroomboxing.com/events":
-                    discovered_event_urls.append(("Matchroom Boxing", l))
-    except Exception as e:
-        print(f"  [Info] Scan Matchroom : {e}")
-
-    # 2. Scan direct de UFC.com pour extraire les prochains événements
-    try:
-        r_ufc = requests.get("https://www.ufc.com/events", headers=HEADERS, timeout=10)
-        if r_ufc.status_code == 200:
-            links = re.findall(r'/event/[a-z0-9\-]+', r_ufc.text)
-            for l in list(dict.fromkeys(links))[:3]:
-                discovered_event_urls.append(("UFC Officiel", f"https://www.ufc.com{l}"))
-    except Exception as e:
-        print(f"  [Info] Scan UFC : {e}")
-
-    # 3. Exploration des sous-pages d'événements découvertes (jusqu'à 8 galas majeurs)
-    for label, ev_url in discovered_event_urls[:8]:
-        print(f"  -> Extraction de la carte complète : {ev_url}")
-        sub_data = scrape_event_subpage(ev_url, label)
-        if sub_data:
-            collected_blocks.append(sub_data)
-
-    # 4. Lecture des calendriers globaux (Box.live, Tapology, Rizin, Kickboxing)
-    OVERVIEW_SOURCES = [
-        ("Box.live Calendrier Boxe", "https://r.jina.ai/https://box.live/upcoming-fights-schedule/"),
-        ("Tapology Fightcenter", "https://r.jina.ai/https://www.tapology.com/fightcenter"),
-        ("Queensberry Promotions", "https://r.jina.ai/https://www.queensberry.co.uk/events/"),
-        ("BKFC Events", "https://r.jina.ai/https://www.bkfc.com/events"),
-        ("Glory Kickboxing Events", "https://r.jina.ai/https://glorykickboxing.com/events"),
-        ("Rizin FF Events", "https://r.jina.ai/https://jp.rizinff.com/schedules/"),
-    ]
-    for label, url in OVERVIEW_SOURCES:
+    # Recherche d'un objet JSON { ... } ou d'un tableau [ ... ]
+    first_brace = cleaned.find("{")
+    last_brace = cleaned.rfind("}")
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        candidate = cleaned[first_brace : last_brace + 1]
+        # Suppression des virgules traînantes éventuelles avant } ou ]
+        candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=12)
-            if resp.status_code == 200 and len(resp.text) > 200:
-                collected_blocks.append(f"\n=== CALENDRIER GLOBAL : {label} ===\n{resp.text[:6000]}")
-                print(f"  [OK] {label}")
-        except Exception as e:
-            print(f"  [Info] Source ignorée ({label}) : {e}")
-
-    # 5. Flux RSS ciblés sur les cartes complètes ("full card" / "undercard") et le Japon
-    RSS_SOURCES = [
-        ("Undercards & Full Fight Cards (EN)", "https://news.google.com/rss/search?q=(%22undercard%22+OR+%22full+card%22+OR+%22fight+card%22+OR+%22running+order%22)+(boxing+OR+Matchroom+OR+Queensberry+OR+UFC+OR+BKFC+OR+Glory)+when:7d&hl=en-US&gl=US&ceid=US:en"),
-        ("Boxe Japon & Korakuen Hall (JA)", "https://news.google.com/rss/search?q=%E3%83%9C%E3%82%AF%E3%82%B7%E3%83%B3%E3%82%B0+(%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB+OR+%E5%85%A8%E5%AF%BE%E6%88%A6%E3%82%AB%E3%83%BC%E3%83%89+OR+%E8%88%88%E8%A1%8C)+when:7d&hl=ja&gl=JP&ceid=JP:ja"),
-        ("Rizin, RISE, K-1, Krush (JA)", "https://news.google.com/rss/search?q=(RIZIN+OR+RISE+OR+K-1+OR+Krush)+(%E5%AF%BE%E6%88%A6%E3%82%AB%E3%83%BC%E3%83%89+OR+%E5%A4%A7%E4%BC%9A)+when:7d&hl=ja&gl=JP&ceid=JP:ja"),
-        ("RAF Real American Freestyle Wrestling (EN)", "https://news.google.com/rss/search?q=%22Real+American+Freestyle%22+OR+%22RAF+wrestling%22+when:14d&hl=en-US&gl=US&ceid=US:en"),
-    ]
-    for label, url in RSS_SOURCES:
-        try:
-            resp = requests.get(url, headers=HEADERS, timeout=10)
-            if resp.status_code == 200:
-                root = ET.fromstring(resp.content)
-                items = root.findall(".//item")[:12]
-                if items:
-                    collected_blocks.append(f"\n=== DÉPÊCHES CARTES COMPLÈTES : {label} ===")
-                for item in items:
-                    t = clean_text(item.findtext("title", ""))
-                    d = clean_text(item.findtext("description", ""))[:300]
-                    p = clean_text(item.findtext("pubDate", ""))
-                    if t:
-                        collected_blocks.append(f"- [{p}] {t} — {d}")
+            data = json.loads(candidate)
+            if isinstance(data, dict):
+                return data.get("evenements", [])
+            if isinstance(data, list):
+                return data
         except Exception:
             pass
 
-    return "\n".join(collected_blocks)
+    first_bracket = cleaned.find("[")
+    last_bracket = cleaned.rfind("]")
+    if first_bracket != -1 and last_bracket != -1 and last_bracket > first_bracket:
+        candidate = cleaned[first_bracket : last_bracket + 1]
+        candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
+        try:
+            data = json.loads(candidate)
+            if isinstance(data, list):
+                return data
+        except Exception:
+            pass
 
-verified_schedule_data = discover_and_crawl_events()
+    return []
 
 # ==============================================================================
-# ÉTAPE 2 : RÉSOLUTION AUTOMATIQUE DES AFFICHES OFFICIELLES (POSTERS)
+# 5. EXÉCUTION D'UN MICRO-AGENT AVEC RECHERCHE GOOGLE & REPLI ANTI-429
 # ==============================================================================
-def build_poster_banner(match):
-    poster_url = html.unescape(match.group(1)).strip()
-    source_url = html.unescape(match.group(2)).strip()
-    title_label = html.unescape(match.group(3)).strip()
-    belt_label = html.unescape(match.group(4)).strip()
+def run_micro_agent(agent_cfg):
+    discipline_id = agent_cfg["id"]
+    print(f"\n--- Lancement Micro-Agent [{discipline_id}] ---")
 
-    # Si l'URL du poster n'est pas fournie directement mais qu'on a l'URL de la page officielle, on tente de l'extraire
-    if (not poster_url or poster_url == "AUTO") and source_url.startswith("http"):
-        if source_url in POSTER_REGISTRY:
-            poster_url = POSTER_REGISTRY[source_url]
-        else:
-            try:
-                r = requests.get(source_url, headers=HEADERS, timeout=6)
-                if r.status_code == 200:
-                    extracted = extract_og_image(r.text, source_url)
-                    if extracted:
-                        poster_url = extracted
-                        POSTER_REGISTRY[source_url] = extracted
-            except Exception:
-                pass
+    prompt = f"""Tu es un agent d'extraction de données factuelles spécialisé dans les sports de combat.
+Date actuelle : {date_str} (Fuseau horaire : Europe/Paris).
+Fenêtre temporelle STRICTE autorisée : {DATE_WINDOW_STR}.
 
-    belt_html = f'<div class="poster-belt">👑 {html.escape(belt_label)}</div>' if belt_label else ""
+MISSION :
+{agent_cfg['search_hint']}
 
-    if poster_url and poster_url.startswith("http"):
-        return f"""
+CONSIGNES IMPÉRATIVES :
+{agent_cfg['specific_rules']}
+- Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
+- ZÉRO HALLUCINATION : N'invente jamais de combat, d'adversaire 'TBA' fictif, ni de palmarès. Si tu n'es pas certain d'un palmarès ou d'une taille, mets "N/C".
+- Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
+- Convertis toutes les heures à l'heure de Paris (CET/CEST).
+- Rédige les présentations et analyses en français journalistique précis en conservant les termes techniques (puncher, out-boxer, southpaw, main event, undercard, KO, TKO, undisputed).
+
+FORMAT DE SORTIE OBLIGATOIRE :
+Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma, sans aucun texte avant ni après :
+{{
+  "evenements": [
+    {{
+      "nom_gala": "Nom officiel du gala : Combattant A vs. Combattant B",
+      "date_paris": "Samedi 24/10/2026",
+      "lieu": "Salle / Arène, Ville, Pays",
+      "url_officielle": "https://...",
+      "poster_url": "https://... (ou vide si inconnu)",
+      "heure_debut_paris": "19h00",
+      "heure_main_event_paris": "23h15",
+      "diffuseur_origine": "DAZN Global",
+      "diffuseur_france": "DAZN France",
+      "enjeu_principal": "Titre mondial WBC Super-Légers (-63,5 kg)",
+      "presentation": "2 à 3 phrases de présentation factuelle et dynamique des enjeux de l'événement.",
+      "combats": [
+        {{
+          "statut": "Main Event (ou Co-Main Event / Undercard / Prelims)",
+          "combattant_a": "Prénom Nom",
+          "palmares_a": "19-0-0, 14 KOs",
+          "taille_a": "1m78",
+          "combattant_b": "Prénom Nom",
+          "palmares_b": "25-1-0, 11 KOs",
+          "taille_b": "1m75",
+          "categorie_kg": "Super-légers (-63,5 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Titre en jeu et courte description stylistique du duel en 1 à 2 phrases."
+        }}
+      ]
+    }}
+  ]
+}}
+Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie exactement : {{"evenements": []}}
+"""
+
+    for idx, model_name in enumerate(AVAILABLE_MODELS):
+        try:
+            print(f"  Appel {model_name} avec Google Search Grounding...")
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    tools=[types.Tool(google_search=types.GoogleSearch())],
+                    temperature=0.1,
+                ),
+            )
+            if response and getattr(response, "text", None):
+                events = parse_agent_json(response.text)
+                grounding_urls = extract_grounding_urls(response)
+
+                # Enrichissement des URLs et Posters via les métadonnées vérifiées de Google Search
+                for ev in events:
+                    ev_url = (ev.get("url_officielle") or "").strip()
+                    if (not ev_url or "google.com" in ev_url) and grounding_urls:
+                        ev["url_officielle"] = grounding_urls[0]
+                        ev_url = grounding_urls[0]
+
+                    poster = (ev.get("poster_url") or "").strip()
+                    if not poster or not poster.startswith("http"):
+                        # Tentative d'extraction du poster officiel depuis l'URL de l'événement
+                        found_poster = extract_og_image_from_url(ev_url)
+                        if not found_poster:
+                            for g_url in grounding_urls[:3]:
+                                found_poster = extract_og_image_from_url(g_url)
+                                if found_poster:
+                                    break
+                        ev["poster_url"] = found_poster or ""
+
+                print(f"  -> {len(events)} événement(s) vérifié(s) extrait(s) pour [{discipline_id}].")
+                return events
+
+        except Exception as e:
+            err_str = str(e)
+            print(f"  [Avertissement] {model_name} sur [{discipline_id}] : {err_str[:160]}")
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                wait_time = 35 if idx == 0 else 20
+                print(f"  Pause de sécurité de {wait_time}s (quota API) avant rotation de modèle...")
+                time.sleep(wait_time)
+            else:
+                time.sleep(4)
+
+    print(f"  [Info] Aucun résultat récupéré pour [{discipline_id}], affichage de l'état vide sécurisé.")
+    return []
+
+# ==============================================================================
+# 6. CONSTRUCTION DU HTML PAR SECTION À PARTIR DU JSON VÉRIFIÉ
+# ==============================================================================
+def render_event_card_html(ev):
+    nom_gala = html.escape(ev.get("nom_gala") or "Événement Officiel")
+    date_paris = html.escape(ev.get("date_paris") or "")
+    lieu = html.escape(ev.get("lieu") or "Lieu à confirmer")
+    url_off = (ev.get("url_officielle") or "").strip()
+    poster_url = (ev.get("poster_url") or "").strip()
+    h_debut = html.escape(ev.get("heure_debut_paris") or "N/C")
+    h_main = html.escape(ev.get("heure_main_event_paris") or "N/C")
+    diff_orig = html.escape(ev.get("diffuseur_origine") or "International")
+    diff_fr = html.escape(ev.get("diffuseur_france") or "Streaming officiel")
+    enjeu = html.escape(ev.get("enjeu_principal") or "")
+    presentation = html.escape(ev.get("presentation") or "")
+    combats = ev.get("combats") or []
+
+    # Bannière Poster officiel (avec bascule automatique propre si l'image est bloquée)
+    belt_badge = f'<div class="poster-belt">👑 {enjeu}</div>' if enjeu else ""
+    if poster_url.startswith("http"):
+        poster_block = f"""
         <div class="poster-container">
-            <img src="{html.escape(poster_url)}" alt="{html.escape(title_label)}" class="event-poster-img"
+            <img src="{html.escape(poster_url)}" alt="{nom_gala}" class="event-poster-img"
                  onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
             <div class="poster-overlay">
-                {belt_html}
-                <div class="poster-Dynamic-title">{html.escape(title_label)}</div>
+                {belt_badge}
+                <div class="poster-dynamic-title">{nom_gala}</div>
             </div>
         </div>
         """
     else:
-        return f"""
+        poster_block = f"""
         <div class="poster-container poster-fallback-mode">
             <div class="poster-overlay">
-                {belt_html}
-                <div class="poster-Dynamic-title">{html.escape(title_label)}</div>
+                {belt_badge}
+                <div class="poster-dynamic-title">{nom_gala}</div>
             </div>
         </div>
         """
 
-def inject_official_posters(raw_html):
-    print("Intégration des affiches officielles des événements...")
-    pattern = r'<div\s+class="poster-slot"\s+data-poster="([^"]*)"\s+data-source="([^"]*)"\s+data-title="([^"]*)"\s+data-belt="([^"]*)"\s*>\s*</div>'
-    return re.sub(pattern, build_poster_banner, raw_html)
+    source_btn = (
+        f'<a href="{html.escape(url_off)}" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>'
+        if url_off.startswith("http")
+        else ""
+    )
 
-# ==============================================================================
-# ÉTAPE 3 : PROMPT DE GÉNÉRATION DU CALENDRIER COMPLET
-# ==============================================================================
-CALENDAR_PROMPT = f"""Tu es un documentaliste sportif d'élite spécialisé en Boxe Anglaise, MMA, Kickboxing et Lutte.
-Date actuelle de référence : {date_str} (Fuseau horaire : Europe/Paris).
-Ta mission est de produire le CALENDRIER HEBDOMADAIRE COMPLET des combats prévus sur les 7 prochains jours (du {date_str} à J+7).
+    # Liste des combats de la carte
+    bouts_html_list = []
+    for c in combats:
+        statut = html.escape(c.get("statut") or "")
+        fa = html.escape(c.get("combattant_a") or "")
+        pa = html.escape(c.get("palmares_a") or "")
+        ta = html.escape(c.get("taille_a") or "")
+        fb = html.escape(c.get("combattant_b") or "")
+        pb = html.escape(c.get("palmares_b") or "")
+        tb = html.escape(c.get("taille_b") or "")
+        cat = html.escape(c.get("categorie_kg") or "")
+        rds = html.escape(c.get("rounds") or "")
+        desc = html.escape(c.get("enjeu_et_analyse") or "")
 
-DIRECTIVES STRICTES POUR LES CARTES COMPLÈTES ET LES PALMARÈS :
-1. CARTES COMPLÈTES OBLIGATOIRES : Ne laisse JAMAIS une carte avec uniquement le Main Event si l'undercard a été annoncée. Utilise les données extraites ci-dessous ET ton outil Google Search pour chercher spécifiquement "<Nom du Gala> full fight card undercard" afin de lister TOUS les combats programmés sur la carte.
-2. EXACTITUDE DES PALMARÈS : Vérifie systématiquement le palmarès actuel exact de chaque boxeur/combattant (ex: si la page officielle Matchroom indique 19-0, 14 KOs, affiche 19-0-0, 14 KOs et non un ancien chiffre obsolète).
-3. ZÉRO INVENTION : N'invente jamais de faux adversaires ni de lignes "vs TBA". Ne liste que les vrais combats réellement programmés sur l'événement.
-4. UNITÉS & LANGUE :
-   - Français journalistique fluide et précis. Conserve les termes techniques consacrés (puncher, out-boxer, brawler, southpaw, jab, uppercut, hook, knockdown, KO, TKO, main event, co-main event, undercard, contender, undisputed).
-   - Tous les poids en kilogrammes (ex: -63,5 kg) et toutes les tailles en mètres (ex: 1m78).
-   - Toutes les heures converties à l'heure de Paris (CET/CEST).
+        meta_a = " | ".join(x for x in [pa, ta] if x and x != "N/C")
+        meta_b = " | ".join(x for x in [pb, tb] if x and x != "N/C")
+        str_a = f"{fa} ({meta_a})" if meta_a else fa
+        str_b = f"{fb} ({meta_b})" if meta_b else fb
 
-STRUCTURE DES 8 RUBRIQUES À GÉNÉRER :
-1. <section id="boxe-monde" class="sport-section"><h2>🥊 1. Boxe Anglaise — Galas Internationaux</h2> ... </section>
-2. <section id="boxe-japon" class="sport-section"><h2>🇯🇵 2. Boxe Anglaise — Galas au Japon (Korakuen Hall & Arènes)</h2> ... </section>
-3. <section id="ufc" class="sport-section"><h2>🔥 3. UFC</h2> ... </section>
-4. <section id="rizin" class="sport-section"><h2>🌸 4. Rizin Fighting Federation</h2> ... </section>
-5. <section id="bkfc" class="sport-section"><h2>👊 5. BKFC (Bare Knuckle)</h2> ... </section>
-6. <section id="kick-japon" class="sport-section"><h2>🦵 6. Kickboxing Japonais (RISE, K-1, Krush)</h2> ... </section>
-7. <section id="glory" class="sport-section"><h2>🏆 7. Glory Kickboxing</h2> ... </section>
-8. <section id="raf" class="sport-section"><h2>🤼 8. RAF (Real American Freestyle Wrestling)</h2> ... </section>
+        pill_text = " — ".join(x for x in [statut, cat, rds] if x)
+        pill_html = f'<span class="weight-pill">{pill_text}</span>' if pill_text else ""
 
-MODÈLE HTML OBLIGATOIRE POUR CHAQUE GALA (<article class="event-card">) :
-En toute première ligne de chaque `<article class="event-card">`, place cette balise (en remplissant `data-poster` avec l'URL `POSTER_OFFICIEL` si présente dans les données brutes, sinon écris `"AUTO"`, et `data-source` avec l'URL officielle de l'événement) :
-<div class="poster-slot" data-poster="URL_POSTER_OU_AUTO" data-source="URL_OFFICIELLE_EVENEMENT" data-title=" Combattant A vs. Combattant B " data-belt="Ceinture ou Enjeu & Catégorie en kg"></div>
-
-Puis à l'intérieur de `<article class="event-card">`, affiche :
-- <div class="card-header-row">
-    <h3 class="event-title">Nom officiel du Gala : Combattant A vs. Combattant B</h3>
-    <a href="URL_OFFICIELLE_EVENEMENT" target="_blank" rel="noopener" class="source-btn">🔗 Page officielle</a>
-  </div>
-- <div class="meta-grid">
-    <div class="meta-item">📍 <strong>Lieu :</strong> Arène / Salle, Ville, Pays</div>
-    <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>XXhXX</strong> | Main Event vers <strong>XXhXX</strong></div>
-    <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : Chaîne</span> <span class="badge-tv badge-fr">France : Chaîne</span></div>
-  </div>
-- <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Présentation dynamique de l'événement et des combats principaux en 2 à 3 phrases.</p>
-- <details class="card-details">
-    <summary>📊 Développer la carte complète, palmarès et analyse des combats</summary>
-    <div class="fight-list">
-      Pour CHAQUE combat de la carte (Main Event, Co-Main Event, et tous les combats de l'Undercard), génère un bloc `<div class="bout-item">` :
-      <div class="bout-item">
-        <div class="bout-header">
-          🥊 <strong>Nom Boxeur A (V-D-N, X KOs | 1mXX) vs. Nom Boxeur B (V-D-N, Y KOs | 1mXX)</strong>
-          <span class="weight-pill">Catégorie (XX,X kg) — X rounds</span>
+        bouts_html_list.append(f"""
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>{str_a}</strong> vs. <strong>{str_b}</strong></div>
+                {pill_html}
+            </div>
+            <div class="bout-desc">{desc}</div>
         </div>
-        <div class="bout-desc">Enjeu (titre en jeu) et présentation stylistique du combat en 1 à 2 phrases.</div>
-      </div>
-    </div>
-  </details>
+        """)
 
-Si aucun événement n'a lieu cette semaine dans un sport secondaire, insère :
-<div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette discipline.</div>
+    if bouts_html_list:
+        bouts_content = "".join(bouts_html_list)
+        count_label = f"({len(bouts_html_list)} combat{'s' if len(bouts_html_list) > 1 else ''} répertorié{'s' if len(bouts_html_list) > 1 else ''})"
+    else:
+        bouts_content = "<div class='bout-item'><em>Détail complet de la sous-carte en attente de publication officielle par le promoteur.</em></div>"
+        count_label = ""
 
-DONNÉES BRUTES EXTRAITES DES SITES OFFICIELS AUJOURD'HUI :
-{verified_schedule_data}
+    return f"""
+    <article class="event-card">
+        {poster_block}
+        <div class="card-header-row">
+            <h3 class="event-title">{nom_gala}</h3>
+            {source_btn}
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">{date_paris}</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> {lieu}</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>{h_debut}</strong> &nbsp;|&nbsp; Main Event vers <strong>{h_main}</strong></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : {diff_orig}</span> <span class="badge-tv badge-fr">France : {diff_fr}</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> {presentation}</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats {count_label}</summary>
+            <div class="fight-list">
+                {bouts_content}
+            </div>
+        </details>
+    </article>
+    """
 
-Renvoie UNIQUEMENT le code HTML des 8 sections (`<section ...>...</section>`). N'inclus jamais de balises Markdown ```html ou ```.
-"""
+# Exécution séquentielle des 8 Micro-Agents avec temporisation anti-quota
+sections_html = []
+for idx, cfg in enumerate(AGENTS_CONFIG):
+    events_list = run_micro_agent(cfg)
+    if events_list:
+        cards_rendered = "\n".join(render_event_card_html(ev) for ev in events_list)
+    else:
+        cards_rendered = f'<div class="empty-state">🗓️ {html.escape(cfg["empty_msg"])}</div>'
 
-# ==============================================================================
-# ÉTAPE 4 : EXÉCUTION DE L'APPEL GEMINI AVEC RECHERCHE ACTIVE
-# ==============================================================================
-def get_available_models():
-    preferred = ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-3.5-flash"]
-    found = []
-    try:
-        for m in client.models.list():
-            name = getattr(m, "name", "").replace("models/", "")
-            if "gemini" in name and not any(x in name for x in ["embedding", "vision", "imagen", "audio", "tts"]):
-                found.append(name)
-    except Exception:
-        pass
-    ordered = [p for p in preferred if not found or p in found]
-    for f in found:
-        if f not in ordered:
-            ordered.append(f)
-    return ordered or ["gemini-3.8-flash"]
+    section_block = f"""
+    <section id="{cfg['id']}" class="sport-section">
+        <h2>{cfg['title']}</h2>
+        {cards_rendered}
+    </section>
+    """
+    sections_html.append(section_block)
 
-models_to_try = get_available_models()
-calendar_html = None
+    # Pause préventive de 14 secondes entre deux agents pour respecter le Rate Limit Google Search
+    if idx < len(AGENTS_CONFIG) - 1:
+        time.sleep(14)
 
-for model_name in models_to_try[:2]:
-    try:
-        print(f"Génération du calendrier complet via {model_name} (Search Grounding actif)...")
-        resp = client.models.generate_content(
-            model=model_name,
-            contents=CALENDAR_PROMPT,
-            config=types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearch())],
-                temperature=0.1,
-            ),
-        )
-        if resp and getattr(resp, "text", None):
-            calendar_html = resp.text
-            print(f"Succès avec {model_name} !")
-            break
-    except Exception as e:
-        print(f"Avertissement ({model_name} + Search) : {e}")
-        time.sleep(3)
-
-if not calendar_html:
-    for model_name in models_to_try:
-        try:
-            print(f"Repli sur {model_name} (basé sur le Deep Scraping)...")
-            resp = client.models.generate_content(
-                model=model_name,
-                contents=CALENDAR_PROMPT,
-                config=types.GenerateContentConfig(temperature=0.1),
-            )
-            if resp and getattr(resp, "text", None):
-                calendar_html = resp.text
-                print(f"Succès avec {model_name} !")
-                break
-        except Exception as e:
-            print(f"Modèle {model_name} indisponible : {e}")
-            time.sleep(2)
-
-if calendar_html:
-    calendar_html = calendar_html.replace("```html", "").replace("```", "").strip()
-    calendar_html = inject_official_posters(calendar_html)
-else:
-    calendar_html = "<div class='empty-state'>⚠️ Synchronisation en cours. Veuillez rafraîchir la page dans quelques instants.</div>"
+all_sections_content = "\n".join(sections_html)
 
 # ==============================================================================
-# ÉTAPE 5 : GABARIT HTML/CSS/JS (BEIGE & MARRON CHAUD + OUTILS INTERACTIFS)
+# 7. ASSEMBLAGE DU SITE FINAL (DESIGN BEIGE, CRÈME & MARRON CHAUD)
 # ==============================================================================
 FINAL_HTML = f"""<!DOCTYPE html>
 <html lang="fr">
@@ -396,7 +565,6 @@ FINAL_HTML = f"""<!DOCTYPE html>
             margin: 0 auto;
             padding: 2rem 1.2rem 4rem 1.2rem;
         }}
-        /* En-tête */
         header.hero {{
             text-align: center;
             padding: 2.2rem 1.5rem;
@@ -429,7 +597,6 @@ FINAL_HTML = f"""<!DOCTYPE html>
             font-size: 0.85rem;
             font-weight: 600;
         }}
-        /* Barre de navigation & outils */
         .sticky-bar {{
             position: sticky;
             top: 10px;
@@ -475,7 +642,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
         .search-input {{
             flex: 1;
             min-width: 200px;
-            padding: 0.45rem 0.85rem;
+            padding: 0.48rem 0.85rem;
             border: 1px solid var(--border-warm);
             border-radius: 8px;
             background-color: var(--bg-details);
@@ -490,7 +657,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
             background-color: var(--accent-dark);
             color: #FFFDF9;
             border: none;
-            padding: 0.48rem 0.95rem;
+            padding: 0.5rem 0.95rem;
             border-radius: 8px;
             font-family: inherit;
             font-size: 0.85rem;
@@ -501,10 +668,9 @@ FINAL_HTML = f"""<!DOCTYPE html>
         .toggle-all-btn:hover {{
             background-color: var(--accent-main);
         }}
-        /* Sections par sport */
         .sport-section {{
             margin-bottom: 3rem;
-            scroll-margin-top: 130px;
+            scroll-margin-top: 135px;
         }}
         .sport-section h2 {{
             font-family: 'Outfit', sans-serif;
@@ -515,7 +681,6 @@ FINAL_HTML = f"""<!DOCTYPE html>
             padding-bottom: 0.5rem;
             border-bottom: 3px solid var(--accent-main);
         }}
-        /* Carte d'événement */
         .event-card {{
             background-color: var(--bg-card);
             border: 1px solid var(--border-warm);
@@ -525,11 +690,10 @@ FINAL_HTML = f"""<!DOCTYPE html>
             box-shadow: var(--shadow-soft);
             overflow: hidden;
         }}
-        /* Bannière Poster Officiel */
         .poster-container {{
             position: relative;
             width: 100%;
-            max-height: 360px;
+            max-height: 380px;
             border-radius: 12px;
             overflow: hidden;
             margin-bottom: 1.25rem;
@@ -541,7 +705,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
         }}
         .event-poster-img {{
             width: 100%;
-            max-height: 360px;
+            max-height: 380px;
             object-fit: cover;
             object-position: center top;
             display: block;
@@ -549,7 +713,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
         .poster-overlay {{
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(30, 16, 8, 0.92) 0%, rgba(30, 16, 8, 0.25) 55%, rgba(30, 16, 8, 0.1) 100%);
+            background: linear-gradient(to top, rgba(28, 15, 7, 0.94) 0%, rgba(28, 15, 7, 0.25) 55%, rgba(28, 15, 7, 0.08) 100%);
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -558,7 +722,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
             color: #FFFDF9;
         }}
         .poster-container.poster-fallback-mode {{
-            min-height: 140px;
+            min-height: 135px;
         }}
         .poster-container.poster-fallback-mode .poster-overlay {{
             position: relative;
@@ -567,11 +731,11 @@ FINAL_HTML = f"""<!DOCTYPE html>
             text-align: center;
             justify-content: center;
             width: 100%;
-            padding: 1.6rem 1rem;
+            padding: 1.5rem 1rem;
         }}
         .poster-belt {{
             display: inline-block;
-            background-color: rgba(196, 136, 43, 0.3);
+            background-color: rgba(196, 136, 43, 0.32);
             backdrop-filter: blur(4px);
             border: 1px solid #F7D388;
             color: #F7D388;
@@ -583,15 +747,14 @@ FINAL_HTML = f"""<!DOCTYPE html>
             border-radius: 99px;
             margin-bottom: 0.45rem;
         }}
-        .poster-Dynamic-title {{
+        .poster-dynamic-title {{
             font-family: 'Outfit', sans-serif;
-            font-size: 1.45rem;
+            font-size: 1.4rem;
             font-weight: 800;
             color: #FFFDF9;
             text-shadow: 0 2px 8px rgba(0,0,0,0.65);
             line-height: 1.25;
         }}
-        /* En-tête de carte avec bouton source */
         .card-header-row {{
             display: flex;
             flex-wrap: wrap;
@@ -614,7 +777,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
             color: var(--accent-main);
             background-color: var(--bg-details);
             border: 1px solid var(--border-warm);
-            padding: 0.3rem 0.75rem;
+            padding: 0.32rem 0.78rem;
             border-radius: 8px;
             transition: all 0.2s ease;
         }}
@@ -623,7 +786,6 @@ FINAL_HTML = f"""<!DOCTYPE html>
             color: #FFFFFF;
             border-color: var(--accent-main);
         }}
-        /* Grille d'infos */
         .meta-grid {{
             display: grid;
             grid-template-columns: 1fr;
@@ -631,9 +793,13 @@ FINAL_HTML = f"""<!DOCTYPE html>
             background-color: var(--bg-details);
             border: 1px solid var(--border-warm);
             border-radius: 10px;
-            padding: 0.9rem 1.1rem;
+            padding: 0.95rem 1.15rem;
             margin-bottom: 1rem;
             font-size: 0.94rem;
+        }}
+        .highlight-date {{
+            color: var(--accent-main);
+            font-weight: 700;
         }}
         .badge-tv {{
             display: inline-block;
@@ -655,7 +821,6 @@ FINAL_HTML = f"""<!DOCTYPE html>
             color: var(--text-primary);
             margin: 0 0 1.1rem 0;
         }}
-        /* Menu déroulant Carte Complète */
         details.card-details {{
             background-color: var(--bg-details);
             border: 1px solid var(--border-warm);
@@ -675,6 +840,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 0.5rem;
         }}
         summary::-webkit-details-marker {{
             display: none;
@@ -686,6 +852,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
             color: var(--accent-dark);
             padding: 0.22rem 0.65rem;
             border-radius: 6px;
+            white-space: nowrap;
         }}
         details[open] summary::after {{
             content: "▲ Masquer";
@@ -711,10 +878,14 @@ FINAL_HTML = f"""<!DOCTYPE html>
             align-items: center;
             justify-content: space-between;
             gap: 0.5rem;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.3rem;
+        }}
+        .bout-fighters {{
+            font-size: 0.98rem;
+            color: var(--text-primary);
         }}
         .bout-desc {{
-            font-size: 0.92rem;
+            font-size: 0.91rem;
             color: var(--text-secondary);
         }}
         .weight-pill {{
@@ -723,7 +894,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
             color: var(--accent-dark);
             font-weight: 700;
             font-size: 0.78rem;
-            padding: 0.15rem 0.55rem;
+            padding: 0.18rem 0.6rem;
             border-radius: 6px;
         }}
         .empty-state {{
@@ -745,7 +916,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
         }}
         @media (max-width: 600px) {{
             header.hero h1 {{ font-size: 1.75rem; }}
-            .poster-Dynamic-title {{ font-size: 1.2rem; }}
+            .poster-dynamic-title {{ font-size: 1.18rem; }}
         }}
     </style>
 </head>
@@ -753,8 +924,8 @@ FINAL_HTML = f"""<!DOCTYPE html>
     <div class="container">
         <header class="hero">
             <h1>🥊 Calendrier des Sports de Combat</h1>
-            <p>Le programme officiel vérifié : Boxe Anglaise, Japon, UFC, Rizin, BKFC, Kickboxing & RAF</p>
-            <span class="update-pill">🔄 Mis à jour le {date_str} à {heure_str} (Heure de Paris)</span>
+            <p>Programmation officielle vérifiée : Boxe Mondiale & Japonaise, The Ring, Zuffa, UFC, Rizin, BKFC, Kickboxing & RAF</p>
+            <span class="update-pill">🔄 Mis à jour le {date_str} à {heure_str} (Heure de Paris) • Période : {valid_dates_fr[0]} au {valid_dates_fr[-1]}</span>
         </header>
 
         <div class="sticky-bar">
@@ -769,22 +940,21 @@ FINAL_HTML = f"""<!DOCTYPE html>
                 <a href="#raf">🤼 RAF</a>
             </nav>
             <div class="toolbar">
-                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par boxeur, gala, ville ou diffuseur (ex: DAZN)...">
+                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom, Queensberry, The Ring...), ville ou chaîne...">
                 <button type="button" id="toggleAllBtn" class="toggle-all-btn">📂 Tout déplier</button>
             </div>
         </div>
 
         <main id="mainContent">
-            {calendar_html}
+            {all_sections_content}
         </main>
 
         <footer>
-            <p>Affiches & cartes extraites des pages officielles des promoteurs • Heures de Paris (CET/CEST) • Unités métriques (kg / m)</p>
+            <p>Architecture Micro-Agents vérifiée • Fuseau horaire : Paris (CET/CEST) • Système métrique standardisé (kg / m)</p>
         </footer>
     </div>
 
     <script>
-        // Bouton Tout déplier / Tout replier
         const toggleBtn = document.getElementById('toggleAllBtn');
         let allOpen = false;
         toggleBtn.addEventListener('click', () => {{
@@ -795,7 +965,6 @@ FINAL_HTML = f"""<!DOCTYPE html>
             toggleBtn.textContent = allOpen ? '📁 Tout replier' : '📂 Tout déplier';
         }});
 
-        // Filtre de recherche en temps réel
         const searchInput = document.getElementById('searchInput');
         searchInput.addEventListener('input', (e) => {{
             const query = e.target.value.toLowerCase().trim();
@@ -815,4 +984,4 @@ with open("index.html", "w", encoding="utf-8") as f:
 with open("calendrier.html", "w", encoding="utf-8") as f:
     f.write(FINAL_HTML)
 
-print("Calendrier complet et posters officiels générés avec succès !")
+print("\nSynchronisation terminée avec succès : index.html et calendrier.html sont à jour.")
