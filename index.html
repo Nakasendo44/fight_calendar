@@ -40,7 +40,6 @@
             margin: 0 auto;
             padding: 2rem 1.2rem 4rem 1.2rem;
         }
-        /* En-tête */
         header.hero {
             text-align: center;
             padding: 2.2rem 1.5rem;
@@ -73,7 +72,6 @@
             font-size: 0.85rem;
             font-weight: 600;
         }
-        /* Barre de navigation & outils */
         .sticky-bar {
             position: sticky;
             top: 10px;
@@ -119,7 +117,7 @@
         .search-input {
             flex: 1;
             min-width: 200px;
-            padding: 0.45rem 0.85rem;
+            padding: 0.48rem 0.85rem;
             border: 1px solid var(--border-warm);
             border-radius: 8px;
             background-color: var(--bg-details);
@@ -134,7 +132,7 @@
             background-color: var(--accent-dark);
             color: #FFFDF9;
             border: none;
-            padding: 0.48rem 0.95rem;
+            padding: 0.5rem 0.95rem;
             border-radius: 8px;
             font-family: inherit;
             font-size: 0.85rem;
@@ -145,10 +143,9 @@
         .toggle-all-btn:hover {
             background-color: var(--accent-main);
         }
-        /* Sections par sport */
         .sport-section {
             margin-bottom: 3rem;
-            scroll-margin-top: 130px;
+            scroll-margin-top: 135px;
         }
         .sport-section h2 {
             font-family: 'Outfit', sans-serif;
@@ -159,7 +156,6 @@
             padding-bottom: 0.5rem;
             border-bottom: 3px solid var(--accent-main);
         }
-        /* Carte d'événement */
         .event-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-warm);
@@ -169,11 +165,10 @@
             box-shadow: var(--shadow-soft);
             overflow: hidden;
         }
-        /* Bannière Poster Officiel */
         .poster-container {
             position: relative;
             width: 100%;
-            max-height: 360px;
+            max-height: 380px;
             border-radius: 12px;
             overflow: hidden;
             margin-bottom: 1.25rem;
@@ -185,7 +180,7 @@
         }
         .event-poster-img {
             width: 100%;
-            max-height: 360px;
+            max-height: 380px;
             object-fit: cover;
             object-position: center top;
             display: block;
@@ -193,7 +188,7 @@
         .poster-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(30, 16, 8, 0.92) 0%, rgba(30, 16, 8, 0.25) 55%, rgba(30, 16, 8, 0.1) 100%);
+            background: linear-gradient(to top, rgba(28, 15, 7, 0.94) 0%, rgba(28, 15, 7, 0.25) 55%, rgba(28, 15, 7, 0.08) 100%);
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -202,7 +197,7 @@
             color: #FFFDF9;
         }
         .poster-container.poster-fallback-mode {
-            min-height: 140px;
+            min-height: 135px;
         }
         .poster-container.poster-fallback-mode .poster-overlay {
             position: relative;
@@ -211,11 +206,11 @@
             text-align: center;
             justify-content: center;
             width: 100%;
-            padding: 1.6rem 1rem;
+            padding: 1.5rem 1rem;
         }
         .poster-belt {
             display: inline-block;
-            background-color: rgba(196, 136, 43, 0.3);
+            background-color: rgba(196, 136, 43, 0.32);
             backdrop-filter: blur(4px);
             border: 1px solid #F7D388;
             color: #F7D388;
@@ -227,15 +222,14 @@
             border-radius: 99px;
             margin-bottom: 0.45rem;
         }
-        .poster-Dynamic-title {
+        .poster-dynamic-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.45rem;
+            font-size: 1.4rem;
             font-weight: 800;
             color: #FFFDF9;
             text-shadow: 0 2px 8px rgba(0,0,0,0.65);
             line-height: 1.25;
         }
-        /* En-tête de carte avec bouton source */
         .card-header-row {
             display: flex;
             flex-wrap: wrap;
@@ -258,7 +252,7 @@
             color: var(--accent-main);
             background-color: var(--bg-details);
             border: 1px solid var(--border-warm);
-            padding: 0.3rem 0.75rem;
+            padding: 0.32rem 0.78rem;
             border-radius: 8px;
             transition: all 0.2s ease;
         }
@@ -267,7 +261,6 @@
             color: #FFFFFF;
             border-color: var(--accent-main);
         }
-        /* Grille d'infos */
         .meta-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -275,9 +268,13 @@
             background-color: var(--bg-details);
             border: 1px solid var(--border-warm);
             border-radius: 10px;
-            padding: 0.9rem 1.1rem;
+            padding: 0.95rem 1.15rem;
             margin-bottom: 1rem;
             font-size: 0.94rem;
+        }
+        .highlight-date {
+            color: var(--accent-main);
+            font-weight: 700;
         }
         .badge-tv {
             display: inline-block;
@@ -299,7 +296,6 @@
             color: var(--text-primary);
             margin: 0 0 1.1rem 0;
         }
-        /* Menu déroulant Carte Complète */
         details.card-details {
             background-color: var(--bg-details);
             border: 1px solid var(--border-warm);
@@ -319,6 +315,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 0.5rem;
         }
         summary::-webkit-details-marker {
             display: none;
@@ -330,6 +327,7 @@
             color: var(--accent-dark);
             padding: 0.22rem 0.65rem;
             border-radius: 6px;
+            white-space: nowrap;
         }
         details[open] summary::after {
             content: "▲ Masquer";
@@ -355,10 +353,14 @@
             align-items: center;
             justify-content: space-between;
             gap: 0.5rem;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.3rem;
+        }
+        .bout-fighters {
+            font-size: 0.98rem;
+            color: var(--text-primary);
         }
         .bout-desc {
-            font-size: 0.92rem;
+            font-size: 0.91rem;
             color: var(--text-secondary);
         }
         .weight-pill {
@@ -367,7 +369,7 @@
             color: var(--accent-dark);
             font-weight: 700;
             font-size: 0.78rem;
-            padding: 0.15rem 0.55rem;
+            padding: 0.18rem 0.6rem;
             border-radius: 6px;
         }
         .empty-state {
@@ -389,7 +391,7 @@
         }
         @media (max-width: 600px) {
             header.hero h1 { font-size: 1.75rem; }
-            .poster-Dynamic-title { font-size: 1.2rem; }
+            .poster-dynamic-title { font-size: 1.18rem; }
         }
     </style>
 </head>
@@ -397,8 +399,8 @@
     <div class="container">
         <header class="hero">
             <h1>🥊 Calendrier des Sports de Combat</h1>
-            <p>Le programme officiel vérifié : Boxe Anglaise, Japon, UFC, Rizin, BKFC, Kickboxing & RAF</p>
-            <span class="update-pill">🔄 Mis à jour le 21/10/2026 à 16:15 (Heure de Paris)</span>
+            <p>Programmation officielle vérifiée : Boxe Mondiale & Japonaise, The Ring, Zuffa, UFC, Rizin, BKFC, Kickboxing & RAF</p>
+            <span class="update-pill">🔄 Mis à jour le 21/10/2026 à 20:37 (Heure de Paris) • Période : 21/10/2026 au 28/10/2026</span>
         </header>
 
         <div class="sticky-bar">
@@ -413,52 +415,458 @@
                 <a href="#raf">🤼 RAF</a>
             </nav>
             <div class="toolbar">
-                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par boxeur, gala, ville ou diffuseur (ex: DAZN)...">
+                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom, Queensberry, The Ring...), ville ou chaîne...">
                 <button type="button" id="toggleAllBtn" class="toggle-all-btn">📂 Tout déplier</button>
             </div>
         </div>
 
         <main id="mainContent">
-            <section id="boxe-monde" class="sport-section"><h2>🥊 1. Boxe Anglaise — Galas Internationaux</h2>
-<div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette discipline.</div>
-</section>
+            
+    <section id="boxe-monde" class="sport-section">
+        <h2>🥊 1. Boxe Anglaise — Galas Internationaux</h2>
+        
+    <article class="event-card">
+        
+        <div class="poster-container">
+            <img src="https://ringwalks.com/assets/og/boxers/maxi-hughes.jpg" alt="Dalton Smith vs. Alberto Puello" class="event-poster-img"
+                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
+            <div class="poster-overlay">
+                <div class="poster-belt">👑 Titre mondial WBC Super-Légers (-63,5 kg)</div>
+                <div class="poster-dynamic-title">Dalton Smith vs. Alberto Puello</div>
+            </div>
+        </div>
+        
+        <div class="card-header-row">
+            <h3 class="event-title">Dalton Smith vs. Alberto Puello</h3>
+            <a href="https://box.live/fights/smith-vs-puello/" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Utilita Arena Sheffield, Sheffield, Royaume-Uni</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>19h00</strong> &nbsp;|&nbsp; Main Event vers <strong>23h00</strong></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : DAZN</span> <span class="badge-tv badge-fr">France : DAZN France</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le champion invaincu Dalton Smith défend sa ceinture mondiale WBC des super-légers à domicile face au redoutable gaucher dominicain Alberto Puello. Un choc de styles crucial pour la suprématie de la catégorie.</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (3 combats répertoriés)</summary>
+            <div class="fight-list">
+                
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Dalton Smith (19-0-0, 14 KOs | 1m76)</strong> vs. <strong>Alberto Puello (25-1-0, 11 KOs | 1m75)</strong></div>
+                <span class="weight-pill">Main Event — Super-légers (-63,5 kg) — 12 rounds</span>
+            </div>
+            <div class="bout-desc">Titre mondial WBC des super-légers. Dalton Smith, le puncheur local, tente de conserver son invincibilité face à l&#x27;ancien champion du monde Alberto Puello, un gaucher technique et expérimenté.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Giorgio Visioli (11-0-0, 6 KOs | 1m73)</strong> vs. <strong>Maxi Hughes (29-9-2, 6 KOs | 1m70)</strong></div>
+                <span class="weight-pill">Co-Main Event — Légers (-61,2 kg) — 10 rounds</span>
+            </div>
+            <div class="bout-desc">Combat de poids légers. Le jeune espoir invaincu Giorgio Visioli fait face à un test majeur contre le vétéran et ancien champion IBO Maxi Hughes.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Shannon Ryan (11-1-0, 2 KOs)</strong> vs. <strong>Emma Dolan (9-1-0, 1 KO | 1m65)</strong></div>
+                <span class="weight-pill">Undercard — Super-mouches (-52,2 kg) — 10 rounds</span>
+            </div>
+            <div class="bout-desc">Combat féminin chez les super-mouches. Shannon Ryan cherche à rebondir face à Emma Dolan.</div>
+        </div>
+        
+            </div>
+        </details>
+    </article>
+    
 
-<section id="boxe-japon" class="sport-section"><h2>🇯🇵 2. Boxe Anglaise — Galas au Japon (Korakuen Hall & Arènes)</h2>
-<div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette discipline.</div>
-</section>
+    <article class="event-card">
+        
+        <div class="poster-container">
+            <img src="https://ringwalks.com/assets/og/boxers/maxi-hughes.jpg" alt="Emanuel Navarrete vs. O&#x27;Shaquie Foster" class="event-poster-img"
+                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
+            <div class="poster-overlay">
+                <div class="poster-belt">👑 Titres mondiaux IBF, WBC, WBO et The Ring vacante des Super-Plumes (-59,0 kg)</div>
+                <div class="poster-dynamic-title">Emanuel Navarrete vs. O&#x27;Shaquie Foster</div>
+            </div>
+        </div>
+        
+        <div class="card-header-row">
+            <h3 class="event-title">Emanuel Navarrete vs. O&#x27;Shaquie Foster</h3>
+            <a href="https://box.live/fights/navarrete-vs-foster/" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Frost Bank Center, San Antonio, États-Unis</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>02h00</strong> &nbsp;|&nbsp; Main Event vers <strong>05h00</strong></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : DAZN</span> <span class="badge-tv badge-fr">France : DAZN France</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Un choc d&#x27;unification majeur chez les super-plumes opposant le champion mexicain Emanuel Navarrete au champion américain O&#x27;Shaquie Foster pour les ceintures IBF, WBC, WBO et le titre vacant The Ring.</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (2 combats répertoriés)</summary>
+            <div class="fight-list">
+                
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Emanuel Navarrete (40-2-1, 33 KOs | 1m70)</strong> vs. <strong>O&#x27;Shaquie Foster (25-3-0, 12 KOs | 1m74)</strong></div>
+                <span class="weight-pill">Main Event — Super-plumes (-59,0 kg) — 12 rounds</span>
+            </div>
+            <div class="bout-desc">Titres mondiaux IBF, WBC, WBO et The Ring vacante des super-plumes. Emanuel Navarrete, le puncheur mexicain, affronte le technicien américain O&#x27;Shaquie Foster dans un combat d&#x27;unification historique.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Frank Martin (19-1-1, 13 KOs | 1m73)</strong> vs. <strong>Tarik Zaina (18-3-1, 12 KOs | 1m83)</strong></div>
+                <span class="weight-pill">Co-Main Event — Super-légers (-63,5 kg) — 10 rounds</span>
+            </div>
+            <div class="bout-desc">Combat de poids super-légers. L&#x27;ancien prétendant mondial Frank Martin cherche à se relancer face à Tarik Zaina.</div>
+        </div>
+        
+            </div>
+        </details>
+    </article>
+    
+    </section>
+    
 
-<section id="ufc" class="sport-section"><h2>🔥 3. UFC</h2>
-<div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette discipline.</div>
-</section>
+    <section id="boxe-japon" class="sport-section">
+        <h2>🇯🇵 2. Boxe Anglaise — Galas au Japon (Korakuen Hall & Arènes)</h2>
+        
+    <article class="event-card">
+        
+        <div class="poster-container poster-fallback-mode">
+            <div class="poster-overlay">
+                <div class="poster-belt">👑 Combat de classement national - Poids Légers (-61,2 kg)</div>
+                <div class="poster-dynamic-title">Hopeful Fight vol.46 : Ruito Saeki vs. Shun Sekine</div>
+            </div>
+        </div>
+        
+        <div class="card-header-row">
+            <h3 class="event-title">Hopeful Fight vol.46 : Ruito Saeki vs. Shun Sekine</h3>
+            <a href="https://boxingraise.com" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>05h00</strong> &nbsp;|&nbsp; Main Event vers <strong>07h30</strong></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : BOXING RAISE</span> <span class="badge-tv badge-fr">France : BOXING RAISE</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le Korakuen Hall accueille le gala Hopeful Fight vol.46, mettant en vedette un duel de poids légers entre le classé national Ruito Saeki et le redoutable puncheur Shun Sekine [1.2]. Un affrontement crucial pour grimper dans les classements de la JBC [1.2].</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (1 combat répertorié)</summary>
+            <div class="fight-list">
+                
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Ruito Saeki (11-6-4, 3 KOs)</strong> vs. <strong>Shun Sekine (14-3-1, 12 KOs)</strong></div>
+                <span class="weight-pill">Main Event — Poids légers (-61,2 kg) — 8 rounds</span>
+            </div>
+            <div class="bout-desc">Combat en 8 rounds [1.16]. Saeki, boxeur mobile et technique, cherche à stopper sa série de matchs nuls face à Sekine, un puncheur agressif qui mise sur son punch dévastateur [1.2].</div>
+        </div>
+        
+            </div>
+        </details>
+    </article>
+    
 
-<section id="rizin" class="sport-section"><h2>🌸 4. Rizin Fighting Federation</h2>
-<div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette discipline.</div>
-</section>
+    <article class="event-card">
+        
+        <div class="poster-container">
+            <img src="https://framerusercontent.com/images/MAmMcsdRixLvnpxGuF8lPrNKE.jpg" alt="Dynamite Glove 2026 : Yasuhiro Kawashima vs. Keigo Sato" class="event-poster-img"
+                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
+            <div class="poster-overlay">
+                <div class="poster-belt">👑 Gala spécial &#x27;Hajime no Ippo&#x27; - Poids Welters (-66,7 kg)</div>
+                <div class="poster-dynamic-title">Dynamite Glove 2026 : Yasuhiro Kawashima vs. Keigo Sato</div>
+            </div>
+        </div>
+        
+        <div class="card-header-row">
+            <h3 class="event-title">Dynamite Glove 2026 : Yasuhiro Kawashima vs. Keigo Sato</h3>
+            <a href="https://ippo-world.com" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Mercredi 28/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>10h00</strong> &nbsp;|&nbsp; Main Event vers <strong>11h30</strong></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : BOXING RAISE</span> <span class="badge-tv badge-fr">France : BOXING RAISE</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le Dynamite Glove 2026 propose une soirée unique mêlant combats professionnels officiels et l&#x27;univers du manga culte &#x27;Hajime no Ippo&#x27; [1.13]. En plus des 7 combats au programme, l&#x27;auteur George Morikawa participera à un talk-show exceptionnel [1.6].</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (1 combat répertorié)</summary>
+            <div class="fight-list">
+                
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Yasuhiro Kawashima</strong> vs. <strong>Keigo Sato</strong></div>
+                <span class="weight-pill">Main Event — Poids welters (-66,7 kg) — 4 rounds</span>
+            </div>
+            <div class="bout-desc">Combat en 4 rounds [1.6]. Un duel de jeunes espoirs chez les welters pour clôturer cette soirée spéciale dédiée aux fans de noble art et de manga [1.6, 1.13].</div>
+        </div>
+        
+            </div>
+        </details>
+    </article>
+    
+    </section>
+    
 
-<section id="bkfc" class="sport-section"><h2>👊 5. BKFC (Bare Knuckle)</h2>
-<div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette discipline.</div>
-</section>
+    <section id="ufc" class="sport-section">
+        <h2>🔥 3. UFC</h2>
+        
+    <article class="event-card">
+        
+        <div class="poster-container poster-fallback-mode">
+            <div class="poster-overlay">
+                <div class="poster-belt">👑 Titre mondial UFC des poids plumes (-65,8 kg)</div>
+                <div class="poster-dynamic-title">UFC 333: Volkanovski vs. Evloev</div>
+            </div>
+        </div>
+        
+        <div class="card-header-row">
+            <h3 class="event-title">UFC 333: Volkanovski vs. Evloev</h3>
+            <a href="https://www.ufc.com/event/ufc-333" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Etihad Arena, Yas Island, Abu Dhabi, Émirats arabes unis</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>16h00</strong> &nbsp;|&nbsp; Main Event vers <strong>22h30</strong></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : Paramount+</span> <span class="badge-tv badge-fr">France : RMC Sport / UFC Fight Pass</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> L&#x27;UFC fait son retour annuel à Abu Dhabi pour l&#x27;UFC 333, un événement exceptionnel marqué par deux combats pour le titre. En tête d&#x27;affiche, le champion incontesté des poids plumes Alexander Volkanovski défend sa ceinture face au redoutable et invaincu Movsar Evloev. En co-main event, le champion des poids coqs Petr Yan affronte son rival Merab Dvalishvili pour clore leur trilogie historique.</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (7 combats répertoriés)</summary>
+            <div class="fight-list">
+                
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Alexander Volkanovski (28-4-0, 13 KOs | 1m68)</strong> vs. <strong>Movsar Evloev (20-0-0, 3 KOs | 1m73)</strong></div>
+                <span class="weight-pill">Main Event — Poids plumes (-65,8 kg) — 5 rounds</span>
+            </div>
+            <div class="bout-desc">Titre UFC des poids plumes en jeu. Un choc de styles classique entre le striking d&#x27;élite et le volume de Volkanovski et la lutte étouffante de l&#x27;invaincu Evloev.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Petr Yan (20-5-0, 7 KOs | 1m70)</strong> vs. <strong>Merab Dvalishvili (21-5-0, 3 KOs | 1m68)</strong></div>
+                <span class="weight-pill">Co-Main Event — Poids coqs (-61,2 kg) — 5 rounds</span>
+            </div>
+            <div class="bout-desc">Titre UFC des poids coqs en jeu. Troisième affrontement décisif entre le champion Yan et le pressing incessant de Dvalishvili pour sceller leur rivalité.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Lone&#x27;er Kavanagh (10-2-0, 4 KOs | 1m63)</strong> vs. <strong>Ramazan Temirov (20-3-0, 12 KOs | 1m63)</strong></div>
+                <span class="weight-pill">Main Card — Poids mouches (-56,7 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Duel crucial chez les poids mouches entre deux prétendants explosifs cherchant à se rapprocher d&#x27;une chance pour le titre.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Alexander Volkov (40-11-0, 24 KOs | 2m01)</strong> vs. <strong>Rizvan Kuniev (14-3-1, 6 KOs | 1m93)</strong></div>
+                <span class="weight-pill">Main Card — Poids lourds (-120,2 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Choc de géants chez les poids lourds opposant l&#x27;expérimenté Volkov au redoutable Kuniev.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Aaron Pico (14-5-0, 9 KOs | 1m73)</strong> vs. <strong>Losene Keita (17-2-0, 11 KOs | 1m75)</strong></div>
+                <span class="weight-pill">Main Card — Poids plumes (-65,8 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Un duel explosif chez les poids plumes entre le puissant lutteur-puncher Pico et le champion d&#x27;Oktagon Keita.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Azamat Murzakanov (16-1-0, 9 KOs | 1m80)</strong> vs. <strong>Dominick Reyes (16-5-0, 10 KOs | 1m93)</strong></div>
+                <span class="weight-pill">Prelims — Poids mi-lourds (-93,0 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Choc chez les mi-lourds entre le puissant puncheur Murzakanov et l&#x27;ancien prétendant au titre Reyes.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Nikita Krylov (31-12-0, 13 KOs | 1m91)</strong> vs. <strong>Abdul-Rakhman Yakhyaev (10-0-0, N/C)</strong></div>
+                <span class="weight-pill">Prelims — Poids mi-lourds (-93,0 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Le vétéran Krylov fait face à l&#x27;invaincu et prometteur Yakhyaev dans la catégorie des mi-lourds.</div>
+        </div>
+        
+            </div>
+        </details>
+    </article>
+    
+    </section>
+    
 
-<section id="kick-japon" class="sport-section"><h2>🦵 6. Kickboxing Japonais (RISE, K-1, Krush)</h2>
-<div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette discipline.</div>
-</section>
+    <section id="rizin" class="sport-section">
+        <h2>🌸 4. Rizin Fighting Federation</h2>
+        <div class="empty-state">🗓️ Aucun événement Rizin programmé cette semaine.</div>
+    </section>
+    
 
-<section id="glory" class="sport-section"><h2>🏆 7. Glory Kickboxing</h2>
-<div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette discipline.</div>
-</section>
+    <section id="bkfc" class="sport-section">
+        <h2>👊 5. BKFC (Bare Knuckle)</h2>
+        
+    <article class="event-card">
+        
+        <div class="poster-container">
+            <img src="https://www.trillertv.com/thumbs/o/profile/15377_300x300.jpg" alt="BKFC Fight Night Clearwater: Reber vs. Street" class="event-poster-img"
+                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
+            <div class="poster-overlay">
+                <div class="poster-belt">👑 Combat de haut niveau chez les poids coqs (-61,2 kg)</div>
+                <div class="poster-dynamic-title">BKFC Fight Night Clearwater: Reber vs. Street</div>
+            </div>
+        </div>
+        
+        <div class="card-header-row">
+            <h3 class="event-title">BKFC Fight Night Clearwater: Reber vs. Street</h3>
+            <a href="https://www.bkfc.com/events/bkfc-fight-night-clearwater-reber-vs-street" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> OCC Road House, Clearwater, États-Unis</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>02h00</strong> &nbsp;|&nbsp; Main Event vers <strong>04h30</strong></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : BKFC+ App / Fubo</span> <span class="badge-tv badge-fr">France : BKFC+ App / TrillerTV</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le Bare Knuckle Fighting Championship fait son retour à l&#x27;OCC Road House de Clearwater pour une soirée explosive. En tête d&#x27;affiche, le numéro 2 des poids coqs Ryan Reber affronte le redoutable Justin Street dans un duel crucial pour la course au titre.</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (2 combats répertoriés)</summary>
+            <div class="fight-list">
+                
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Ryan Reber (8-2-0 | 1m75)</strong> vs. <strong>Justin Street (4-2-0 | 1m68)</strong></div>
+                <span class="weight-pill">Main Event — Poids coqs (-61,2 kg) — 5 rounds</span>
+            </div>
+            <div class="bout-desc">Duel de haut niveau chez les poids coqs. Reber cherche à consolider sa place de prétendant numéro 2 face à un Street sur une série de trois victoires consécutives.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Michael Larrimore (3-2-0 | 1m75)</strong> vs. <strong>Nate Morrow (2-0-0 | 1m75)</strong></div>
+                <span class="weight-pill">Co-Main Event — Poids coqs (-61,2 kg) — 5 rounds</span>
+            </div>
+            <div class="bout-desc">Larrimore, ancien prétendant au titre, tente de se relancer face à l&#x27;invaincu Morrow dans un choc de puncheurs prometteur.</div>
+        </div>
+        
+            </div>
+        </details>
+    </article>
+    
+    </section>
+    
 
-<section id="raf" class="sport-section"><h2>🤼 8. RAF (Real American Freestyle Wrestling)</h2>
-<div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette discipline.</div>
-</section>
+    <section id="kick-japon" class="sport-section">
+        <h2>🦵 6. Kickboxing Japonais (RISE, K-1, Krush)</h2>
+        
+    <article class="event-card">
+        
+        <div class="poster-container">
+            <img src="https://worldfightingleague.com/assets/og-default.jpg" alt="WFL x K-1 Dortmund : Brice Kombou vs. Sergej Braun" class="event-poster-img"
+                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
+            <div class="poster-overlay">
+                <div class="poster-belt">👑 Titres mondiaux WFL, WKU et ISKA des poids super-moyens (-82,5 kg)</div>
+                <div class="poster-dynamic-title">WFL x K-1 Dortmund : Brice Kombou vs. Sergej Braun</div>
+            </div>
+        </div>
+        
+        <div class="card-header-row">
+            <h3 class="event-title">WFL x K-1 Dortmund : Brice Kombou vs. Sergej Braun</h3>
+            <a href="https://worldfightingleague.com" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Helmut-Körnig-Halle, Dortmund, Allemagne</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>14h00</strong> &nbsp;|&nbsp; Main Event vers <strong>21h00</strong></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : Prime Combat TV</span> <span class="badge-tv badge-fr">France : Prime Combat TV</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le K-1 s&#x27;associe à la World Fighting League (WFL) pour un événement exceptionnel à Dortmund. En plus d&#x27;un tournoi à 8 combattants dans la catégorie des -90 kg pour décrocher un ticket pour le K-1 World GP 2027 à Tokyo, la soirée propose deux combats de championnat du monde majeurs.</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (2 combats répertoriés)</summary>
+            <div class="fight-list">
+                
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Brice Kombou</strong> vs. <strong>Sergej Braun</strong></div>
+                <span class="weight-pill">Main Event — Poids super-moyens (-82,5 kg) — 5 rounds</span>
+            </div>
+            <div class="bout-desc">Titres mondiaux vacants WFL, WKU et ISKA en jeu. Un choc de haut niveau entre le Camerounais Kombou et l&#x27;expérimenté Allemand Braun, spécialiste du karaté Kyokushin.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Jahfarr Wilnis</strong> vs. <strong>Andre Schmeling</strong></div>
+                <span class="weight-pill">Co-Main Event — Poids lourds — 5 rounds</span>
+            </div>
+            <div class="bout-desc">Titre mondial poids lourds WFL et titre vacant WKU en jeu. Le champion en titre Jahfarr Wilnis défend sa ceinture face au solide Allemand Andre Schmeling.</div>
+        </div>
+        
+            </div>
+        </details>
+    </article>
+    
+    </section>
+    
+
+    <section id="glory" class="sport-section">
+        <h2>🏆 7. Glory Kickboxing</h2>
+        <div class="empty-state">🗓️ Aucun événement Glory Kickboxing programmé cette semaine.</div>
+    </section>
+    
+
+    <section id="raf" class="sport-section">
+        <h2>🤼 8. RAF (Real American Freestyle Wrestling)</h2>
+        
+    <article class="event-card">
+        
+        <div class="poster-container">
+            <img src="https://sportify.press/wp-content/uploads/2026/07/khamzat-chimaev.webp" alt="RAF 14: Tsarukyan vs. Danis" class="event-poster-img"
+                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
+            <div class="poster-overlay">
+                <div class="poster-belt">👑 Titre inaugural des poids moyens Crossover de la RAF (-84 kg)</div>
+                <div class="poster-dynamic-title">RAF 14: Tsarukyan vs. Danis</div>
+            </div>
+        </div>
+        
+        <div class="card-header-row">
+            <h3 class="event-title">RAF 14: Tsarukyan vs. Danis</h3>
+            <a href="https://www.realamericanfreestyle.com/events/tsarukyan-vs-danis-las-vegas-nv" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> BleauLive Theater, Fontainebleau Las Vegas, Las Vegas, États-Unis</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>03h00</strong> &nbsp;|&nbsp; Main Event vers <strong>05h30</strong></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : Fox Nation</span> <span class="badge-tv badge-fr">France : Fox Nation</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le gala RAF 14 marque les débuts de la ligue Real American Freestyle à Las Vegas. L&#x27;événement propose un duel très attendu entre Arman Tsarukyan et Dillon Danis pour le titre inaugural des poids moyens Crossover, ainsi que le retour de Khamzat Chimaev face à Robbie Lawler.</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (2 combats répertoriés)</summary>
+            <div class="fight-list">
+                
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Arman Tsarukyan (7-1-0 | 1m70)</strong> vs. <strong>Dillon Danis (0-2-0 | 1m83)</strong></div>
+                <span class="weight-pill">Main Event — Poids moyens Crossover (-84 kg) — 2 rounds de 3 minutes</span>
+            </div>
+            <div class="bout-desc">Titre inaugural des poids moyens Crossover en jeu. Tsarukyan, lutteur d&#x27;élite et favori, affronte le spécialiste du jiu-jitsu brésilien Danis dans un choc de styles.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Khamzat Chimaev (3-0-0 | 1m88)</strong> vs. <strong>Robbie Lawler (0-0-0 | 1m80)</strong></div>
+                <span class="weight-pill">Co-Main Event — Poids cruiserweight Crossover (-88 kg) — 2 rounds de 3 minutes</span>
+            </div>
+            <div class="bout-desc">Combat de transition pour Chimaev avant son combat pour le titre en novembre, face à l&#x27;ancien champion de l&#x27;UFC Robbie Lawler qui fait ses débuts en RAF.</div>
+        </div>
+        
+            </div>
+        </details>
+    </article>
+    
+    </section>
+    
         </main>
 
         <footer>
-            <p>Affiches & cartes extraites des pages officielles des promoteurs • Heures de Paris (CET/CEST) • Unités métriques (kg / m)</p>
+            <p>Architecture Micro-Agents vérifiée • Fuseau horaire : Paris (CET/CEST) • Système métrique standardisé (kg / m)</p>
         </footer>
     </div>
 
     <script>
-        // Bouton Tout déplier / Tout replier
         const toggleBtn = document.getElementById('toggleAllBtn');
         let allOpen = false;
         toggleBtn.addEventListener('click', () => {
@@ -469,7 +877,6 @@
             toggleBtn.textContent = allOpen ? '📁 Tout replier' : '📂 Tout déplier';
         });
 
-        // Filtre de recherche en temps réel
         const searchInput = document.getElementById('searchInput');
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
