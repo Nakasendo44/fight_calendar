@@ -3,261 +3,572 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendrier des Combats - Le QG des Sports de Combat</title>
+    <title>Calendrier des Combats — Boxe, MMA & Kickboxing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-    :root {
-        --bg-main: #F9F6F0;
-        --card-bg: #FFFFFF;
-        --card-alt: #F4EFE6;
-        --text-main: #2C221E;
-        --text-muted: #6B5B52;
-        --accent-brown: #8A4B29;
-        --accent-dark: #4A2E1B;
-        --border-color: #E6DFD3;
-        --font-serif: 'Georgia', 'Cambria', serif;
-        --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    }
-    * { box-sizing: border-box; }
-    body {
-        margin: 0;
-        padding: 0;
-        background-color: var(--bg-main);
-        color: var(--text-main);
-        font-family: var(--font-sans);
-        line-height: 1.65;
-        font-size: 16px;
-    }
-    .wrapper {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 2.5rem 1.25rem;
-    }
-    header {
-        text-align: center;
-        margin-bottom: 2rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 2px solid var(--border-color);
-    }
-    h1 {
-        font-family: var(--font-serif);
-        font-size: 2.3rem;
-        color: var(--accent-dark);
-        margin: 0 0 0.5rem 0;
-        letter-spacing: -0.5px;
-    }
-    .subtitle {
-        color: var(--text-muted);
-        font-size: 1rem;
-        margin-bottom: 0.8rem;
-    }
-    .badge-date {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        font-size: 0.85rem;
-        background-color: var(--card-alt);
-        color: var(--accent-dark);
-        border: 1px solid var(--border-color);
-        border-radius: 20px;
-        font-weight: 500;
-    }
-    /* Barre de navigation moderne */
-    nav.main-nav {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-bottom: 2.5rem;
-    }
-    nav.main-nav a {
-        text-decoration: none;
-        padding: 0.65rem 1.4rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.2s ease;
-        border: 1px solid var(--border-color);
-        background-color: var(--card-bg);
-        color: var(--text-muted);
-    }
-    nav.main-nav a.active {
-        background-color: var(--accent-brown);
-        color: #FFFFFF;
-        border-color: var(--accent-brown);
-    }
-    nav.main-nav a:hover:not(.active) {
-        background-color: var(--card-alt);
-        color: var(--accent-dark);
-    }
-    /* Typographie des articles */
-    h2 {
-        font-family: var(--font-serif);
-        color: var(--accent-dark);
-        font-size: 1.7rem;
-        margin-top: 2rem;
-        margin-bottom: 1.2rem;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 0.4rem;
-    }
-    h3 {
-        font-family: var(--font-serif);
-        color: var(--accent-brown);
-        font-size: 1.35rem;
-        margin-top: 1.5rem;
-        margin-bottom: 0.6rem;
-    }
-    p { margin-top: 0; margin-bottom: 1.1rem; }
-    article.news-item {
-        background-color: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1.6rem;
-        box-shadow: 0 2px 6px rgba(74, 46, 27, 0.03);
-    }
-    blockquote {
-        margin: 1.2rem 0;
-        padding: 1rem 1.3rem;
-        background-color: var(--card-alt);
-        border-left: 4px solid var(--accent-brown);
-        border-radius: 0 8px 8px 0;
-        font-style: italic;
-        color: var(--accent-dark);
-    }
-    /* Cartes du calendrier */
-    .event-card {
-        background-color: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 6px rgba(74, 46, 27, 0.03);
-    }
-    .event-card .meta-info {
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        margin-bottom: 0.8rem;
-    }
-    .meta-tag {
-        display: inline-block;
-        background: var(--card-alt);
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        margin-right: 0.4rem;
-        font-weight: 500;
-        color: var(--accent-dark);
-    }
-    details {
-        margin-top: 1.2rem;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 0.8rem 1.2rem;
-        background-color: var(--card-alt);
-    }
-    summary {
-        font-weight: 600;
-        color: var(--accent-brown);
-        cursor: pointer;
-        outline: none;
-    }
-    details ul {
-        margin-top: 1rem;
-        padding-left: 1.2rem;
-    }
-    details li {
-        margin-bottom: 0.8rem;
-    }
-    footer {
-        text-align: center;
-        margin-top: 3.5rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--border-color);
-        color: var(--text-muted);
-        font-size: 0.85rem;
-    }
-</style>
+        :root {
+            --bg-page: #F6F1E7;
+            --bg-card: #FFFDF9;
+            --bg-subtle: #EDE5D6;
+            --bg-details: #F9F5ED;
+            --text-primary: #261A13;
+            --text-secondary: #5E4B3E;
+            --accent-main: #9A4E24;
+            --accent-dark: #4A2812;
+            --accent-gold: #C4882B;
+            --border-warm: #DFD4C1;
+            --shadow-soft: 0 8px 24px rgba(58, 35, 18, 0.06);
+        }
+        * {
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-page);
+            background-image: radial-gradient(circle at 50% 0%, #FFFDF8 0%, #F6F1E7 70%);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 16px;
+            line-height: 1.65;
+        }
+        .container {
+            max-width: 940px;
+            margin: 0 auto;
+            padding: 2rem 1.2rem 4rem 1.2rem;
+        }
+        /* En-tête */
+        header.hero {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            background: linear-gradient(135deg, #3B2213 0%, #5E341B 100%);
+            color: #FFFDF9;
+            border-radius: 18px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 28px rgba(59, 34, 19, 0.18);
+        }
+        header.hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.3rem;
+            font-weight: 800;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -0.5px;
+            color: #FFFDF9;
+        }
+        header.hero p {
+            margin: 0 0 1rem 0;
+            color: #E8DACA;
+            font-size: 1.02rem;
+        }
+        .update-pill {
+            display: inline-block;
+            background-color: rgba(255, 253, 249, 0.14);
+            border: 1px solid rgba(255, 253, 249, 0.25);
+            color: #FFFDF9;
+            padding: 0.35rem 0.9rem;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        /* Barre d'accès rapide par sport */
+        .quick-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+            padding: 0.8rem;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-warm);
+            border-radius: 14px;
+            box-shadow: var(--shadow-soft);
+            position: sticky;
+            top: 10px;
+            z-index: 50;
+        }
+        .quick-nav a {
+            text-decoration: none;
+            color: var(--accent-dark);
+            background-color: var(--bg-subtle);
+            padding: 0.45rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+        .quick-nav a:hover {
+            background-color: var(--accent-main);
+            color: #FFFFFF;
+            transform: translateY(-1px);
+        }
+        /* Sections par sport */
+        .sport-section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 85px;
+        }
+        .sport-section h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: var(--accent-dark);
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--accent-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        /* Carte d'événement */
+        .event-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-warm);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.6rem;
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+        }
+        /* Bannière Photos Face-Off */
+        .faceoff-banner {
+            background: linear-gradient(135deg, #2D1B10 0%, #4E2E1B 50%, #2D1B10 100%);
+            border-radius: 12px;
+            padding: 1.2rem 1rem;
+            margin-bottom: 1.25rem;
+            color: #FFFDF9;
+            text-align: center;
+            border: 1px solid #6E452B;
+        }
+        .faceoff-belt {
+            display: inline-block;
+            background-color: rgba(196, 136, 43, 0.22);
+            border: 1px solid var(--accent-gold);
+            color: #F7D388;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.2rem 0.75rem;
+            border-radius: 99px;
+            margin-bottom: 0.9rem;
+        }
+        .faceoff-grid {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            gap: 0.75rem;
+        }
+        .fighter-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 40%;
+        }
+        .avatar-wrap {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            border: 3px solid var(--accent-gold);
+            overflow: hidden;
+            background-color: #3D2415;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+        }
+        .fighter-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+        }
+        .fighter-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #F7D388;
+            background: radial-gradient(circle, #5A351E 0%, #2D1B10 100%);
+        }
+        .fighter-name {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #FFFDF9;
+            line-height: 1.25;
+        }
+        .vs-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background-color: var(--accent-main);
+            border: 2px solid #F7D388;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: #FFFFFF;
+        }
+        .event-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-dark);
+            margin: 0 0 0.9rem 0;
+        }
+        /* Grille d'infos (Lieu, Heures, TV) */
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.55rem;
+            background-color: var(--bg-details);
+            border: 1px solid var(--border-warm);
+            border-radius: 10px;
+            padding: 0.9rem 1.1rem;
+            margin-bottom: 1rem;
+            font-size: 0.94rem;
+        }
+        .badge-tv {
+            display: inline-block;
+            background-color: var(--bg-subtle);
+            color: var(--accent-dark);
+            padding: 0.15rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-right: 0.35rem;
+            border: 1px solid var(--border-warm);
+        }
+        .badge-fr {
+            background-color: #9A4E24;
+            color: #FFFFFF;
+            border-color: #9A4E24;
+        }
+        .event-desc {
+            color: var(--text-primary);
+            margin: 0 0 1rem 0;
+        }
+        /* Menu déroulant Carte Complète */
+        details {
+            background-color: var(--bg-details);
+            border: 1px solid var(--border-warm);
+            border-radius: 10px;
+            padding: 0.85rem 1.15rem;
+            transition: all 0.2s ease;
+        }
+        details[open] {
+            background-color: #F4EFE4;
+            border-color: var(--accent-main);
+        }
+        summary {
+            font-weight: 700;
+            color: var(--accent-main);
+            cursor: pointer;
+            font-size: 0.98rem;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        summary::-webkit-details-marker {
+            display: none;
+        }
+        summary::after {
+            content: "▼ Afficher";
+            font-size: 0.8rem;
+            background-color: var(--bg-subtle);
+            color: var(--accent-dark);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+        }
+        details[open] summary::after {
+            content: "▲ Masquer";
+            background-color: var(--accent-main);
+            color: #FFFFFF;
+        }
+        .fight-list {
+            margin-top: 1rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--border-warm);
+        }
+        .bout-item {
+            padding: 0.7rem 0;
+            border-bottom: 1px dashed var(--border-warm);
+        }
+        .bout-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .weight-pill {
+            display: inline-block;
+            background-color: var(--bg-subtle);
+            color: var(--accent-dark);
+            font-weight: 700;
+            font-size: 0.8rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 5px;
+        }
+        .empty-state {
+            background-color: var(--bg-card);
+            border: 1px dashed var(--border-warm);
+            border-radius: 12px;
+            padding: 1.2rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            text-align: center;
+        }
+        footer {
+            text-align: center;
+            margin-top: 3.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-warm);
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }
+        @media (max-width: 600px) {
+            header.hero h1 { font-size: 1.75rem; }
+            .avatar-wrap { width: 70px; height: 70px; }
+            .fighter-name { font-size: 0.92rem; }
+        }
+    </style>
 </head>
 <body>
-    <div class="wrapper">
-        <header>
-            <h1>🥊 Le QG des Sports de Combat</h1>
-            <div class="subtitle">L'actualité décryptée & le radar complet des galas de la semaine</div>
-            <span class="badge-date">Édition du 21/10/2026 à 15:13 (Heure de Paris)</span>
+    <div class="container">
+        <header class="hero">
+            <h1>🥊 Calendrier des Sports de Combat</h1>
+            <p>Le programme officiel vérifié : Boxe Anglaise, Japon, UFC, Rizin, BKFC, Kickboxing & RAF</p>
+            <span class="update-pill">🔄 Mis à jour le 21/10/2026 à 15:43 (Heure de Paris)</span>
         </header>
 
-        <nav class="main-nav">
-            <a href="index.html" class="">📰 Actualités & Décryptages</a>
-            <a href="calendrier.html" class="active">📅 Calendrier des Combats</a>
+        <nav class="quick-nav">
+            <a href="#boxe-monde">🥊 Boxe Monde</a>
+            <a href="#boxe-japon">🇯🇵 Boxe Japon</a>
+            <a href="#ufc">🔥 UFC</a>
+            <a href="#rizin">🌸 Rizin</a>
+            <a href="#bkfc">👊 BKFC</a>
+            <a href="#kick-japon">🦵 Kick JP</a>
+            <a href="#glory">🏆 Glory</a>
+            <a href="#raf">🤼 RAF</a>
         </nav>
 
         <main>
-            <h3>1. Boxe anglaise - Galas Internationaux</h3>
+            <section id="boxe-monde" class="sport-section">
+  <h2>🥊 1. Boxe Anglaise — Galas Internationaux</h2>
+  
+  <article class="event-card">
+    
+    <div class="faceoff-banner">
+        <div class="faceoff-belt">👑 Super-légers (-63,5 kg) &amp; Titre mondial WBC</div>
+        <div class="faceoff-grid">
+            <div class="fighter-col">
+                <div class="avatar-wrap"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/John_Dalton_by_Thomas_Phillips%2C_1835.jpg/500px-John_Dalton_by_Thomas_Phillips%2C_1835.jpg?utm_source=ja.wikipedia.org&utm_campaign=api&utm_content=thumbnail" alt="Dalton Smith" class="fighter-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="fighter-fallback" style="display:none;">DS</div></div>
+                <span class="fighter-name">Dalton Smith</span>
+            </div>
+            <div class="vs-col">
+                <span class="vs-badge">VS</span>
+            </div>
+            <div class="fighter-col">
+                <div class="avatar-wrap"><div class="fighter-fallback">AP</div></div>
+                <span class="fighter-name">Alberto Puello</span>
+            </div>
+        </div>
+    </div>
+    
+    <h3 class="event-title">Matchroom Boxing : Dalton Smith vs. Alberto Puello</h3>
+    <div class="meta-grid">
+      <div class="meta-item">📍 <strong>Lieu :</strong> Utilita Arena, Sheffield, Royaume-Uni</div>
+      <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début à <strong>19h00</strong> | Main Event vers <strong>23h30</strong></div>
+      <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : DAZN Global</span> <span class="badge-tv badge-fr">France : DAZN</span></div>
+    </div>
+    <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le surdoué britannique <strong>Dalton Smith</strong> dispute son premier grand championnat du monde à domicile face au redoutable gaucher dominicain <strong>Alberto Puello</strong>. Une confrontation de styles absolue entre un puncheur d'élite clinique devant son public et un maître technicien invaincu déterminé à conserver son statut dans l'arène des super-légers.</p>
+    <details>
+      <summary>📊 Développer la carte complète, palmarès et analyse des combats</summary>
+      <div class="fight-list">
+        <div class="bout-item">
+          🥊 <strong>Dalton Smith (17-0-0, 12 KOs | 1m78) vs. Alberto Puello (23-0-0, 10 KOs | 1m75)</strong> — <span class="weight-pill">Super-légers (-63,5 kg)</span>
+          <p>Championnat du monde WBC. Smith, redoutable contreur et puncheur au timing chirurgical, défie la garde hermétique et le coup d'œil exceptionnel du styliste dominicain Puello.</p>
+        </div>
+      </div>
+    </details>
+  </article>
 
-<div class="event-card">
-  <h4>Matchroom Boxing : Alberto Puello vs. Dalton Smith</h4>
-  <p><strong>Lieu :</strong> Utilita Arena, Sheffield, Royaume-Uni</p>
-  <p><strong>Heures :</strong> Début de la soirée à 19h00 | Combat principal estimé à 23h15 (Heure de Paris)</p>
-  <p><strong>Diffuseurs :</strong> DAZN (International) / DAZN France</p>
-  <p><strong>Présentation du choc principal :</strong> Choc au sommet chez les super-légers (-63,5 kg) pour le titre mondial WBC. L'invaincu britannique Dalton Smith (19-0-0, 14 KO) dispute le combat le plus important de sa carrière devant son public face au redoutable gaucher dominicain Alberto Puello (23-0-0, 10 KO), réputé pour sa précision chirurgicale et sa maestria tactique.</p>
-  <details>
-    <summary>Développer la carte complète des combats</summary>
-    <ul>
-      <li><strong>Titre mondial WBC - Super-légers (-63,5 kg) :</strong> Dalton Smith (19-0-0, 14 KO) vs. Alberto Puello (23-0-0, 10 KO)</li>
-      <li>Reste de la carte en cours de finalisation par l'organisation.</li>
-    </ul>
-  </details>
-</div>
+  <article class="event-card">
+    
+    <div class="faceoff-banner">
+        <div class="faceoff-belt">👑 Super-plumes (-58,9 kg) &amp; Unification WBO / WBC</div>
+        <div class="faceoff-grid">
+            <div class="fighter-col">
+                <div class="avatar-wrap"><div class="fighter-fallback">EN</div></div>
+                <span class="fighter-name">Emanuel Navarrete</span>
+            </div>
+            <div class="vs-col">
+                <span class="vs-badge">VS</span>
+            </div>
+            <div class="fighter-col">
+                <div class="avatar-wrap"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cf/RobsonConcei%C3%A7%C3%A3o.png/500px-RobsonConcei%C3%A7%C3%A3o.png?utm_source=ja.wikipedia.org&utm_campaign=api&utm_content=thumbnail" alt="O&#x27;Shaquie Foster" class="fighter-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="fighter-fallback" style="display:none;">OF</div></div>
+                <span class="fighter-name">O&#x27;Shaquie Foster</span>
+            </div>
+        </div>
+    </div>
+    
+    <h3 class="event-title">Top Rank Boxing : Emanuel Navarrete vs. O'Shaquie Foster</h3>
+    <div class="meta-grid">
+      <div class="meta-item">📍 <strong>Lieu :</strong> Pechanga Arena, San Diego, États-Unis</div>
+      <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début à <strong>01h00</strong> (dimanche) | Main Event vers <strong>05h00</strong></div>
+      <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : ESPN+</span> <span class="badge-tv badge-fr">France : RMC Sport</span></div>
+    </div>
+    <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Choc au sommet d'unification chez les super-plumes opposant le guerrier mexicain <strong>Emanuel Navarrete</strong> au virtuose défensif américain <strong>O'Shaquie Foster</strong>. L'imprévisibilité et le volume de frappes infernal de « Vaquero » se heurtent au sens du contre et à la gestion de distance d'école de Foster.</p>
+    <details>
+      <summary>📊 Développer la carte complète, palmarès et analyse des combats</summary>
+      <div class="fight-list">
+        <div class="bout-item">
+          🥊 <strong>Emanuel Navarrete (38-2-1, 31 KOs | 1m70) vs. O'Shaquie Foster (23-3-0, 12 KOs | 1m74)</strong> — <span class="weight-pill">Super-plumes (-58,9 kg)</span>
+          <p>Unification des couronnes WBO et WBC. Un duel de styles magistral entre la pression tout-terrain de Navarrete et la précision millimétrée de Foster en phase de repli.</p>
+        </div>
+      </div>
+    </details>
+  </article>
+</section>
 
-<h3>2. Boxe anglaise - Galas au Japon (Korakuen Hall inclus)</h3>
-<p><em>Aucun événement majeur programmé cette semaine (reprogrammation du championnat du monde de Tomoki Kameda actée suite au communiqué WBA).</em></p>
+<section id="boxe-japon" class="sport-section">
+  <h2>🇯🇵 2. Boxe Anglaise — Galas au Japon (Korakuen Hall & Arènes)</h2>
+  <div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette catégorie.</div>
+</section>
 
-<h3>3. UFC</h3>
+<section id="ufc" class="sport-section">
+  <h2>🔥 3. UFC</h2>
+  
+  <article class="event-card">
+    
+    <div class="faceoff-banner">
+        <div class="faceoff-belt">👑 Poids Plumes (-65,8 kg) &amp; Ceinture UFC</div>
+        <div class="faceoff-grid">
+            <div class="fighter-col">
+                <div class="avatar-wrap"><img src="https://thumb.wikimedia.org/wikipedia/en/thumb/c/c8/Volkanovski_2021_red_shirt.jpeg/500px-Volkanovski_2021_red_shirt.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail" alt="Alexander Volkanovski" class="fighter-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="fighter-fallback" style="display:none;">AV</div></div>
+                <span class="fighter-name">Alexander Volkanovski</span>
+            </div>
+            <div class="vs-col">
+                <span class="vs-badge">VS</span>
+            </div>
+            <div class="fighter-col">
+                <div class="avatar-wrap"><img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Movsar_Evloev_M-1_Challenge_2018.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled" alt="Movsar Evloev" class="fighter-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="fighter-fallback" style="display:none;">ME</div></div>
+                <span class="fighter-name">Movsar Evloev</span>
+            </div>
+        </div>
+    </div>
+    
+    <h3 class="event-title">UFC 333 : Alexander Volkanovski vs. Movsar Evloev</h3>
+    <div class="meta-grid">
+      <div class="meta-item">📍 <strong>Lieu :</strong> Etihad Arena, Yas Island, Abou Dabi, Émirats Arabes Unis</div>
+      <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début des préliminaires à <strong>16h00</strong> | Carte principale à <strong>20h00</strong> | Main Event vers <strong>22h45</strong></div>
+      <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : Paramount+ / ESPN+</span> <span class="badge-tv badge-fr">France : RMC Sport 2</span></div>
+    </div>
+    <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> L'UFC pose ses valises à Abou Dabi pour un événement spectaculaire coiffé par deux combats de championnat du monde. La légende des poids plumes <strong>Alexander Volkanovski</strong> tente de préserver son trône face au lutteur d'élite invaincu <strong>Movsar Evloev</strong>, tandis que le co-main event met en scène la revanche ultra-attendue entre <strong>Petr Yan</strong> et <strong>Merab Dvalishvili</strong> pour la couronne des poids coqs.</p>
+    <details>
+      <summary>📊 Développer la carte complète, palmarès et analyse des combats</summary>
+      <div class="fight-list">
+        <div class="bout-item">
+          🥊 <strong>Alexander Volkanovski (26-4-0, 13 KOs | 1m68) vs. Movsar Evloev (18-0-0, 3 KOs | 1m70)</strong> — <span class="weight-pill">Poids plumes (-65,8 kg)</span>
+          <p>Titre mondial UFC des poids plumes. Volkanovski met son trône et son héritage en jeu face au contrôle au sol étouffant et au rythme sans faille du Daghestanais Evloev.</p>
+        </div>
+        <div class="bout-item">
+          🥊 <strong>Petr Yan (17-5-0, 7 KOs | 1m71) vs. Merab Dvalishvili (18-4-0, 3 KOs | 1m68)</strong> — <span class="weight-pill">Poids coqs (-61,2 kg)</span>
+          <p>Titre mondial UFC des poids coqs. Revanche explosive au sommet : la boxe d'école et les contres de Yan face au moteur infini et à la lutte de harcèlement de « The Machine » Dvalishvili.</p>
+        </div>
+        <div class="bout-item">
+          🥊 <strong>Alexander Volkov (38-10-0, 24 KOs | 2m01) vs. Rizvan Kuniev (13-2-1, 6 KOs | 1m93)</strong> — <span class="weight-pill">Poids lourds (-120,2 kg)</span>
+          <p>Choc de géants chez les poids lourds entre la science du kickboxing à distance de Volkov et la puissance brute de Kuniev.</p>
+        </div>
+        <div class="bout-item">
+          🥊 <strong>Lone'er Kavanagh (7-0-0, 4 KOs | 1m68) vs. Ramazan Temirov (18-2-0, 10 KOs | 1m65)</strong> — <span class="weight-pill">Poids mouches (-56,7 kg)</span>
+          <p>Duel à très haute intensité chez les prétendants de la division des mouches entre deux spécialistes de la percussion ultra-rapide.</p>
+        </div>
+        <div class="bout-item">
+          🥊 <strong>Iasmin Lucindo (17-5-0, 8 KOs | 1m60) vs. Nicolle Caliari (8-2-0, 4 KOs | 1m63)</strong> — <span class="weight-pill">Poids pailles (-52,2 kg)</span>
+          <p>Affrontement 100% brésilien chez les pailles entre la jeunesse bondissante de Lucindo et l'explosivité au striking de Caliari.</p>
+        </div>
+      </div>
+    </details>
+  </article>
+</section>
 
-<div class="event-card">
-  <h4>UFC Fight Night 292</h4>
-  <p><strong>Lieu :</strong> UFC APEX, Las Vegas, Nevada, États-Unis</p>
-  <p><strong>Heures :</strong> Carte préliminaire à 22h00 | Carte principale à 01h00 | Combat principal estimé à 03h30 (Heure de Paris)</p>
-  <p><strong>Diffuseurs :</strong> ESPN+ (États-Unis) / RMC Sport 2 (France)</p>
-  <p><strong>Présentation de la soirée :</strong> Soirée d'action dans l'octogone de l'APEX, marquée par des remaniements de dernière minute sur les combats de tête et une confrontation pivotale pour l'ordre hiérarchique de la catégorie.</p>
-  <details>
-    <summary>Développer la carte complète des combats</summary>
-    <ul>
-      <li>Reste de la carte en cours de finalisation par l'organisation.</li>
-    </ul>
-  </details>
-</div>
+<section id="rizin" class="sport-section">
+  <h2>🌸 4. Rizin Fighting Federation</h2>
+  <div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette catégorie.</div>
+</section>
 
-<h3>4. Rizin</h3>
-<p><em>Aucun événement majeur programmé cette semaine.</em></p>
+<section id="bkfc" class="sport-section">
+  <h2>👊 5. BKFC (Bare Knuckle)</h2>
+  <div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette catégorie.</div>
+</section>
 
-<h3>5. BKFC</h3>
-<p><em>Aucun événement majeur programmé cette semaine.</em></p>
+<section id="kick-japon" class="sport-section">
+  <h2>🦵 6. Kickboxing Japonais (RISE, K-1, Krush)</h2>
+  
+  <article class="event-card">
+    
+    <div class="faceoff-banner">
+        <div class="faceoff-belt">👑 Super-plumes (-60,0 kg)</div>
+        <div class="faceoff-grid">
+            <div class="fighter-col">
+                <div class="avatar-wrap"><div class="fighter-fallback">ST</div></div>
+                <span class="fighter-name">Shota Tezuka</span>
+            </div>
+            <div class="vs-col">
+                <span class="vs-badge">VS</span>
+            </div>
+            <div class="fighter-col">
+                <div class="avatar-wrap"><div class="fighter-fallback">SC</div></div>
+                <span class="fighter-name">Superbon Gym Challenger</span>
+            </div>
+        </div>
+    </div>
+    
+    <h3 class="event-title">Shootboxing 2026 act.5 : Tezuka vs. Challenger Superbon Gym</h3>
+    <div class="meta-grid">
+      <div class="meta-item">📍 <strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</div>
+      <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début à <strong>10h30</strong> | Main Event vers <strong>13h30</strong></div>
+      <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : U-NEXT (Japon)</span> <span class="badge-tv badge-fr">France : U-NEXT</span></div>
+    </div>
+    <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le temple du Korakuen Hall accueille une confrontation internationale majeure de Shootboxing entre l'élite japonaise et des combattants thaïlandais recommandés par la légende Superbon. <strong>Shota Tezuka</strong> et <strong>Koyata Yamada</strong> montent au front avec l'obligation de s'imposer par arrêt avant la limite.</p>
+    <details>
+      <summary>📊 Développer la carte complète, palmarès et analyse des combats</summary>
+      <div class="fight-list">
+        <div class="bout-item">
+          🥊 <strong>Shota Tezuka vs. Superbon Gym Challenger</strong> — <span class="weight-pill">Super-plumes (-60,0 kg)</span>
+          <p>Combat principal en règles Shootboxing intégrant projections et soumissions debout. Tezuka veut faire parler son anglaise percutante face au muay-thaï traditionnel.</p>
+        </div>
+        <div class="bout-item">
+          🥊 <strong>Koyata Yamada vs. Muay Thai Contender</strong> — <span class="weight-pill">Super-coqs (-55,0 kg)</span>
+          <p>Le puncheur Yamada mise sur sa vitesse d'exécution pour déborder son adversaire et infliger un KO retentissant.</p>
+        </div>
+      </div>
+    </details>
+  </article>
+</section>
 
-<h3>6. Kickboxing Japonais (RISE, K-1, Krush)</h3>
+<section id="glory" class="sport-section">
+  <h2>🏆 7. Glory Kickboxing</h2>
+  <div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette catégorie.</div>
+</section>
 
-<div class="event-card">
-  <h4>Shoot Boxing 2026 Series</h4>
-  <p><strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</p>
-  <p><strong>Heures :</strong> Début de la réunion à 10h30 | Combats principaux vers 13h00 (Heure de Paris)</p>
-  <p><strong>Diffuseurs :</strong> U-NEXT (Japon) / Streaming officiel international</p>
-  <p><strong>Présentation de la soirée :</strong> Opposition internationale de haut niveau opposant les fers de lance du Shoot Boxing japonais aux protégés de l'académie thaïlandaise de Superbon Banchamek. Shota Tezuka et Koyata Yamada montent sur le ring du mythique Korakuen Hall avec l'ambition déclarée de s'imposer avant la limite.</p>
-  <details>
-    <summary>Développer la carte complète des combats</summary>
-    <ul>
-      <li><strong>Super fight Shoot Boxing / Muay Thai (-58,0 kg) :</strong> Shota Tezuka vs. Représentant Superbon Gym</li>
-      <li><strong>Super fight Shoot Boxing / Muay Thai (-55,0 kg) :</strong> Koyata Yamada vs. Représentant Superbon Gym</li>
-      <li>Reste de la carte en cours de finalisation par l'organisation.</li>
-    </ul>
-  </details>
-</div>
-
-<h3>7. Glory Kickboxing</h3>
-<p><em>Aucun événement majeur programmé cette semaine.</em></p>
-
-<h3>8. RAF (Real American Freestyle wrestling)</h3>
-<p><em>Aucun événement majeur programmé cette semaine.</em></p>
+<section id="raf" class="sport-section">
+  <h2>🤼 8. RAF (Real American Freestyle Wrestling)</h2>
+  <div class="empty-state">🗓️ Aucun événement majeur programmé cette semaine dans cette catégorie.</div>
+</section>
         </main>
 
         <footer>
-            <p>Rédaction & Veille automatique multilingue. Unités standardisées (kg, m) et heures calées sur Paris (CET/CEST).</p>
+            <p>Données croisées depuis les calendriers officiels des promoteurs • Horaires convertis sur Paris (CET/CEST) • Système métrique (kg / m)</p>
         </footer>
     </div>
 </body>
