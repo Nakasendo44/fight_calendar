@@ -271,4 +271,435 @@ def get_available_models():
             ordered.append(f)
     return ordered or ["gemini-3.8-flash"]
 
-models_to_try = get_available_models
+models_to_try = get_available_models()
+calendar_content = None
+
+# Tentative avec Google Search activé pour vérifier chaque carte en direct
+for model_name in models_to_try[:2]:
+    try:
+        print(f"Génération du calendrier vérifié via {model_name} (Search Grounding actif)...")
+        resp = client.models.generate_content(
+            model=model_name,
+            contents=CALENDAR_PROMPT,
+            config=types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+                temperature=0.1,
+            ),
+        )
+        if resp and getattr(resp, "text", None):
+            calendar_content = resp.text
+            print(f"Succès avec {model_name} !")
+            break
+    except Exception as e:
+        print(f"Avertissement ({model_name} + Search) : {e}")
+        time.sleep(3)
+
+# Repli sans l'outil Search si le quota Search est temporairement saturé
+if not calendar_content:
+    for model_name in models_to_try:
+        try:
+            print(f"Repli sur {model_name} avec les données extraites...")
+            resp = client.models.generate_content(
+                model=model_name,
+                contents=CALENDAR_PROMPT,
+                config=types.GenerateContentConfig(temperature=0.1),
+            )
+            if resp and getattr(resp, "text", None):
+                calendar_content = resp.text
+                print(f"Succès avec {model_name} !")
+                break
+        except Exception as e:
+            print(f"Modèle {model_name} indisponible : {e}")
+            time.sleep(2)
+
+if calendar_content:
+    calendar_content = calendar_content.replace("```html", "").replace("```", "").strip()
+    calendar_content = inject_fighter_photos(calendar_content)
+else:
+    calendar_content = "<div class='empty-state'>⚠️ Synchronisation en cours. Veuillez rafraîchir la page d'ici quelques minutes.</div>"
+
+# ==============================================================================
+# ÉTAPE 5 : DESIGN MODERNE BEIGE / MARRON CHAUD & TYPOGRAPHIE SOIGNÉE
+# ==============================================================================
+HTML_TEMPLATE = f"""<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendrier des Combats — Boxe, MMA & Kickboxing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {{
+            --bg-page: #F6F1E7;
+            --bg-card: #FFFDF9;
+            --bg-subtle: #EDE5D6;
+            --bg-details: #F9F5ED;
+            --text-primary: #261A13;
+            --text-secondary: #5E4B3E;
+            --accent-main: #9A4E24;
+            --accent-dark: #4A2812;
+            --accent-gold: #C4882B;
+            --border-warm: #DFD4C1;
+            --shadow-soft: 0 8px 24px rgba(58, 35, 18, 0.06);
+        }}
+        * {{
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }}
+        body {{
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-page);
+            background-image: radial-gradient(circle at 50% 0%, #FFFDF8 0%, #F6F1E7 70%);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 16px;
+            line-height: 1.65;
+        }}
+        .container {{
+            max-width: 940px;
+            margin: 0 auto;
+            padding: 2rem 1.2rem 4rem 1.2rem;
+        }}
+        /* En-tête */
+        header.hero {{
+            text-align: center;
+            padding: 2rem 1.5rem;
+            background: linear-gradient(135deg, #3B2213 0%, #5E341B 100%);
+            color: #FFFDF9;
+            border-radius: 18px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 28px rgba(59, 34, 19, 0.18);
+        }}
+        header.hero h1 {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.3rem;
+            font-weight: 800;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -0.5px;
+            color: #FFFDF9;
+        }}
+        header.hero p {{
+            margin: 0 0 1rem 0;
+            color: #E8DACA;
+            font-size: 1.02rem;
+        }}
+        .update-pill {{
+            display: inline-block;
+            background-color: rgba(255, 253, 249, 0.14);
+            border: 1px solid rgba(255, 253, 249, 0.25);
+            color: #FFFDF9;
+            padding: 0.35rem 0.9rem;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }}
+        /* Barre d'accès rapide par sport */
+        .quick-nav {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+            padding: 0.8rem;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-warm);
+            border-radius: 14px;
+            box-shadow: var(--shadow-soft);
+            position: sticky;
+            top: 10px;
+            z-index: 50;
+        }}
+        .quick-nav a {{
+            text-decoration: none;
+            color: var(--accent-dark);
+            background-color: var(--bg-subtle);
+            padding: 0.45rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }}
+        .quick-nav a:hover {{
+            background-color: var(--accent-main);
+            color: #FFFFFF;
+            transform: translateY(-1px);
+        }}
+        /* Sections par sport */
+        .sport-section {{
+            margin-bottom: 3rem;
+            scroll-margin-top: 85px;
+        }}
+        .sport-section h2 {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: var(--accent-dark);
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--accent-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }}
+        /* Carte d'événement */
+        .event-card {{
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-warm);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.6rem;
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+        }}
+        /* Bannière Photos Face-Off */
+        .faceoff-banner {{
+            background: linear-gradient(135deg, #2D1B10 0%, #4E2E1B 50%, #2D1B10 100%);
+            border-radius: 12px;
+            padding: 1.2rem 1rem;
+            margin-bottom: 1.25rem;
+            color: #FFFDF9;
+            text-align: center;
+            border: 1px solid #6E452B;
+        }}
+        .faceoff-belt {{
+            display: inline-block;
+            background-color: rgba(196, 136, 43, 0.22);
+            border: 1px solid var(--accent-gold);
+            color: #F7D388;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.2rem 0.75rem;
+            border-radius: 99px;
+            margin-bottom: 0.9rem;
+        }}
+        .faceoff-grid {{
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            gap: 0.75rem;
+        }}
+        .fighter-col {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 40%;
+        }}
+        .avatar-wrap {{
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            border: 3px solid var(--accent-gold);
+            overflow: hidden;
+            background-color: #3D2415;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+        }}
+        .fighter-img {{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+        }}
+        .fighter-fallback {{
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #F7D388;
+            background: radial-gradient(circle, #5A351E 0%, #2D1B10 100%);
+        }}
+        .fighter-name {{
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #FFFDF9;
+            line-height: 1.25;
+        }}
+        .vs-badge {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background-color: var(--accent-main);
+            border: 2px solid #F7D388;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: #FFFFFF;
+        }}
+        .event-title {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-dark);
+            margin: 0 0 0.9rem 0;
+        }}
+        /* Grille d'infos (Lieu, Heures, TV) */
+        .meta-grid {{
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.55rem;
+            background-color: var(--bg-details);
+            border: 1px solid var(--border-warm);
+            border-radius: 10px;
+            padding: 0.9rem 1.1rem;
+            margin-bottom: 1rem;
+            font-size: 0.94rem;
+        }}
+        .badge-tv {{
+            display: inline-block;
+            background-color: var(--bg-subtle);
+            color: var(--accent-dark);
+            padding: 0.15rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-right: 0.35rem;
+            border: 1px solid var(--border-warm);
+        }}
+        .badge-fr {{
+            background-color: #9A4E24;
+            color: #FFFFFF;
+            border-color: #9A4E24;
+        }}
+        .event-desc {{
+            color: var(--text-primary);
+            margin: 0 0 1rem 0;
+        }}
+        /* Menu déroulant Carte Complète */
+        details {{
+            background-color: var(--bg-details);
+            border: 1px solid var(--border-warm);
+            border-radius: 10px;
+            padding: 0.85rem 1.15rem;
+            transition: all 0.2s ease;
+        }}
+        details[open] {{
+            background-color: #F4EFE4;
+            border-color: var(--accent-main);
+        }}
+        summary {{
+            font-weight: 700;
+            color: var(--accent-main);
+            cursor: pointer;
+            font-size: 0.98rem;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }}
+        summary::-webkit-details-marker {{
+            display: none;
+        }}
+        summary::after {{
+            content: "▼ Afficher";
+            font-size: 0.8rem;
+            background-color: var(--bg-subtle);
+            color: var(--accent-dark);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+        }}
+        details[open] summary::after {{
+            content: "▲ Masquer";
+            background-color: var(--accent-main);
+            color: #FFFFFF;
+        }}
+        .fight-list {{
+            margin-top: 1rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--border-warm);
+        }}
+        .bout-item {{
+            padding: 0.7rem 0;
+            border-bottom: 1px dashed var(--border-warm);
+        }}
+        .bout-item:last-child {{
+            border-bottom: none;
+            padding-bottom: 0;
+        }}
+        .weight-pill {{
+            display: inline-block;
+            background-color: var(--bg-subtle);
+            color: var(--accent-dark);
+            font-weight: 700;
+            font-size: 0.8rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 5px;
+        }}
+        .empty-state {{
+            background-color: var(--bg-card);
+            border: 1px dashed var(--border-warm);
+            border-radius: 12px;
+            padding: 1.2rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            text-align: center;
+        }}
+        footer {{
+            text-align: center;
+            margin-top: 3.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-warm);
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }}
+        @media (max-width: 600px) {{
+            header.hero h1 {{ font-size: 1.75rem; }}
+            .avatar-wrap {{ width: 70px; height: 70px; }}
+            .fighter-name {{ font-size: 0.92rem; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1>🥊 Calendrier des Sports de Combat</h1>
+            <p>Le programme officiel vérifié : Boxe Anglaise, Japon, UFC, Rizin, BKFC, Kickboxing & RAF</p>
+            <span class="update-pill">🔄 Mis à jour le {date_str} à {heure_str} (Heure de Paris)</span>
+        </header>
+
+        <nav class="quick-nav">
+            <a href="#boxe-monde">🥊 Boxe Monde</a>
+            <a href="#boxe-japon">🇯🇵 Boxe Japon</a>
+            <a href="#ufc">🔥 UFC</a>
+            <a href="#rizin">🌸 Rizin</a>
+            <a href="#bkfc">👊 BKFC</a>
+            <a href="#kick-japon">🦵 Kick JP</a>
+            <a href="#glory">🏆 Glory</a>
+            <a href="#raf">🤼 RAF</a>
+        </nav>
+
+        <main>
+            {calendar_content}
+        </main>
+
+        <footer>
+            <p>Données croisées depuis les calendriers officiels des promoteurs • Horaires convertis sur Paris (CET/CEST) • Système métrique (kg / m)</p>
+        </footer>
+    </div>
+</body>
+</html>
+"""
+
+# Sauvegarde dans index.html et calendrier.html (compatibilité totale avec le workflow existant)
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(HTML_TEMPLATE)
+
+with open("calendrier.html", "w", encoding="utf-8") as f:
+    f.write(HTML_TEMPLATE)
+
+print("Calendrier généré avec succès dans index.html et calendrier.html !")
