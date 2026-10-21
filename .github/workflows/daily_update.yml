@@ -2,9 +2,7 @@ name: Actualisation Quotidienne du Calendrier
 
 on:
   schedule:
-    # Exécution programmée tous les matins à 05h00 UTC
     - cron: '0 5 * * *'
-  # Permet également de forcer manuellement la mise à jour via un bouton sur GitHub
   workflow_dispatch:
 
 jobs:
@@ -35,6 +33,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action Bot"
-          git add index.html
+          git add index.html calendrier.html
           git commit -m "Mise à jour automatique : $(date '+%Y-%m-%d %H:%M')" || echo "Aucune modification à publier"
           git push
