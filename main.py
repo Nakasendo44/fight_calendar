@@ -1,3 +1,4 @@
+SCRIPT VERSION FONCTIONNEL (PAS OU PEU DE POSTER 1H15)
 import os
 import sys
 import time
@@ -42,29 +43,22 @@ HEADERS = {
 }
 
 # ==============================================================================
-# 2. DÉCOUVERTE DES MODÈLES (SANS LES MODÈLES 404 NI LES MODÈLES IMAGE/AUDIO)
+# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES DISPONIBLES (VERSION FONCTIONNELLE RESTAURÉE)
 # ==============================================================================
 def get_available_models():
     preferred = [
-        "gemini-robotics-er-2-preview",
         "gemini-3.8-flash",
         "gemini-3.8-flash-lite",
         "gemini-3.5-flash",
-        "gemini-3-flash-preview",
-        "gemini-3.1-flash-lite-preview",
-        "gemini-3.1-flash-lite",
-        "gemini-flash-latest",
-        "gemini-flash-lite-latest",
-    ]
-    excluded = [
-        "embedding", "imagen", "veo", "tts", "audio", "vision", "aqa",
-        "2.5", "image", "banana", "transcribe", "argon", "customtools"
+        "gemini-2.5-flash",
     ]
     discovered = []
     try:
         for m in client.models.list():
             short = getattr(m, "name", "").replace("models/", "")
-            if "gemini" in short and not any(ex in short for ex in excluded):
+            if "gemini" in short and not any(
+                ex in short for ex in ["embedding", "imagen", "veo", "tts", "audio", "vision", "aqa"]
+            ):
                 discovered.append(short)
         print(f"Modèles actifs détectés : {discovered}")
     except Exception as e:
@@ -79,7 +73,7 @@ def get_available_models():
 AVAILABLE_MODELS = get_available_models()
 
 # ==============================================================================
-# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS (VERSION FONCTIONNELLE RESTAURÉE)
+# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS
 # ==============================================================================
 AGENTS_CONFIG = [
     {
@@ -187,7 +181,7 @@ AGENTS_CONFIG = [
         "empty_msg": "Aucun événement RAF programmé cette semaine.",
         "search_hint": (
             "Recherche les événements officiels Real American Freestyle wrestling (RAF) et Joe Hand Promotions sur : "
-            "realamericanfreestyle.com/events-gallery, flowrestling.org, themat.com et les communiqués officiels RAF."
+            "flowrestling.org, themat.com et les communiqués officiels RAF."
         ),
         "specific_rules": (
             "- Applique une rigueur absolue : si aucun événement RAF n'a lieu exactement dans les 7 prochains jours, renvoie une liste vide []."
@@ -196,11 +190,11 @@ AGENTS_CONFIG = [
 ]
 
 # ==============================================================================
-# 4. MOTEUR D'EXTRACTION D'AFFICHES OFFICIELLES FILTRÉ (VERSION PROMOTEURS STRICTE)
+# 4. MOTEUR D'EXTRACTION D'AFFICHES OFFICIELLES FILTRÉ (ANTI-RINGWALKS)
 # ==============================================================================
 POSTER_CACHE = {}
 
-# Sites d'agrégation bannis UNIQUEMENT pour les images (Tapology remis en liste noire)
+# Sites d'agrégation bannis UNIQUEMENT pour les images (renvoient de fausses affiches génériques)
 BLOCKED_IMAGE_DOMAINS = [
     "ringwalks.com",
     "box.live",
@@ -213,7 +207,7 @@ BLOCKED_IMAGE_DOMAINS = [
     "reddit.com",
 ]
 
-# Sites officiels autorisés pour la récupération d'affiches et logos de promoteurs
+# Sites officiels prioritaires pour la récupération d'affiches
 TRUSTED_PROMOTER_DOMAINS = [
     "matchroomboxing.com",
     "queensberry.co.uk",
@@ -234,17 +228,13 @@ TRUSTED_PROMOTER_DOMAINS = [
     "ibu4gin.net",
     "asianboxing.info",
     "flowrestling.org",
-    "realamericanfreestyle.com",
 ]
 
 def is_url_allowed_for_poster(url):
     if not url or not url.startswith("http"):
         return False
     low = url.lower()
-    if any(b in low for b in BLOCKED_IMAGE_DOMAINS):
-        return False
-    # Autorise uniquement les domaines officiels de promoteurs pour éviter toute image d'article hors sujet
-    return any(t in low for t in TRUSTED_PROMOTER_DOMAINS)
+    return not any(b in low for b in BLOCKED_IMAGE_DOMAINS)
 
 def is_valid_poster_image(img_url):
     if not img_url or not img_url.startswith("http"):
@@ -262,7 +252,7 @@ def is_valid_poster_image(img_url):
     return not any(t in low for t in bad_tokens)
 
 def extract_og_image_from_url(url):
-    """Récupère l'image officielle (og:image / twitter:image) uniquement sur les domaines de promoteurs."""
+    """Récupère l'image officielle (og:image / twitter:image) uniquement sur les domaines autorisés."""
     if not is_url_allowed_for_poster(url):
         return None
     if url in POSTER_CACHE:
@@ -270,13 +260,6 @@ def extract_og_image_from_url(url):
 
     try:
         resp = requests.get(url, headers=HEADERS, timeout=8)
-        # Si la sous-page du promoteur renvoie 404, on tente la page d'accueil du promoteur (ex: matchroomboxing.com)
-        if resp.status_code >= 400:
-            parsed_root = urllib.parse.urlparse(url)
-            root_url = f"{parsed_root.scheme}://{parsed_root.netloc}/"
-            if root_url != url:
-                resp = requests.get(root_url, headers=HEADERS, timeout=8)
-
         if resp.status_code == 200:
             raw = resp.text
             patterns = [
@@ -293,7 +276,7 @@ def extract_og_image_from_url(url):
                     elif img.startswith("/"):
                         parsed = urllib.parse.urlparse(url)
                         img = f"{parsed.scheme}://{parsed.netloc}{img}"
-                    if not any(b in img.lower() for b in BLOCKED_IMAGE_DOMAINS) and is_valid_poster_image(img):
+                    if is_url_allowed_for_poster(img) and is_valid_poster_image(img):
                         POSTER_CACHE[url] = img
                         return img
     except Exception:
@@ -427,51 +410,32 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
                 events = parse_agent_json(response.text)
                 grounding_urls = extract_grounding_urls(response)
 
-                # Enrichissement des URLs et Posters (strictement comme la version fonctionnelle)
+                # Enrichissement des URLs et Posters (en filtrant les agrégateurs comme ringwalks.com)
                 for ev in events:
                     ev_url = (ev.get("url_officielle") or "").strip()
                     if (not ev_url or "google.com" in ev_url) and grounding_urls:
                         ev["url_officielle"] = grounding_urls[0]
                         ev_url = grounding_urls[0]
 
-                    # Correctif ciblé uniquement si un sous-lien BKFC renvoie 404
-                    if "bkfc.com/events/" in ev_url.lower():
-                        try:
-                            chk = requests.get(ev_url, headers=HEADERS, timeout=5)
-                            if chk.status_code == 404:
-                                ev_url = "https://www.bkfc.com/events"
-                                ev["url_officielle"] = ev_url
-                        except Exception:
-                            ev_url = "https://www.bkfc.com/events"
-                            ev["url_officielle"] = ev_url
-
                     poster = (ev.get("poster_url") or "").strip()
                     if not is_url_allowed_for_poster(poster) or not is_valid_poster_image(poster):
                         poster = ""
 
                     if not poster:
-                        # 1. Essai sur l'URL officielle si c'est un domaine de promoteur
+                        # 1. Essai sur l'URL officielle si elle n'est pas sur liste noire
                         found_poster = extract_og_image_from_url(ev_url)
-                        # 2. Sinon on cherche uniquement dans les URLs de promoteurs officiels
+                        # 2. Sinon on cherche en priorité dans les URLs de promoteurs officiels visitées par Google
                         if not found_poster:
                             trusted_urls = [
                                 u for u in grounding_urls if any(t in u.lower() for t in TRUSTED_PROMOTER_DOMAINS)
                             ]
-                            for g_url in trusted_urls[:4]:
+                            other_urls = [
+                                u for u in grounding_urls if u not in trusted_urls and is_url_allowed_for_poster(u)
+                            ]
+                            for g_url in (trusted_urls + other_urls)[:4]:
                                 found_poster = extract_og_image_from_url(g_url)
                                 if found_poster:
                                     break
-                        # 3. Si le nom du gala mentionne un grand promoteur, on récupère sa bannière officielle
-                        if not found_poster:
-                            gala_low = (ev.get("nom_gala") or "").lower()
-                            if "matchroom" in gala_low:
-                                found_poster = extract_og_image_from_url("https://www.matchroomboxing.com/")
-                            elif "queensberry" in gala_low:
-                                found_poster = extract_og_image_from_url("https://www.queensberry.co.uk/")
-                            elif "top rank" in gala_low:
-                                found_poster = extract_og_image_from_url("https://www.toprank.com/")
-                            elif "golden boy" in gala_low:
-                                found_poster = extract_og_image_from_url("https://www.goldenboy.com/")
                         poster = found_poster or ""
 
                     ev["poster_url"] = poster
@@ -599,11 +563,8 @@ def render_event_card_html(ev):
 
 # Exécution séquentielle des 8 Micro-Agents avec temporisation anti-quota
 sections_html = []
-total_events_found = 0
-
 for idx, cfg in enumerate(AGENTS_CONFIG):
     events_list = run_micro_agent(cfg)
-    total_events_found += len(events_list)
     if events_list:
         cards_rendered = "\n".join(render_event_card_html(ev) for ev in events_list)
     else:
@@ -618,12 +579,7 @@ for idx, cfg in enumerate(AGENTS_CONFIG):
     sections_html.append(section_block)
 
     if idx < len(AGENTS_CONFIG) - 1:
-        print("  Pause de 65s pour réinitialiser la fenêtre de quota par minute (RPM)...")
-        time.sleep(65)
-
-if total_events_found == 0 and os.path.exists("index.html"):
-    print("\n[ALERTE QUOTA API] 0 événement extrait. Conservation des fichiers existants.")
-    sys.exit(0)
+        time.sleep(14)
 
 all_sections_content = "\n".join(sections_html)
 
@@ -797,6 +753,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
             box-shadow: var(--shadow-soft);
             overflow: hidden;
         }}
+        /* Bannière Poster Officiel avec object-fit: contain (Zéro rognage des portraits ou affiches) */
         .poster-container {{
             position: relative;
             width: 100%;
