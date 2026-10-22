@@ -510,7 +510,9 @@ sections_html = []
 for idx, cfg in enumerate(AGENTS_CONFIG):
     events_list = run_micro_agent(cfg)
     cards_rendered = "\n".join(render_event_card_html(ev) for ev in events_list) if events_list else f'<div class="empty-state">🗓️ {html.escape(cfg["empty_msg"])}</div>'
-    sections_html.append(f'<section id="{cfg['id']}" class="sport-section"><h2>{cfg['title']}</h2>{cards_rendered}</section>')
+    # Utilisation stricte de guillemets doubles pour éviter SyntaxError en Python 3.11
+    sections_html.append(f'<section id="{cfg["id"]}" class="sport-section"><h2>{cfg["title"]}</h2>{cards_rendered}</section>')
+    
     if idx < len(AGENTS_CONFIG) - 1:
         time.sleep(14)
 
