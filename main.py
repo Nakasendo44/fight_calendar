@@ -26,15 +26,20 @@ now_paris = datetime.now(paris_tz)
 date_str = now_paris.strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
-# Génération explicite de la fenêtre des 7 prochains jours pour éviter toute erreur de date par l'IA
+# Génération explicite des dates en Français, ISO et Anglais (pour les sites US comme BKFC/Tapology)
 valid_dates_fr = []
 valid_dates_iso = []
+valid_dates_en = []
 for offset in range(8):
     d = now_paris + timedelta(days=offset)
     valid_dates_fr.append(d.strftime("%d/%m/%Y"))
     valid_dates_iso.append(d.strftime("%Y-%m-%d"))
+    valid_dates_en.append(d.strftime("%b %d, %Y"))
 
-DATE_WINDOW_STR = f"du {valid_dates_fr[0]} au {valid_dates_fr[-1]} inclus (Dates ISO autorisées : {', '.join(valid_dates_iso)})"
+DATE_WINDOW_STR = (
+    f"du {valid_dates_fr[0]} au {valid_dates_fr[-1]} inclus "
+    f"(Dates ISO : {', '.join(valid_dates_iso)} | Format US : {', '.join(valid_dates_en)})"
+)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
@@ -42,24 +47,28 @@ HEADERS = {
 }
 
 # ==============================================================================
-# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES DISPONIBLES (VERSION FONCTIONNELLE INTACTE)
+# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES TEXTE ACTIFS (SANS LES MODÈLES 404/IMAGE)
 # ==============================================================================
 def get_available_models():
     preferred = [
         "gemini-3.8-flash",
         "gemini-3.8-flash-lite",
         "gemini-3.5-flash",
-        "gemini-2.5-flash",
+        "gemini-3-flash-preview",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-flash-latest",
+    ]
+    excluded_tokens = [
+        "embedding", "imagen", "veo", "tts", "audio", "vision", "aqa",
+        "image", "banana", "transcribe", "argon", "customtools", "2.5"
     ]
     discovered = []
     try:
         for m in client.models.list():
             short = getattr(m, "name", "").replace("models/", "")
-            if "gemini" in short and not any(
-                ex in short for ex in ["embedding", "imagen", "veo", "tts", "audio", "vision", "aqa"]
-            ):
+            if "gemini" in short and not any(ex in short for ex in excluded_tokens):
                 discovered.append(short)
-        print(f"Modèles actifs détectés : {discovered}")
+        print(f"Modèles texte actifs détectés : {discovered}")
     except Exception as e:
         print(f"Info liste modèles : {e}")
 
@@ -72,7 +81,7 @@ def get_available_models():
 AVAILABLE_MODELS = get_available_models()
 
 # ==============================================================================
-# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS (TEXTES INTACTS + RAF & TAPOLOGY)
+# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS
 # ==============================================================================
 AGENTS_CONFIG = [
     {
@@ -81,15 +90,15 @@ AGENTS_CONFIG = [
         "fallback_url": "https://box.live/upcoming-fights-schedule/",
         "empty_msg": "Aucun gala international majeur répertorié dans la fenêtre des 7 prochains jours.",
         "search_hint": (
-            "Recherche les galas de boxe anglaise prévus cette semaine sur : "
-            "box.live, ringtv.com/schedule, matchroomboxing.com/events, queensberry.co.uk, "
-            "dazn.com, espn.com/boxing/schedule, fightnights.com, ufcfightpass.com, tapology.com/fightcenter. "
+            "Recherche tous les galas de boxe anglaise prévus cette semaine ET leur carte complète (full fight card / undercard) sur : "
+            "box.live, tapology.com/fightcenter, ringtv.com/schedule, matchroomboxing.com/events, queensberry.co.uk, "
+            "dazn.com, espn.com/boxing/schedule, fightnights.com, ufcfightpass.com. "
             "Inclus impérativement les cartes Matchroom, Queensberry, Top Rank, PBC, Golden Boy, "
             "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
         ),
         "specific_rules": (
-            "- Vérifie et liste TOUS les combats connus de la carte (Main Event, Co-Main Event et Undercard complète).\n"
-            "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) sur Box.live, Tapology ou le site du promoteur.\n"
+            "- EXHAUSTIVITÉ DE LA CARTE : Pour chaque gala trouvé (ex: Matchroom, Top Rank, Queensberry, etc.), cherche sa fiche détaillée sur Box.live ou Tapology pour extraire TOUS les combats programmés sur la carte (Main Event, Co-Main Event et tous les combats de l'Undercard, soit généralement 5 à 10 combats par gala).\n"
+            "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) pour chaque boxeur.\n"
             "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, The Ring ou EBU est en jeu.\n"
             "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
         ),
@@ -100,11 +109,12 @@ AGENTS_CONFIG = [
         "fallback_url": "https://boxmob.jp/sp/schedule/",
         "empty_msg": "Aucun gala professionnel japonais répertorié sur cette période de 7 jours.",
         "search_hint": (
-            "Recherche le calendrier de boxe professionnelle japonaise (プロボクシング 日程 後楽園ホール) sur : "
-            "boxmob.jp (Boxing Mobile), boxingnews.jp, ibu4gin.net, asianboxing.info, box.live, tapology.com/fightcenter. "
+            "Recherche le calendrier de boxe professionnelle japonaise (プロボクシング 日程 後楽園ホール) et les cartes complètes sur : "
+            "boxmob.jp (Boxing Mobile), boxingnews.jp, tapology.com/fightcenter, ibu4gin.net, asianboxing.info, box.live. "
             "Cherche les galas au Korakuen Hall (後楽園ホール), Ariake Arena, Yokohama, Osaka (Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next, etc.)."
         ),
         "specific_rules": (
+            "- Liste TOUS les combats connus de chaque réunion japonaise (Main Event et sous-carte complète).\n"
             "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn).\n"
             "- Convertis les horaires japonais (JST = UTC+9) en heure de Paris (souvent entre 10h00 et 14h00 heure de Paris pour le Korakuen Hall).\n"
             "- Précise les diffuseurs japonais d'origine (Lemino, Boxing Raise, U-NEXT, ABEMA, Prime Video JP, WOWOW) et la disponibilité en France.\n"
@@ -117,11 +127,11 @@ AGENTS_CONFIG = [
         "fallback_url": "https://www.ufc.com/events",
         "empty_msg": "Aucun événement UFC programmé cette semaine.",
         "search_hint": (
-            "Recherche le prochain événement UFC prévu dans les 7 prochains jours sur : "
+            "Recherche le prochain événement UFC prévu dans les 7 prochains jours et sa carte complète (Main Card, Prelims, Early Prelims) sur : "
             "ufc.com/events, tapology.com/fightcenter, sherdog.com/events."
         ),
         "specific_rules": (
-            "- Liste la carte complète en séparant clairement le statut de chaque combat (Main Card, Prelims, Early Prelims).\n"
+            "- Extrais l'intégralité des combats de la soirée (les 10 à 14 combats : Main Card, Prelims et Early Prelims).\n"
             "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur.\n"
             "- Convertis les heures du début des Prelims et de la Main Card à l'heure de Paris."
         ),
@@ -137,7 +147,7 @@ AGENTS_CONFIG = [
         ),
         "specific_rules": (
             "- Vérifie strictement si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre des 7 prochains jours.\n"
-            "- Si aucun gala Rizin n'a lieu dans les 7 prochains jours, renvoie immédiatement une liste vide []."
+            "- Si oui, liste tous les combats de la carte. Si aucun gala Rizin n'a lieu dans les 7 prochains jours, renvoie immédiatement une liste vide []."
         ),
     },
     {
@@ -146,13 +156,13 @@ AGENTS_CONFIG = [
         "fallback_url": "https://www.bkfc.com/events",
         "empty_msg": "Aucun événement BKFC programmé cette semaine.",
         "search_hint": (
-            "Recherche le calendrier officiel Bare Knuckle Fighting Championship sur : "
-            "bkfc.com/events, tapology.com/fightcenter."
+            "Recherche tous les événements Bare Knuckle Fighting Championship prévus cette semaine (incluant BKFC numérotés, BKFC Fight Night, BKFC Clearwater, etc.) sur : "
+            "bkfc.com/events, tapology.com/fightcenter, box.live."
         ),
         "specific_rules": (
-            "- Liste le Main Event, le Co-Main Event et les combats confirmés de la carte.\n"
-            "- Indique 'BKFC App / TrillerTV / DAZN' selon le diffuseur officiel de l'événement.\n"
-            "- N'invente jamais d'URL bkfc.com : si tu n'as pas l'URL exacte vérifiée, mets 'https://www.bkfc.com/events'."
+            "- Vérifie attentivement les dates au format US (Oct 2026) sur bkfc.com/events et Tapology pour ne manquer aucun 'BKFC Fight Night' ou gala numéroté de cette semaine.\n"
+            "- Liste TOUS les combats confirmés de la carte (Main Event, Co-Main Event et toute l'Undercard).\n"
+            "- Indique 'BKFC App / TrillerTV / DAZN' selon le diffuseur officiel de l'événement."
         ),
     },
     {
@@ -161,11 +171,11 @@ AGENTS_CONFIG = [
         "fallback_url": "https://www.k-1.co.jp/schedule/",
         "empty_msg": "Aucun gala majeur RISE, K-1 ou Krush programmé cette semaine.",
         "search_hint": (
-            "Recherche les prochains événements K-1, Krush et RISE (K-1 Krush RISE 大会日程 対戦カード) sur : "
+            "Recherche les prochains événements K-1, Krush et RISE (K-1 Krush RISE 大会日程 対戦カード) et leur carte complète sur : "
             "k-1.co.jp/schedule, rise-rc.com/schedule, tapology.com/fightcenter."
         ),
         "specific_rules": (
-            "- Identifie clairement s'il s'agit de K-1, Krush ou RISE et précise la salle (ex: Korakuen Hall, Yoyogi).\n"
+            "- Identifie clairement s'il s'agit de K-1, Krush ou RISE, précise la salle (ex: Korakuen Hall) et liste tous les combats principaux et préliminaires annoncés.\n"
             "- Indique ABEMA TV (格闘チャンネル) comme diffuseur d'origine lorsque applicable et convertis l'heure JST en heure de Paris."
         ),
     },
@@ -175,11 +185,11 @@ AGENTS_CONFIG = [
         "fallback_url": "https://glorykickboxing.com/events",
         "empty_msg": "Aucun événement Glory Kickboxing programmé cette semaine.",
         "search_hint": (
-            "Recherche le calendrier officiel Glory Kickboxing sur : "
+            "Recherche le calendrier officiel Glory Kickboxing et la carte complète sur : "
             "glorykickboxing.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
-            "- Liste tous les combats annoncés (tournois Grand Prix, championnats du monde Glory et Superfights)."
+            "- Liste tous les combats annoncés sur la carte (tournois Grand Prix, championnats du monde Glory, Superfights et Prelims)."
         ),
     },
     {
@@ -189,22 +199,23 @@ AGENTS_CONFIG = [
         "empty_msg": "Aucun événement RAF programmé cette semaine.",
         "search_hint": (
             "Recherche les événements officiels Real American Freestyle wrestling (RAF) en priorité sur : "
-            "realamericanfreestyle.com/events-gallery, realamericanfreestyle.com, flowrestling.org, themat.com et les communiqués officiels RAF."
+            "realamericanfreestyle.com/events-gallery, realamericanfreestyle.com, flowrestling.org, themat.com."
         ),
         "specific_rules": (
             "- Vérifie les événements programmés sur realamericanfreestyle.com/events-gallery (ex: RAF 14, etc.) dans la fenêtre des 7 prochains jours.\n"
-            "- Applique une rigueur absolue : si aucun événement RAF n'a lieu exactement dans les 7 prochains jours, renvoie une liste vide []."
+            "- Liste tous les matchups annoncés sur la carte.\n"
+            "- Si aucun événement RAF n'a lieu exactement dans les 7 prochains jours, renvoie une liste vide []."
         ),
     },
 ]
 
 # ==============================================================================
-# 4. MOTEUR D'EXTRACTION D'AFFICHES OFFICIELLES FILTRÉ (AVEC TAPOLOGY EN PLAN B)
+# 4. MOTEUR D'EXTRACTION D'AFFICHES & RÉSOLUTION DES REDIRECTIONS GOOGLE SEARCH
 # ==============================================================================
 POSTER_CACHE = {}
-URL_VERIFY_CACHE = {}
+RESOLVED_URL_CACHE = {}
 
-# Sites d'agrégation bannis UNIQUEMENT pour les images (Tapology est désormais autorisé !)
+# Sites bannis uniquement pour les images (bannières génériques trompeuses)
 BLOCKED_IMAGE_DOMAINS = [
     "ringwalks.com",
     "box.live",
@@ -216,7 +227,7 @@ BLOCKED_IMAGE_DOMAINS = [
     "reddit.com",
 ]
 
-# Sites officiels prioritaires pour la récupération d'affiches
+# Domaines officiels prioritaires pour la récupération d'affiches
 TRUSTED_PROMOTER_DOMAINS = [
     "realamericanfreestyle.com",
     "matchroomboxing.com",
@@ -247,7 +258,6 @@ def is_url_allowed_for_poster(url):
     return not any(b in low for b in BLOCKED_IMAGE_DOMAINS)
 
 def is_valid_poster_image(img_url):
-    """Exactement la fonction qui permettait d'afficher les visuels/logos Matchroom."""
     if not img_url or not img_url.startswith("http"):
         return False
     low = img_url.lower()
@@ -262,57 +272,43 @@ def is_valid_poster_image(img_url):
     ]
     return not any(t in low for t in bad_tokens)
 
-def verify_official_url(url, grounding_urls, fallback_url):
-    """Vérifie que le bouton 'Source officielle' ne pointe pas vers une page 404 (ex: BKFC)."""
-    if url and url.startswith("http") and "google.com" not in url:
-        if url in URL_VERIFY_CACHE:
-            if URL_VERIFY_CACHE[url]:
-                return URL_VERIFY_CACHE[url]
-        else:
-            try:
-                r = requests.get(url, headers=HEADERS, timeout=6, allow_redirects=True)
-                if r.status_code != 404 and r.status_code < 500:
-                    URL_VERIFY_CACHE[url] = r.url
-                    return r.url
-                print(f"  [Anti-404] Lien mort détecté ({r.status_code}) : {url}")
-                URL_VERIFY_CACHE[url] = None
-            except Exception:
-                URL_VERIFY_CACHE[url] = None
-
-    # Si l'URL est en erreur 404, on cherche une URL valide issue de Google Search
-    for g_url in grounding_urls:
-        if "google.com" in g_url:
-            continue
-        if g_url in URL_VERIFY_CACHE and URL_VERIFY_CACHE[g_url]:
-            return URL_VERIFY_CACHE[g_url]
-        try:
-            r = requests.get(g_url, headers=HEADERS, timeout=6, allow_redirects=True)
-            if r.status_code != 404 and r.status_code < 500:
-                URL_VERIFY_CACHE[g_url] = r.url
-                return r.url
-        except Exception:
-            continue
-
-    return fallback_url
-
-def extract_og_image_from_url(url):
-    """Récupère l'image officielle (ou le poster Tapology au-dessus des combattants)."""
-    if not is_url_allowed_for_poster(url):
+def resolve_and_verify_url(url):
+    """Suit les redirections (notamment vertexaisearch.cloud.google.com) et vérifie que la page n'est pas en erreur 404."""
+    if not url or not url.startswith("http"):
         return None
-    if url in POSTER_CACHE:
-        return POSTER_CACHE[url]
+    if url in RESOLVED_URL_CACHE:
+        return RESOLVED_URL_CACHE[url]
 
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=8, allow_redirects=True)
+        resp = requests.get(url, headers=HEADERS, timeout=7, allow_redirects=True)
+        if resp.status_code < 400 and "google.com/search" not in resp.url:
+            RESOLVED_URL_CACHE[url] = resp.url
+            return resp.url
+    except Exception:
+        pass
+
+    RESOLVED_URL_CACHE[url] = None
+    return None
+
+def extract_og_image_from_url(url):
+    """Récupère l'affiche officielle sur le site du promoteur ou le poster d'événement sur Tapology."""
+    resolved = resolve_and_verify_url(url) or url
+    if not is_url_allowed_for_poster(resolved):
+        return None
+    if resolved in POSTER_CACHE:
+        return POSTER_CACHE[resolved]
+
+    try:
+        resp = requests.get(resolved, headers=HEADERS, timeout=8, allow_redirects=True)
         if resp.status_code == 200:
             final_url = resp.url
             if not is_url_allowed_for_poster(final_url):
-                POSTER_CACHE[url] = None
+                POSTER_CACHE[resolved] = None
                 return None
 
             raw = resp.text
 
-            # Cas spécifique Tapology : on cible l'affiche officielle située au-dessus de la Fight Card
+            # Si la page est sur Tapology, on cible le vrai poster situé au-dessus de la Fight Card
             if "tapology.com" in final_url.lower():
                 tap_match = re.search(
                     r'(https://images\.tapology\.com/poster_images/[0-9]+/profile/[^"\'\s>]+)',
@@ -322,13 +318,12 @@ def extract_og_image_from_url(url):
                 if tap_match:
                     tap_img = html.unescape(tap_match.group(1).strip())
                     if is_valid_poster_image(tap_img):
-                        POSTER_CACHE[url] = tap_img
+                        POSTER_CACHE[resolved] = tap_img
                         return tap_img
-                # Si la page Tapology n'a pas d'affiche d'événement, on ignore son logo générique
-                POSTER_CACHE[url] = None
+                POSTER_CACHE[resolved] = None
                 return None
 
-            # Extraction standard og:image / twitter:image pour tous les promoteurs officiels
+            # Extraction standard og:image / twitter:image pour les sites officiels
             patterns = [
                 r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
                 r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
@@ -344,17 +339,17 @@ def extract_og_image_from_url(url):
                         parsed = urllib.parse.urlparse(final_url)
                         img = f"{parsed.scheme}://{parsed.netloc}{img}"
                     if is_url_allowed_for_poster(img) and is_valid_poster_image(img):
-                        POSTER_CACHE[url] = img
+                        POSTER_CACHE[resolved] = img
                         return img
     except Exception:
         pass
 
-    POSTER_CACHE[url] = None
+    POSTER_CACHE[resolved] = None
     return None
 
 def extract_grounding_urls(response):
-    """Extrait les URLs réelles visitées par Google Search depuis les métadonnées de la réponse."""
-    urls = []
+    """Extrait et résout les URLs réelles visitées par Google Search."""
+    raw_urls = []
     try:
         candidates = getattr(response, "candidates", []) or []
         for cand in candidates:
@@ -365,10 +360,16 @@ def extract_grounding_urls(response):
             for ch in chunks:
                 web = getattr(ch, "web", None)
                 if web and getattr(web, "uri", None):
-                    urls.append(web.uri)
+                    raw_urls.append(web.uri)
     except Exception:
         pass
-    return urls
+
+    resolved_list = []
+    for u in raw_urls[:8]:
+        real_u = resolve_and_verify_url(u)
+        if real_u and real_u not in resolved_list:
+            resolved_list.append(real_u)
+    return resolved_list
 
 def parse_agent_json(raw_text):
     """Extrait et parse de manière ultra-tolérante le bloc JSON produit par un agent."""
@@ -405,7 +406,7 @@ def parse_agent_json(raw_text):
     return []
 
 # ==============================================================================
-# 5. EXÉCUTION D'UN MICRO-AGENT AVEC RECHERCHE GOOGLE & REPLI ANTI-429
+# 5. EXÉCUTION D'UN MICRO-AGENT AVEC RECHERCHE GOOGLE & SOUS-CARTES COMPLÈTES
 # ==============================================================================
 def run_micro_agent(agent_cfg):
     discipline_id = agent_cfg["id"]
@@ -421,6 +422,7 @@ MISSION :
 
 CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
+- CARTE COMPLÈTE OBLIGATOIRE : Ne t'arrête JAMAIS au seul Main Event. Pour chaque événement retenu, extrais tous les combats répertoriés sur la carte (Main Event, Co-Main Event, et l'ensemble des combats Undercard / Prelims).
 - Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
 - ZÉRO HALLUCINATION : N'invente jamais de combat, d'adversaire 'TBA' fictif, ni de palmarès. Si tu n'es pas certain d'un palmarès ou d'une taille, mets "N/C".
 - Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
@@ -428,7 +430,7 @@ CONSIGNES IMPÉRATIVES :
 - Rédige les présentations et analyses en français journalistique précis en conservant les termes techniques (puncher, out-boxer, southpaw, main event, undercard, KO, TKO, undisputed).
 
 FORMAT DE SORTIE OBLIGATOIRE :
-Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma, sans aucun texte avant ni après :
+Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma (avec TOUS les combats de la carte dans le tableau "combats"), sans aucun texte avant ni après :
 {{
   "evenements": [
     {{
@@ -445,16 +447,40 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma, sans a
       "presentation": "2 à 3 phrases de présentation factuelle et dynamique des enjeux de l'événement.",
       "combats": [
         {{
-          "statut": "Main Event (ou Co-Main Event / Undercard / Prelims)",
-          "combattant_a": "Prénom Nom",
+          "statut": "Main Event",
+          "combattant_a": "Prénom Nom A",
           "palmares_a": "19-0-0, 14 KOs",
           "taille_a": "1m78",
-          "combattant_b": "Prénom Nom",
+          "combattant_b": "Prénom Nom B",
           "palmares_b": "25-1-0, 11 KOs",
           "taille_b": "1m75",
           "categorie_kg": "Super-légers (-63,5 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Titre en jeu et courte description stylistique du duel en 1 à 2 phrases."
+          "enjeu_et_analyse": "Titre en jeu et courte description stylistique du duel."
+        }},
+        {{
+          "statut": "Co-Main Event",
+          "combattant_a": "Prénom Nom C",
+          "palmares_a": "15-1-0, 9 KOs",
+          "taille_a": "1m82",
+          "combattant_b": "Prénom Nom D",
+          "palmares_b": "18-2-0, 8 KOs",
+          "taille_b": "1m80",
+          "categorie_kg": "Mi-moyens (-66,7 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Enjeu et style de l'affrontement."
+        }},
+        {{
+          "statut": "Undercard",
+          "combattant_a": "Prénom Nom E",
+          "palmares_a": "10-0-0, 6 KOs",
+          "taille_a": "1m73",
+          "combattant_b": "Prénom Nom F",
+          "palmares_b": "12-3-1, 4 KOs",
+          "taille_b": "1m71",
+          "categorie_kg": "Légers (-61,2 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Combat de la sous-carte."
         }}
       ]
     }}
@@ -475,7 +501,7 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
                 ),
             )
             if response and getattr(response, "text", None):
-                # Astuce gain de temps : le modèle qui fonctionne passe en tête de liste pour les agents suivants
+                # On place le modèle réactif en tête pour éviter les attentes sur les agents suivants
                 if AVAILABLE_MODELS[0] != model_name and model_name in AVAILABLE_MODELS:
                     AVAILABLE_MODELS.remove(model_name)
                     AVAILABLE_MODELS.insert(0, model_name)
@@ -483,11 +509,12 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
                 events = parse_agent_json(response.text)
                 grounding_urls = extract_grounding_urls(response)
 
-                # Enrichissement des URLs et Posters
                 for ev in events:
-                    ev_url = (ev.get("url_officielle") or "").strip()
-                    ev_url = verify_official_url(ev_url, grounding_urls, fallback_url)
-                    ev["url_officielle"] = ev_url
+                    raw_ev_url = (ev.get("url_officielle") or "").strip()
+                    valid_ev_url = resolve_and_verify_url(raw_ev_url)
+                    if not valid_ev_url:
+                        valid_ev_url = grounding_urls[0] if grounding_urls else fallback_url
+                    ev["url_officielle"] = valid_ev_url
 
                     poster = (ev.get("poster_url") or "").strip()
                     if not is_url_allowed_for_poster(poster) or not is_valid_poster_image(poster):
@@ -495,13 +522,12 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
 
                     if not poster:
                         # 1. Essai sur l'URL officielle vérifiée
-                        found_poster = extract_og_image_from_url(ev_url)
-                        # 2. Plan A : URLs de promoteurs officiels visitées par Google
+                        found_poster = extract_og_image_from_url(valid_ev_url)
+                        # 2. Essai sur les URLs de promoteurs officiels puis Tapology (résolues)
                         if not found_poster:
                             trusted_urls = [
                                 u for u in grounding_urls if any(t in u.lower() for t in TRUSTED_PROMOTER_DOMAINS)
                             ]
-                            # 3. Plan B : Tapology (vrai poster au-dessus des combattants) et autres URLs autorisées
                             tapology_urls = [
                                 u for u in grounding_urls if "tapology.com" in u.lower()
                             ]
@@ -524,11 +550,11 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
             err_str = str(e)
             print(f"  [Avertissement] {model_name} sur [{discipline_id}] : {err_str[:160]}")
             if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                wait_time = 35 if idx == 0 else 20
+                wait_time = 25 if idx == 0 else 15
                 print(f"  Pause de sécurité de {wait_time}s (quota API) avant rotation de modèle...")
                 time.sleep(wait_time)
             else:
-                time.sleep(4)
+                time.sleep(3)
 
     print(f"  [Info] Aucun résultat récupéré pour [{discipline_id}], affichage de l'état vide sécurisé.")
     return []
