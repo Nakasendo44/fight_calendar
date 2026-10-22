@@ -26,6 +26,7 @@ now_paris = datetime.now(paris_tz)
 date_str = now_paris.strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
+# Génération explicite de la fenêtre des 7 prochains jours pour éviter toute erreur de date par l'IA
 valid_dates_fr = []
 valid_dates_iso = []
 for offset in range(8):
@@ -41,7 +42,7 @@ HEADERS = {
 }
 
 # ==============================================================================
-# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES DISPONIBLES
+# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES DISPONIBLES (VERSION FONCTIONNELLE INTACTE)
 # ==============================================================================
 def get_available_models():
     preferred = [
@@ -58,8 +59,9 @@ def get_available_models():
                 ex in short for ex in ["embedding", "imagen", "veo", "tts", "audio", "vision", "aqa"]
             ):
                 discovered.append(short)
+        print(f"Modèles actifs détectés : {discovered}")
     except Exception as e:
-        pass
+        print(f"Info liste modèles : {e}")
 
     final_list = [p for p in preferred if not discovered or p in discovered]
     for d in discovered:
@@ -70,179 +72,263 @@ def get_available_models():
 AVAILABLE_MODELS = get_available_models()
 
 # ==============================================================================
-# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS
+# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS (TEXTES INTACTS + RAF & TAPOLOGY)
 # ==============================================================================
 AGENTS_CONFIG = [
     {
         "id": "boxe-monde",
         "title": "🥊 1. Boxe Anglaise — Galas Internationaux",
-        "fallback_schedule_url": "https://box.live/upcoming-fights-schedule/",
+        "fallback_url": "https://box.live/upcoming-fights-schedule/",
         "empty_msg": "Aucun gala international majeur répertorié dans la fenêtre des 7 prochains jours.",
         "search_hint": (
             "Recherche les galas de boxe anglaise prévus cette semaine sur : "
             "box.live, ringtv.com/schedule, matchroomboxing.com/events, queensberry.co.uk, "
-            "dazn.com, espn.com/boxing/schedule, fightnights.com, ufcfightpass.com, tapology.com/fightcenter."
+            "dazn.com, espn.com/boxing/schedule, fightnights.com, ufcfightpass.com, tapology.com/fightcenter. "
+            "Inclus impérativement les cartes Matchroom, Queensberry, Top Rank, PBC, Golden Boy, "
+            "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
         ),
         "specific_rules": (
+            "- Vérifie et liste TOUS les combats connus de la carte (Main Event, Co-Main Event et Undercard complète).\n"
+            "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) sur Box.live, Tapology ou le site du promoteur.\n"
             "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, The Ring ou EBU est en jeu.\n"
-            "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs)."
+            "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
         ),
     },
     {
         "id": "boxe-japon",
         "title": "🇯🇵 2. Boxe Anglaise — Galas au Japon (Korakuen Hall & Arènes)",
-        "fallback_schedule_url": "https://boxmob.jp/sp/schedule/",
+        "fallback_url": "https://boxmob.jp/sp/schedule/",
         "empty_msg": "Aucun gala professionnel japonais répertorié sur cette période de 7 jours.",
         "search_hint": (
-            "Recherche le calendrier de boxe japonaise (プロボクシング 日程) sur : "
-            "boxmob.jp, boxingnews.jp, ibu4gin.net, asianboxing.info, tapology.com/fightcenter."
+            "Recherche le calendrier de boxe professionnelle japonaise (プロボクシング 日程 後楽園ホール) sur : "
+            "boxmob.jp (Boxing Mobile), boxingnews.jp, ibu4gin.net, asianboxing.info, box.live, tapology.com/fightcenter. "
+            "Cherche les galas au Korakuen Hall (後楽園ホール), Ariake Arena, Yokohama, Osaka (Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next, etc.)."
         ),
         "specific_rules": (
-            "- Transcris tous les noms des boxeurs japonais en alphabet latin.\n"
-            "- Précise les diffuseurs japonais (Lemino, U-NEXT, ABEMA) et les titres nationaux/OPBF."
+            "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn).\n"
+            "- Convertis les horaires japonais (JST = UTC+9) en heure de Paris (souvent entre 10h00 et 14h00 heure de Paris pour le Korakuen Hall).\n"
+            "- Précise les diffuseurs japonais d'origine (Lemino, Boxing Raise, U-NEXT, ABEMA, Prime Video JP, WOWOW) et la disponibilité en France.\n"
+            "- Mentionne les titres nationaux JBC, OPBF ou WBO Asia-Pacific en jeu."
         ),
     },
     {
         "id": "ufc",
         "title": "🔥 3. UFC",
-        "fallback_schedule_url": "https://www.ufc.com/events",
+        "fallback_url": "https://www.ufc.com/events",
         "empty_msg": "Aucun événement UFC programmé cette semaine.",
-        "search_hint": "Recherche le prochain événement UFC prévu dans les 7 prochains jours sur : ufc.com/events, tapology.com/fightcenter.",
-        "specific_rules": "- Indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur pour la France.",
+        "search_hint": (
+            "Recherche le prochain événement UFC prévu dans les 7 prochains jours sur : "
+            "ufc.com/events, tapology.com/fightcenter, sherdog.com/events."
+        ),
+        "specific_rules": (
+            "- Liste la carte complète en séparant clairement le statut de chaque combat (Main Card, Prelims, Early Prelims).\n"
+            "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur.\n"
+            "- Convertis les heures du début des Prelims et de la Main Card à l'heure de Paris."
+        ),
     },
     {
         "id": "rizin",
         "title": "🌸 4. Rizin Fighting Federation",
-        "fallback_schedule_url": "https://jp.rizinff.com/schedules/",
+        "fallback_url": "https://jp.rizinff.com/schedules/",
         "empty_msg": "Aucun événement Rizin programmé cette semaine.",
-        "search_hint": "Recherche le calendrier officiel RIZIN (RIZIN 大会日程) sur : jp.rizinff.com/schedules, tapology.com/fightcenter.",
-        "specific_rules": "- Si aucun gala Rizin n'a lieu dans les 7 prochains jours, renvoie immédiatement une liste vide [].",
+        "search_hint": (
+            "Recherche le calendrier officiel RIZIN (RIZIN 大会日程 対戦カード) sur : "
+            "jp.rizinff.com/schedules, tapology.com/fightcenter, sherdog.com."
+        ),
+        "specific_rules": (
+            "- Vérifie strictement si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre des 7 prochains jours.\n"
+            "- Si aucun gala Rizin n'a lieu dans les 7 prochains jours, renvoie immédiatement une liste vide []."
+        ),
     },
     {
         "id": "bkfc",
         "title": "👊 5. BKFC (Bare Knuckle)",
-        "fallback_schedule_url": "https://www.bkfc.com/events",
+        "fallback_url": "https://www.bkfc.com/events",
         "empty_msg": "Aucun événement BKFC programmé cette semaine.",
-        "search_hint": "Recherche le calendrier BKFC sur : bkfc.com/events, tapology.com/fightcenter.",
-        "specific_rules": "- INTERDICTION D'INVENTER UNE URL bkfc.com : si tu n'as pas l'URL exacte vérifiée, utilise 'https://www.bkfc.com/events'.",
+        "search_hint": (
+            "Recherche le calendrier officiel Bare Knuckle Fighting Championship sur : "
+            "bkfc.com/events, tapology.com/fightcenter."
+        ),
+        "specific_rules": (
+            "- Liste le Main Event, le Co-Main Event et les combats confirmés de la carte.\n"
+            "- Indique 'BKFC App / TrillerTV / DAZN' selon le diffuseur officiel de l'événement.\n"
+            "- N'invente jamais d'URL bkfc.com : si tu n'as pas l'URL exacte vérifiée, mets 'https://www.bkfc.com/events'."
+        ),
     },
     {
         "id": "kick-japon",
         "title": "🦵 6. Kickboxing Japonais (RISE, K-1, Krush)",
-        "fallback_schedule_url": "https://www.k-1.co.jp/schedule/",
+        "fallback_url": "https://www.k-1.co.jp/schedule/",
         "empty_msg": "Aucun gala majeur RISE, K-1 ou Krush programmé cette semaine.",
-        "search_hint": "Recherche les événements K-1, Krush et RISE sur : k-1.co.jp/schedule, rise-rc.com/schedule, tapology.com/fightcenter.",
-        "specific_rules": "- Indique ABEMA TV comme diffuseur d'origine lorsque applicable.",
+        "search_hint": (
+            "Recherche les prochains événements K-1, Krush et RISE (K-1 Krush RISE 大会日程 対戦カード) sur : "
+            "k-1.co.jp/schedule, rise-rc.com/schedule, tapology.com/fightcenter."
+        ),
+        "specific_rules": (
+            "- Identifie clairement s'il s'agit de K-1, Krush ou RISE et précise la salle (ex: Korakuen Hall, Yoyogi).\n"
+            "- Indique ABEMA TV (格闘チャンネル) comme diffuseur d'origine lorsque applicable et convertis l'heure JST en heure de Paris."
+        ),
     },
     {
         "id": "glory",
         "title": "🏆 7. Glory Kickboxing",
-        "fallback_schedule_url": "https://glorykickboxing.com/events",
+        "fallback_url": "https://glorykickboxing.com/events",
         "empty_msg": "Aucun événement Glory Kickboxing programmé cette semaine.",
-        "search_hint": "Recherche le calendrier Glory Kickboxing sur : glorykickboxing.com/events, tapology.com/fightcenter.",
-        "specific_rules": "- Liste les tournois Grand Prix ou Superfights annoncés.",
+        "search_hint": (
+            "Recherche le calendrier officiel Glory Kickboxing sur : "
+            "glorykickboxing.com/events, tapology.com/fightcenter."
+        ),
+        "specific_rules": (
+            "- Liste tous les combats annoncés (tournois Grand Prix, championnats du monde Glory et Superfights)."
+        ),
     },
     {
         "id": "raf",
         "title": "🤼 8. RAF (Real American Freestyle Wrestling)",
-        "fallback_schedule_url": "https://www.realamericanfreestyle.com/events-gallery",
+        "fallback_url": "https://www.realamericanfreestyle.com/events-gallery",
         "empty_msg": "Aucun événement RAF programmé cette semaine.",
-        "search_hint": "Recherche les événements RAF sur : realamericanfreestyle.com/events-gallery, realamericanfreestyle.com.",
-        "specific_rules": "- Utilise 'https://www.realamericanfreestyle.com/events-gallery' comme url_officielle si aucune sous-page dédiée n'existe.",
+        "search_hint": (
+            "Recherche les événements officiels Real American Freestyle wrestling (RAF) en priorité sur : "
+            "realamericanfreestyle.com/events-gallery, realamericanfreestyle.com, flowrestling.org, themat.com et les communiqués officiels RAF."
+        ),
+        "specific_rules": (
+            "- Vérifie les événements programmés sur realamericanfreestyle.com/events-gallery (ex: RAF 14, etc.) dans la fenêtre des 7 prochains jours.\n"
+            "- Applique une rigueur absolue : si aucun événement RAF n'a lieu exactement dans les 7 prochains jours, renvoie une liste vide []."
+        ),
     },
 ]
 
 # ==============================================================================
-# 4. MOTEUR D'EXTRACTION D'AFFICHES & URLs
+# 4. MOTEUR D'EXTRACTION D'AFFICHES OFFICIELLES FILTRÉ (AVEC TAPOLOGY EN PLAN B)
 # ==============================================================================
 POSTER_CACHE = {}
-URL_STATUS_CACHE = {}
+URL_VERIFY_CACHE = {}
 
+# Sites d'agrégation bannis UNIQUEMENT pour les images (Tapology est désormais autorisé !)
 BLOCKED_IMAGE_DOMAINS = [
-    "ringwalks.com", "box.live", "sherdog.com", "boxrec.com", "fightnights.com", "wikipedia.org"
+    "ringwalks.com",
+    "box.live",
+    "sherdog.com",
+    "boxrec.com",
+    "fightnights.com",
+    "wikipedia.org",
+    "wikimedia.org",
+    "reddit.com",
 ]
 
+# Sites officiels prioritaires pour la récupération d'affiches
 TRUSTED_PROMOTER_DOMAINS = [
-    "realamericanfreestyle.com", "matchroomboxing.com", "queensberry.co.uk", "ufc.com", "ufcfightpass.com",
-    "bkfc.com", "glorykickboxing.com", "rizinff.com", "k-1.co.jp", "rise-rc.com", "dazn.com",
-    "ringtv.com", "toprank.com", "goldenboy.com", "premierboxingchampions.com", "boxmob.jp"
+    "realamericanfreestyle.com",
+    "matchroomboxing.com",
+    "queensberry.co.uk",
+    "ufc.com",
+    "ufcfightpass.com",
+    "bkfc.com",
+    "glorykickboxing.com",
+    "rizinff.com",
+    "k-1.co.jp",
+    "rise-rc.com",
+    "dazn.com",
+    "ringtv.com",
+    "toprank.com",
+    "goldenboy.com",
+    "premierboxingchampions.com",
+    "boxmob.jp",
+    "boxingnews.jp",
+    "ibu4gin.net",
+    "asianboxing.info",
+    "flowrestling.org",
 ]
-
-SECONDARY_POSTER_DOMAINS = ["tapology.com"]
 
 def is_url_allowed_for_poster(url):
     if not url or not url.startswith("http"):
         return False
-    return not any(b in url.lower() for b in BLOCKED_IMAGE_DOMAINS)
+    low = url.lower()
+    return not any(b in low for b in BLOCKED_IMAGE_DOMAINS)
 
-def is_valid_poster_image(img_url, is_trusted=False):
-    """Tolère les logos si le site est un promoteur officiel, sinon filtre strict (Tapology)."""
+def is_valid_poster_image(img_url):
+    """Exactement la fonction qui permettait d'afficher les visuels/logos Matchroom."""
     if not img_url or not img_url.startswith("http"):
         return False
     low = img_url.lower()
-    if any(b in low for b in BLOCKED_IMAGE_DOMAINS):
-        return False
-    
-    if is_trusted:
-        # Filtre très léger pour les officiels (on bloque juste les icônes cassées)
-        return not any(t in low for t in ["favicon", "avatar", ".svg", "1x1"])
-    else:
-        # Filtre strict pour Tapology (on bloque les silhouettes grises et logos par défaut)
-        bad_tokens = ["ringwalks", "favicon", "logo", "default", "placeholder", "avatar", "generic", "fallback", "no-poster", ".svg"]
-        return not any(t in low for t in bad_tokens)
+    bad_tokens = [
+        "ringwalks",
+        "favicon",
+        "logo.svg",
+        "default-share",
+        "placeholder",
+        "avatar",
+        ".svg",
+    ]
+    return not any(t in low for t in bad_tokens)
 
-def verify_official_url(candidate_url, grounding_urls, fallback_url):
-    if candidate_url and candidate_url.startswith("http") and "google.com" not in candidate_url:
-        if candidate_url in URL_STATUS_CACHE:
-            if URL_STATUS_CACHE[candidate_url]: return URL_STATUS_CACHE[candidate_url]
+def verify_official_url(url, grounding_urls, fallback_url):
+    """Vérifie que le bouton 'Source officielle' ne pointe pas vers une page 404 (ex: BKFC)."""
+    if url and url.startswith("http") and "google.com" not in url:
+        if url in URL_VERIFY_CACHE:
+            if URL_VERIFY_CACHE[url]:
+                return URL_VERIFY_CACHE[url]
         else:
             try:
-                resp = requests.get(candidate_url, headers=HEADERS, timeout=6, allow_redirects=True)
-                if resp.status_code < 400:
-                    URL_STATUS_CACHE[candidate_url] = resp.url
-                    return resp.url
-                URL_STATUS_CACHE[candidate_url] = None
+                r = requests.get(url, headers=HEADERS, timeout=6, allow_redirects=True)
+                if r.status_code != 404 and r.status_code < 500:
+                    URL_VERIFY_CACHE[url] = r.url
+                    return r.url
+                print(f"  [Anti-404] Lien mort détecté ({r.status_code}) : {url}")
+                URL_VERIFY_CACHE[url] = None
             except Exception:
-                URL_STATUS_CACHE[candidate_url] = None
+                URL_VERIFY_CACHE[url] = None
 
+    # Si l'URL est en erreur 404, on cherche une URL valide issue de Google Search
     for g_url in grounding_urls:
-        if g_url in URL_STATUS_CACHE and URL_STATUS_CACHE[g_url]: return URL_STATUS_CACHE[g_url]
+        if "google.com" in g_url:
+            continue
+        if g_url in URL_VERIFY_CACHE and URL_VERIFY_CACHE[g_url]:
+            return URL_VERIFY_CACHE[g_url]
         try:
-            resp = requests.get(g_url, headers=HEADERS, timeout=6, allow_redirects=True)
-            if resp.status_code < 400:
-                URL_STATUS_CACHE[g_url] = resp.url
-                return resp.url
+            r = requests.get(g_url, headers=HEADERS, timeout=6, allow_redirects=True)
+            if r.status_code != 404 and r.status_code < 500:
+                URL_VERIFY_CACHE[g_url] = r.url
+                return r.url
         except Exception:
             continue
 
     return fallback_url
 
 def extract_og_image_from_url(url):
+    """Récupère l'image officielle (ou le poster Tapology au-dessus des combattants)."""
     if not is_url_allowed_for_poster(url):
         return None
     if url in POSTER_CACHE:
         return POSTER_CACHE[url]
 
-    is_trusted = any(t in url.lower() for t in TRUSTED_PROMOTER_DOMAINS)
-
     try:
         resp = requests.get(url, headers=HEADERS, timeout=8, allow_redirects=True)
         if resp.status_code == 200:
-            final_page_url = resp.url
-            if not is_url_allowed_for_poster(final_page_url):
+            final_url = resp.url
+            if not is_url_allowed_for_poster(final_url):
+                POSTER_CACHE[url] = None
                 return None
+
             raw = resp.text
 
-            # Logique Tapology
-            if "tapology.com" in final_page_url.lower():
-                tap_match = re.search(r'(https://images\.tapology\.com/poster_images/[0-9]+/profile/[^"\'\s>]+)', raw, flags=re.IGNORECASE)
+            # Cas spécifique Tapology : on cible l'affiche officielle située au-dessus de la Fight Card
+            if "tapology.com" in final_url.lower():
+                tap_match = re.search(
+                    r'(https://images\.tapology\.com/poster_images/[0-9]+/profile/[^"\'\s>]+)',
+                    raw,
+                    flags=re.IGNORECASE,
+                )
                 if tap_match:
                     tap_img = html.unescape(tap_match.group(1).strip())
-                    if is_valid_poster_image(tap_img, is_trusted=False):
+                    if is_valid_poster_image(tap_img):
                         POSTER_CACHE[url] = tap_img
                         return tap_img
+                # Si la page Tapology n'a pas d'affiche d'événement, on ignore son logo générique
+                POSTER_CACHE[url] = None
+                return None
 
-            # Logique Standard
+            # Extraction standard og:image / twitter:image pour tous les promoteurs officiels
             patterns = [
                 r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
                 r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
@@ -252,11 +338,12 @@ def extract_og_image_from_url(url):
                 m = re.search(pat, raw, flags=re.IGNORECASE)
                 if m:
                     img = html.unescape(m.group(1).strip())
-                    if img.startswith("//"): img = "https:" + img
+                    if img.startswith("//"):
+                        img = "https:" + img
                     elif img.startswith("/"):
-                        parsed = urllib.parse.urlparse(final_page_url)
+                        parsed = urllib.parse.urlparse(final_url)
                         img = f"{parsed.scheme}://{parsed.netloc}{img}"
-                    if is_url_allowed_for_poster(img) and is_valid_poster_image(img, is_trusted):
+                    if is_url_allowed_for_poster(img) and is_valid_poster_image(img):
                         POSTER_CACHE[url] = img
                         return img
     except Exception:
@@ -265,45 +352,64 @@ def extract_og_image_from_url(url):
     POSTER_CACHE[url] = None
     return None
 
-def parse_agent_json(raw_text):
-    if not raw_text: return []
-    cleaned = raw_text.replace("```json", "").replace("```", "").strip()
-    try:
-        first_brace = cleaned.find("{")
-        last_brace = cleaned.rfind("}")
-        if first_brace != -1 and last_brace != -1:
-            candidate = re.sub(r",\s*([}\]])", r"\1", cleaned[first_brace : last_brace + 1])
-            data = json.loads(candidate)
-            return data.get("evenements", []) if isinstance(data, dict) else data if isinstance(data, list) else []
-    except Exception: pass
-    try:
-        first_bracket = cleaned.find("[")
-        last_bracket = cleaned.rfind("]")
-        if first_bracket != -1 and last_bracket != -1:
-            candidate = re.sub(r",\s*([}\]])", r"\1", cleaned[first_bracket : last_bracket + 1])
-            data = json.loads(candidate)
-            return data if isinstance(data, list) else []
-    except Exception: pass
-    return []
-
 def extract_grounding_urls(response):
+    """Extrait les URLs réelles visitées par Google Search depuis les métadonnées de la réponse."""
     urls = []
     try:
-        for cand in getattr(response, "candidates", []) or []:
+        candidates = getattr(response, "candidates", []) or []
+        for cand in candidates:
             gm = getattr(cand, "grounding_metadata", None)
-            if gm:
-                for ch in getattr(gm, "grounding_chunks", []) or []:
-                    web = getattr(ch, "web", None)
-                    if web and getattr(web, "uri", None): urls.append(web.uri)
-    except Exception: pass
+            if not gm:
+                continue
+            chunks = getattr(gm, "grounding_chunks", []) or []
+            for ch in chunks:
+                web = getattr(ch, "web", None)
+                if web and getattr(web, "uri", None):
+                    urls.append(web.uri)
+    except Exception:
+        pass
     return urls
 
+def parse_agent_json(raw_text):
+    """Extrait et parse de manière ultra-tolérante le bloc JSON produit par un agent."""
+    if not raw_text:
+        return []
+    cleaned = raw_text.replace("```json", "").replace("```", "").strip()
+
+    first_brace = cleaned.find("{")
+    last_brace = cleaned.rfind("}")
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        candidate = cleaned[first_brace : last_brace + 1]
+        candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
+        try:
+            data = json.loads(candidate)
+            if isinstance(data, dict):
+                return data.get("evenements", [])
+            if isinstance(data, list):
+                return data
+        except Exception:
+            pass
+
+    first_bracket = cleaned.find("[")
+    last_bracket = cleaned.rfind("]")
+    if first_bracket != -1 and last_bracket != -1 and last_bracket > first_bracket:
+        candidate = cleaned[first_bracket : last_bracket + 1]
+        candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
+        try:
+            data = json.loads(candidate)
+            if isinstance(data, list):
+                return data
+        except Exception:
+            pass
+
+    return []
+
 # ==============================================================================
-# 5. EXÉCUTION DU MICRO-AGENT
+# 5. EXÉCUTION D'UN MICRO-AGENT AVEC RECHERCHE GOOGLE & REPLI ANTI-429
 # ==============================================================================
 def run_micro_agent(agent_cfg):
     discipline_id = agent_cfg["id"]
-    fallback_schedule_url = agent_cfg.get("fallback_schedule_url", "")
+    fallback_url = agent_cfg.get("fallback_url", "https://box.live/upcoming-fights-schedule/")
     print(f"\n--- Lancement Micro-Agent [{discipline_id}] ---")
 
     prompt = f"""Tu es un agent d'extraction de données factuelles spécialisé dans les sports de combat.
@@ -314,14 +420,15 @@ MISSION :
 {agent_cfg['search_hint']}
 
 CONSIGNES IMPÉRATIVES :
-- RÈGLE ABSOLUE : DÉTAILLE LA SOUS-CARTE INTÉGRALEMENT. Tu dois extraire absolument TOUS les combats préliminaires listés dans tes sources. Ne te limite pas au Main Event.
-- Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
-- ZÉRO HALLUCINATION : N'invente jamais de combat. Si tu n'es pas certain d'un palmarès, mets "N/C".
-- INTERDICTION DE DEVINER UNE URL : Si l'URL exacte n'apparaît pas, utilise l'URL principale : "{fallback_schedule_url}".
 {agent_cfg['specific_rules']}
+- Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
+- ZÉRO HALLUCINATION : N'invente jamais de combat, d'adversaire 'TBA' fictif, ni de palmarès. Si tu n'es pas certain d'un palmarès ou d'une taille, mets "N/C".
+- Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
+- Convertis toutes les heures à l'heure de Paris (CET/CEST).
+- Rédige les présentations et analyses en français journalistique précis en conservant les termes techniques (puncher, out-boxer, southpaw, main event, undercard, KO, TKO, undisputed).
 
 FORMAT DE SORTIE OBLIGATOIRE :
-Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma :
+Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma, sans aucun texte avant ni après :
 {{
   "evenements": [
     {{
@@ -329,16 +436,16 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma :
       "date_paris": "Samedi 24/10/2026",
       "lieu": "Salle / Arène, Ville, Pays",
       "url_officielle": "https://...",
-      "poster_url": "",
+      "poster_url": "https://... (ou vide si inconnu)",
       "heure_debut_paris": "19h00",
       "heure_main_event_paris": "23h15",
       "diffuseur_origine": "DAZN Global",
       "diffuseur_france": "DAZN France",
-      "enjeu_principal": "Titre mondial",
-      "presentation": "Courte présentation.",
+      "enjeu_principal": "Titre mondial WBC Super-Légers (-63,5 kg)",
+      "presentation": "2 à 3 phrases de présentation factuelle et dynamique des enjeux de l'événement.",
       "combats": [
         {{
-          "statut": "Main Event (ou Undercard)",
+          "statut": "Main Event (ou Co-Main Event / Undercard / Prelims)",
           "combattant_a": "Prénom Nom",
           "palmares_a": "19-0-0, 14 KOs",
           "taille_a": "1m78",
@@ -347,7 +454,7 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma :
           "taille_b": "1m75",
           "categorie_kg": "Super-légers (-63,5 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Analyse du duel."
+          "enjeu_et_analyse": "Titre en jeu et courte description stylistique du duel en 1 à 2 phrases."
         }}
       ]
     }}
@@ -356,7 +463,7 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma :
 Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie exactement : {{"evenements": []}}
 """
 
-    for idx, model_name in enumerate(AVAILABLE_MODELS):
+    for idx, model_name in enumerate(list(AVAILABLE_MODELS)):
         try:
             print(f"  Appel {model_name} avec Google Search Grounding...")
             response = client.models.generate_content(
@@ -368,32 +475,46 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
                 ),
             )
             if response and getattr(response, "text", None):
+                # Astuce gain de temps : le modèle qui fonctionne passe en tête de liste pour les agents suivants
+                if AVAILABLE_MODELS[0] != model_name and model_name in AVAILABLE_MODELS:
+                    AVAILABLE_MODELS.remove(model_name)
+                    AVAILABLE_MODELS.insert(0, model_name)
+
                 events = parse_agent_json(response.text)
                 grounding_urls = extract_grounding_urls(response)
 
+                # Enrichissement des URLs et Posters
                 for ev in events:
-                    raw_ev_url = (ev.get("url_officielle") or "").strip()
-                    verified_url = verify_official_url(raw_ev_url, grounding_urls, fallback_schedule_url)
-                    ev["url_officielle"] = verified_url
+                    ev_url = (ev.get("url_officielle") or "").strip()
+                    ev_url = verify_official_url(ev_url, grounding_urls, fallback_url)
+                    ev["url_officielle"] = ev_url
 
                     poster = (ev.get("poster_url") or "").strip()
-                    if not is_url_allowed_for_poster(poster) or not is_valid_poster_image(poster, any(t in poster.lower() for t in TRUSTED_PROMOTER_DOMAINS)):
+                    if not is_url_allowed_for_poster(poster) or not is_valid_poster_image(poster):
                         poster = ""
 
                     if not poster:
-                        found_poster = extract_og_image_from_url(verified_url)
+                        # 1. Essai sur l'URL officielle vérifiée
+                        found_poster = extract_og_image_from_url(ev_url)
+                        # 2. Plan A : URLs de promoteurs officiels visitées par Google
                         if not found_poster:
-                            promoter_urls = [u for u in grounding_urls if any(t in u.lower() for t in TRUSTED_PROMOTER_DOMAINS)]
-                            for p_url in promoter_urls[:4]:
-                                found_poster = extract_og_image_from_url(p_url)
-                                if found_poster: break
-                        if not found_poster:
-                            tapology_urls = [u for u in grounding_urls if any(s in u.lower() for s in SECONDARY_POSTER_DOMAINS)]
-                            for t_url in tapology_urls[:3]:
-                                found_poster = extract_og_image_from_url(t_url)
-                                if found_poster: break
+                            trusted_urls = [
+                                u for u in grounding_urls if any(t in u.lower() for t in TRUSTED_PROMOTER_DOMAINS)
+                            ]
+                            # 3. Plan B : Tapology (vrai poster au-dessus des combattants) et autres URLs autorisées
+                            tapology_urls = [
+                                u for u in grounding_urls if "tapology.com" in u.lower()
+                            ]
+                            other_urls = [
+                                u for u in grounding_urls
+                                if u not in trusted_urls and u not in tapology_urls and is_url_allowed_for_poster(u)
+                            ]
+                            for g_url in (trusted_urls + tapology_urls + other_urls)[:6]:
+                                found_poster = extract_og_image_from_url(g_url)
+                                if found_poster:
+                                    break
                         poster = found_poster or ""
-                    
+
                     ev["poster_url"] = poster
 
                 print(f"  -> {len(events)} événement(s) vérifié(s) extrait(s) pour [{discipline_id}].")
@@ -401,17 +522,19 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
 
         except Exception as e:
             err_str = str(e)
-            print(f"  [Avertissement] {model_name} : {err_str[:160]}")
+            print(f"  [Avertissement] {model_name} sur [{discipline_id}] : {err_str[:160]}")
             if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
                 wait_time = 35 if idx == 0 else 20
+                print(f"  Pause de sécurité de {wait_time}s (quota API) avant rotation de modèle...")
                 time.sleep(wait_time)
             else:
                 time.sleep(4)
 
+    print(f"  [Info] Aucun résultat récupéré pour [{discipline_id}], affichage de l'état vide sécurisé.")
     return []
 
 # ==============================================================================
-# 6. CONSTRUCTION DU HTML
+# 6. CONSTRUCTION DU HTML PAR SECTION À PARTIR DU JSON VÉRIFIÉ
 # ==============================================================================
 def render_event_card_html(ev):
     nom_gala = html.escape(ev.get("nom_gala") or "Événement Officiel")
@@ -449,7 +572,11 @@ def render_event_card_html(ev):
         </div>
         """
 
-    source_btn = f'<a href="{html.escape(url_off)}" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>' if url_off.startswith("http") else ""
+    source_btn = (
+        f'<a href="{html.escape(url_off)}" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>'
+        if url_off.startswith("http")
+        else ""
+    )
 
     bouts_html_list = []
     for c in combats:
@@ -468,6 +595,7 @@ def render_event_card_html(ev):
         meta_b = " | ".join(x for x in [pb, tb] if x and x != "N/C")
         str_a = f"{fa} ({meta_a})" if meta_a else fa
         str_b = f"{fb} ({meta_b})" if meta_b else fb
+
         pill_text = " — ".join(x for x in [statut, cat, rds] if x)
         pill_html = f'<span class="weight-pill">{pill_text}</span>' if pill_text else ""
 
@@ -481,8 +609,12 @@ def render_event_card_html(ev):
         </div>
         """)
 
-    bouts_content = "".join(bouts_html_list) if bouts_html_list else "<div class='bout-item'><em>Détail complet de la sous-carte en attente de publication.</em></div>"
-    count_label = f"({len(bouts_html_list)} combat{'s' if len(bouts_html_list) > 1 else ''} répertorié{'s' if len(bouts_html_list) > 1 else ''})" if bouts_html_list else ""
+    if bouts_html_list:
+        bouts_content = "".join(bouts_html_list)
+        count_label = f"({len(bouts_html_list)} combat{'s' if len(bouts_html_list) > 1 else ''} répertorié{'s' if len(bouts_html_list) > 1 else ''})"
+    else:
+        bouts_content = "<div class='bout-item'><em>Détail complet de la sous-carte en attente de publication officielle par le promoteur.</em></div>"
+        count_label = ""
 
     return f"""
     <article class="event-card">
@@ -506,18 +638,30 @@ def render_event_card_html(ev):
     </article>
     """
 
+# Exécution séquentielle des 8 Micro-Agents avec temporisation anti-quota
 sections_html = []
 for idx, cfg in enumerate(AGENTS_CONFIG):
     events_list = run_micro_agent(cfg)
-    cards_rendered = "\n".join(render_event_card_html(ev) for ev in events_list) if events_list else f'<div class="empty-state">🗓️ {html.escape(cfg["empty_msg"])}</div>'
-    # Utilisation stricte de guillemets doubles pour éviter SyntaxError en Python 3.11
-    sections_html.append(f'<section id="{cfg["id"]}" class="sport-section"><h2>{cfg["title"]}</h2>{cards_rendered}</section>')
-    
+    if events_list:
+        cards_rendered = "\n".join(render_event_card_html(ev) for ev in events_list)
+    else:
+        cards_rendered = f'<div class="empty-state">🗓️ {html.escape(cfg["empty_msg"])}</div>'
+
+    section_block = f"""
+    <section id="{cfg['id']}" class="sport-section">
+        <h2>{cfg['title']}</h2>
+        {cards_rendered}
+    </section>
+    """
+    sections_html.append(section_block)
+
     if idx < len(AGENTS_CONFIG) - 1:
         time.sleep(14)
 
+all_sections_content = "\n".join(sections_html)
+
 # ==============================================================================
-# 7. ASSEMBLAGE HTML
+# 7. ASSEMBLAGE DU SITE FINAL (DESIGN BEIGE/MARRON + POSTERS CONTAIN SANS ROGNAGE)
 # ==============================================================================
 FINAL_HTML = f"""<!DOCTYPE html>
 <html lang="fr">
@@ -529,58 +673,397 @@ FINAL_HTML = f"""<!DOCTYPE html>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {{ --bg-page: #F6F1E7; --bg-card: #FFFDF9; --bg-subtle: #EDE5D6; --bg-details: #F9F5ED; --text-primary: #261A13; --text-secondary: #5E4B3E; --accent-main: #9A4E24; --accent-dark: #4A2812; --accent-gold: #C4882B; --border-warm: #DFD4C1; --shadow-soft: 0 8px 24px rgba(58, 35, 18, 0.06); }}
-        * {{ box-sizing: border-box; scroll-behavior: smooth; }}
-        body {{ margin: 0; padding: 0; background-color: var(--bg-page); background-image: radial-gradient(circle at 50% 0%, #FFFDF8 0%, #F6F1E7 70%); color: var(--text-primary); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; line-height: 1.65; }}
-        .container {{ max-width: 960px; margin: 0 auto; padding: 2rem 1.2rem 4rem 1.2rem; }}
-        header.hero {{ text-align: center; padding: 2.2rem 1.5rem; background: linear-gradient(135deg, #3B2213 0%, #5E341B 100%); color: #FFFDF9; border-radius: 18px; margin-bottom: 1.2rem; box-shadow: 0 10px 28px rgba(59, 34, 19, 0.18); }}
-        header.hero h1 {{ font-family: 'Outfit', sans-serif; font-size: 2.3rem; font-weight: 800; margin: 0 0 0.5rem 0; letter-spacing: -0.5px; }}
-        header.hero p {{ margin: 0 0 1rem 0; color: #E8DACA; font-size: 1.02rem; }}
-        .update-pill {{ display: inline-block; background-color: rgba(255, 253, 249, 0.14); border: 1px solid rgba(255, 253, 249, 0.25); padding: 0.35rem 0.9rem; border-radius: 99px; font-size: 0.85rem; font-weight: 600; }}
-        .sticky-bar {{ position: sticky; top: 10px; z-index: 50; background-color: rgba(255, 253, 249, 0.96); backdrop-filter: blur(8px); border: 1px solid var(--border-warm); border-radius: 14px; padding: 0.75rem; margin-bottom: 2.2rem; box-shadow: var(--shadow-soft); }}
-        .quick-nav {{ display: flex; flex-wrap: wrap; gap: 0.45rem; justify-content: center; margin-bottom: 0.65rem; }}
-        .quick-nav a {{ text-decoration: none; color: var(--accent-dark); background-color: var(--bg-subtle); padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.84rem; font-weight: 700; transition: all 0.2s ease; }}
-        .quick-nav a:hover {{ background-color: var(--accent-main); color: #FFFFFF; }}
-        .toolbar {{ display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: space-between; align-items: center; padding-top: 0.55rem; border-top: 1px solid var(--border-warm); }}
-        .search-input {{ flex: 1; min-width: 200px; padding: 0.48rem 0.85rem; border: 1px solid var(--border-warm); border-radius: 8px; background-color: var(--bg-details); color: var(--text-primary); font-family: inherit; font-size: 0.9rem; }}
-        .search-input:focus {{ outline: 2px solid var(--accent-main); }}
-        .toggle-all-btn {{ background-color: var(--accent-dark); color: #FFFDF9; border: none; padding: 0.5rem 0.95rem; border-radius: 8px; font-family: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.2s ease; }}
-        .toggle-all-btn:hover {{ background-color: var(--accent-main); }}
-        .sport-section {{ margin-bottom: 3rem; scroll-margin-top: 135px; }}
-        .sport-section h2 {{ font-family: 'Outfit', sans-serif; font-size: 1.65rem; font-weight: 800; color: var(--accent-dark); margin-bottom: 1.2rem; padding-bottom: 0.5rem; border-bottom: 3px solid var(--accent-main); }}
-        .event-card {{ background-color: var(--bg-card); border: 1px solid var(--border-warm); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.8rem; box-shadow: var(--shadow-soft); overflow: hidden; }}
-        .poster-container {{ position: relative; width: 100%; height: 320px; border-radius: 12px; overflow: hidden; margin-bottom: 1.25rem; background: radial-gradient(circle at center, #4E2E1B 0%, #1E1008 100%); border: 1px solid #6E452B; display: flex; align-items: center; justify-content: center; }}
-        .event-poster-img {{ width: 100%; height: 100%; object-fit: contain; object-position: center center; display: block; padding-bottom: 2rem; }}
-        .poster-overlay {{ position: absolute; inset: 0; background: linear-gradient(to top, rgba(24, 12, 5, 0.95) 0%, rgba(24, 12, 5, 0.42) 32%, rgba(24, 12, 5, 0.0) 65%); display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; padding: 1rem 1.35rem; color: #FFFDF9; pointer-events: none; }}
-        .poster-container.poster-fallback-mode {{ height: auto; min-height: 135px; background: linear-gradient(135deg, #2D1B10 0%, #5A351E 50%, #2D1B10 100%); }}
-        .poster-container.poster-fallback-mode .poster-overlay {{ position: relative; background: none; align-items: center; text-align: center; justify-content: center; width: 100%; padding: 1.5rem 1rem; pointer-events: auto; }}
-        .poster-belt {{ display: inline-block; background-color: rgba(196, 136, 43, 0.32); backdrop-filter: blur(4px); border: 1px solid #F7D388; color: #F7D388; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.2rem 0.75rem; border-radius: 99px; margin-bottom: 0.45rem; }}
-        .poster-dynamic-title {{ font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: #FFFDF9; text-shadow: 0 2px 8px rgba(0,0,0,0.75); line-height: 1.25; }}
-        .card-header-row {{ display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.9rem; }}
-        .event-title {{ font-family: 'Outfit', sans-serif; font-size: 1.38rem; font-weight: 700; color: var(--accent-dark); margin: 0; }}
-        .source-btn {{ text-decoration: none; font-size: 0.82rem; font-weight: 700; color: var(--accent-main); background-color: var(--bg-details); border: 1px solid var(--border-warm); padding: 0.32rem 0.78rem; border-radius: 8px; transition: all 0.2s ease; }}
-        .source-btn:hover {{ background-color: var(--accent-main); color: #FFFFFF; border-color: var(--accent-main); }}
-        .meta-grid {{ display: grid; grid-template-columns: 1fr; gap: 0.55rem; background-color: var(--bg-details); border: 1px solid var(--border-warm); border-radius: 10px; padding: 0.95rem 1.15rem; margin-bottom: 1rem; font-size: 0.94rem; }}
-        .highlight-date {{ color: var(--accent-main); font-weight: 700; }}
-        .badge-tv {{ display: inline-block; background-color: var(--bg-subtle); color: var(--accent-dark); padding: 0.15rem 0.6rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; margin-right: 0.35rem; border: 1px solid var(--border-warm); }}
-        .badge-fr {{ background-color: var(--accent-main); color: #FFFFFF; border-color: var(--accent-main); }}
-        .event-desc {{ color: var(--text-primary); margin: 0 0 1.1rem 0; }}
-        details.card-details {{ background-color: var(--bg-details); border: 1px solid var(--border-warm); border-radius: 10px; padding: 0.85rem 1.15rem; }}
-        details.card-details[open] {{ background-color: #F4EFE4; border-color: var(--accent-main); }}
-        summary {{ font-weight: 700; color: var(--accent-main); cursor: pointer; font-size: 0.98rem; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }}
-        summary::-webkit-details-marker {{ display: none; }}
-        summary::after {{ content: "▼ Afficher la carte"; font-size: 0.8rem; background-color: var(--bg-subtle); color: var(--accent-dark); padding: 0.22rem 0.65rem; border-radius: 6px; white-space: nowrap; }}
-        details[open] summary::after {{ content: "▲ Masquer"; background-color: var(--accent-main); color: #FFFFFF; }}
-        .fight-list {{ margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--border-warm); }}
-        .bout-item {{ padding: 0.75rem 0; border-bottom: 1px dashed var(--border-warm); }}
-        .bout-item:last-child {{ border-bottom: none; padding-bottom: 0; }}
-        .bout-header {{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.3rem; }}
-        .bout-fighters {{ font-size: 0.98rem; color: var(--text-primary); }}
-        .bout-desc {{ font-size: 0.91rem; color: var(--text-secondary); }}
-        .weight-pill {{ display: inline-block; background-color: var(--bg-subtle); color: var(--accent-dark); font-weight: 700; font-size: 0.78rem; padding: 0.18rem 0.6rem; border-radius: 6px; }}
-        .empty-state {{ background-color: var(--bg-card); border: 1px dashed var(--border-warm); border-radius: 12px; padding: 1.2rem; color: var(--text-secondary); font-style: italic; text-align: center; }}
-        footer {{ text-align: center; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-warm); color: var(--text-secondary); font-size: 0.88rem; }}
-        @media (max-width: 600px) {{ header.hero h1 {{ font-size: 1.75rem; }} .poster-container {{ height: 250px; }} .poster-dynamic-title {{ font-size: 1.18rem; }} }}
+        :root {{
+            --bg-page: #F6F1E7;
+            --bg-card: #FFFDF9;
+            --bg-subtle: #EDE5D6;
+            --bg-details: #F9F5ED;
+            --text-primary: #261A13;
+            --text-secondary: #5E4B3E;
+            --accent-main: #9A4E24;
+            --accent-dark: #4A2812;
+            --accent-gold: #C4882B;
+            --border-warm: #DFD4C1;
+            --shadow-soft: 0 8px 24px rgba(58, 35, 18, 0.06);
+        }}
+        * {{
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }}
+        body {{
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-page);
+            background-image: radial-gradient(circle at 50% 0%, #FFFDF8 0%, #F6F1E7 70%);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 16px;
+            line-height: 1.65;
+        }}
+        .container {{
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.2rem 4rem 1.2rem;
+        }}
+        header.hero {{
+            text-align: center;
+            padding: 2.2rem 1.5rem;
+            background: linear-gradient(135deg, #3B2213 0%, #5E341B 100%);
+            color: #FFFDF9;
+            border-radius: 18px;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 10px 28px rgba(59, 34, 19, 0.18);
+        }}
+        header.hero h1 {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.3rem;
+            font-weight: 800;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -0.5px;
+            color: #FFFDF9;
+        }}
+        header.hero p {{
+            margin: 0 0 1rem 0;
+            color: #E8DACA;
+            font-size: 1.02rem;
+        }}
+        .update-pill {{
+            display: inline-block;
+            background-color: rgba(255, 253, 249, 0.14);
+            border: 1px solid rgba(255, 253, 249, 0.25);
+            color: #FFFDF9;
+            padding: 0.35rem 0.9rem;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }}
+        .sticky-bar {{
+            position: sticky;
+            top: 10px;
+            z-index: 50;
+            background-color: rgba(255, 253, 249, 0.96);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-warm);
+            border-radius: 14px;
+            padding: 0.75rem;
+            margin-bottom: 2.2rem;
+            box-shadow: var(--shadow-soft);
+        }}
+        .quick-nav {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            justify-content: center;
+            margin-bottom: 0.65rem;
+        }}
+        .quick-nav a {{
+            text-decoration: none;
+            color: var(--accent-dark);
+            background-color: var(--bg-subtle);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }}
+        .quick-nav a:hover {{
+            background-color: var(--accent-main);
+            color: #FFFFFF;
+        }}
+        .toolbar {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.55rem;
+            border-top: 1px solid var(--border-warm);
+        }}
+        .search-input {{
+            flex: 1;
+            min-width: 200px;
+            padding: 0.48rem 0.85rem;
+            border: 1px solid var(--border-warm);
+            border-radius: 8px;
+            background-color: var(--bg-details);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+        }}
+        .search-input:focus {{
+            outline: 2px solid var(--accent-main);
+        }}
+        .toggle-all-btn {{
+            background-color: var(--accent-dark);
+            color: #FFFDF9;
+            border: none;
+            padding: 0.5rem 0.95rem;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }}
+        .toggle-all-btn:hover {{
+            background-color: var(--accent-main);
+        }}
+        .sport-section {{
+            margin-bottom: 3rem;
+            scroll-margin-top: 135px;
+        }}
+        .sport-section h2 {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: var(--accent-dark);
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--accent-main);
+        }}
+        .event-card {{
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-warm);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.8rem;
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+        }}
+        /* Bannière Poster Officiel avec object-fit: contain (Zéro rognage des portraits ou affiches) */
+        .poster-container {{
+            position: relative;
+            width: 100%;
+            height: 320px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+            background: radial-gradient(circle at center, #4E2E1B 0%, #1E1008 100%);
+            border: 1px solid #6E452B;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .event-poster-img {{
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center center;
+            display: block;
+            padding-bottom: 2rem;
+        }}
+        .poster-overlay {{
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(24, 12, 5, 0.95) 0%, rgba(24, 12, 5, 0.42) 32%, rgba(24, 12, 5, 0.0) 65%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: flex-start;
+            padding: 1rem 1.35rem;
+            color: #FFFDF9;
+            pointer-events: none;
+        }}
+        .poster-container.poster-fallback-mode {{
+            height: auto;
+            min-height: 135px;
+            background: linear-gradient(135deg, #2D1B10 0%, #5A351E 50%, #2D1B10 100%);
+        }}
+        .poster-container.poster-fallback-mode .poster-overlay {{
+            position: relative;
+            background: none;
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+            width: 100%;
+            padding: 1.5rem 1rem;
+        }}
+        .poster-belt {{
+            display: inline-block;
+            background-color: rgba(196, 136, 43, 0.32);
+            backdrop-filter: blur(4px);
+            border: 1px solid #F7D388;
+            color: #F7D388;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.2rem 0.75rem;
+            border-radius: 99px;
+            margin-bottom: 0.45rem;
+        }}
+        .poster-dynamic-title {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #FFFDF9;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.75);
+            line-height: 1.25;
+        }}
+        .card-header-row {{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.9rem;
+        }}
+        .event-title {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.38rem;
+            font-weight: 700;
+            color: var(--accent-dark);
+            margin: 0;
+        }}
+        .source-btn {{
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--accent-main);
+            background-color: var(--bg-details);
+            border: 1px solid var(--border-warm);
+            padding: 0.32rem 0.78rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }}
+        .source-btn:hover {{
+            background-color: var(--accent-main);
+            color: #FFFFFF;
+            border-color: var(--accent-main);
+        }}
+        .meta-grid {{
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.55rem;
+            background-color: var(--bg-details);
+            border: 1px solid var(--border-warm);
+            border-radius: 10px;
+            padding: 0.95rem 1.15rem;
+            margin-bottom: 1rem;
+            font-size: 0.94rem;
+        }}
+        .highlight-date {{
+            color: var(--accent-main);
+            font-weight: 700;
+        }}
+        .badge-tv {{
+            display: inline-block;
+            background-color: var(--bg-subtle);
+            color: var(--accent-dark);
+            padding: 0.15rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-right: 0.35rem;
+            border: 1px solid var(--border-warm);
+        }}
+        .badge-fr {{
+            background-color: var(--accent-main);
+            color: #FFFFFF;
+            border-color: var(--accent-main);
+        }}
+        .event-desc {{
+            color: var(--text-primary);
+            margin: 0 0 1.1rem 0;
+        }}
+        details.card-details {{
+            background-color: var(--bg-details);
+            border: 1px solid var(--border-warm);
+            border-radius: 10px;
+            padding: 0.85rem 1.15rem;
+        }}
+        details.card-details[open] {{
+            background-color: #F4EFE4;
+            border-color: var(--accent-main);
+        }}
+        summary {{
+            font-weight: 700;
+            color: var(--accent-main);
+            cursor: pointer;
+            font-size: 0.98rem;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }}
+        summary::-webkit-details-marker {{
+            display: none;
+        }}
+        summary::after {{
+            content: "▼ Afficher la carte";
+            font-size: 0.8rem;
+            background-color: var(--bg-subtle);
+            color: var(--accent-dark);
+            padding: 0.22rem 0.65rem;
+            border-radius: 6px;
+            white-space: nowrap;
+        }}
+        details[open] summary::after {{
+            content: "▲ Masquer";
+            background-color: var(--accent-main);
+            color: #FFFFFF;
+        }}
+        .fight-list {{
+            margin-top: 1rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--border-warm);
+        }}
+        .bout-item {{
+            padding: 0.75rem 0;
+            border-bottom: 1px dashed var(--border-warm);
+        }}
+        .bout-item:last-child {{
+            border-bottom: none;
+            padding-bottom: 0;
+        }}
+        .bout-header {{
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+        }}
+        .bout-fighters {{
+            font-size: 0.98rem;
+            color: var(--text-primary);
+        }}
+        .bout-desc {{
+            font-size: 0.91rem;
+            color: var(--text-secondary);
+        }}
+        .weight-pill {{
+            display: inline-block;
+            background-color: var(--bg-subtle);
+            color: var(--accent-dark);
+            font-weight: 700;
+            font-size: 0.78rem;
+            padding: 0.18rem 0.6rem;
+            border-radius: 6px;
+        }}
+        .empty-state {{
+            background-color: var(--bg-card);
+            border: 1px dashed var(--border-warm);
+            border-radius: 12px;
+            padding: 1.2rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            text-align: center;
+        }}
+        footer {{
+            text-align: center;
+            margin-top: 3.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-warm);
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }}
+        @media (max-width: 600px) {{
+            header.hero h1 {{ font-size: 1.75rem; }}
+            .poster-container {{ height: 250px; }}
+            .poster-dynamic-title {{ font-size: 1.18rem; }}
+        }}
     </style>
 </head>
 <body>
@@ -590,37 +1073,50 @@ FINAL_HTML = f"""<!DOCTYPE html>
             <p>Programmation officielle vérifiée : Boxe Mondiale & Japonaise, The Ring, Zuffa, UFC, Rizin, BKFC, Kickboxing & RAF</p>
             <span class="update-pill">🔄 Mis à jour le {date_str} à {heure_str} (Heure de Paris) • Période : {valid_dates_fr[0]} au {valid_dates_fr[-1]}</span>
         </header>
+
         <div class="sticky-bar">
             <nav class="quick-nav">
-                <a href="#boxe-monde">🥊 Boxe Monde</a> <a href="#boxe-japon">🇯🇵 Boxe Japon</a> <a href="#ufc">🔥 UFC</a>
-                <a href="#rizin">🌸 Rizin</a> <a href="#bkfc">👊 BKFC</a> <a href="#kick-japon">🦵 Kick JP</a>
-                <a href="#glory">🏆 Glory</a> <a href="#raf">🤼 RAF</a>
+                <a href="#boxe-monde">🥊 Boxe Monde</a>
+                <a href="#boxe-japon">🇯🇵 Boxe Japon</a>
+                <a href="#ufc">🔥 UFC</a>
+                <a href="#rizin">🌸 Rizin</a>
+                <a href="#bkfc">👊 BKFC</a>
+                <a href="#kick-japon">🦵 Kick JP</a>
+                <a href="#glory">🏆 Glory</a>
+                <a href="#raf">🤼 RAF</a>
             </nav>
             <div class="toolbar">
-                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom...), ville ou chaîne...">
+                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom, Queensberry, The Ring...), ville ou chaîne...">
                 <button type="button" id="toggleAllBtn" class="toggle-all-btn">📂 Tout déplier</button>
             </div>
         </div>
+
         <main id="mainContent">
             {all_sections_content}
         </main>
+
         <footer>
             <p>Architecture Micro-Agents vérifiée • Fuseau horaire : Paris (CET/CEST) • Système métrique standardisé (kg / m)</p>
         </footer>
     </div>
+
     <script>
         const toggleBtn = document.getElementById('toggleAllBtn');
         let allOpen = false;
         toggleBtn.addEventListener('click', () => {{
             allOpen = !allOpen;
-            document.querySelectorAll('details.card-details').forEach(d => d.open = allOpen);
+            document.querySelectorAll('details.card-details').forEach(d => {{
+                d.open = allOpen;
+            }});
             toggleBtn.textContent = allOpen ? '📁 Tout replier' : '📂 Tout déplier';
         }});
+
         const searchInput = document.getElementById('searchInput');
         searchInput.addEventListener('input', (e) => {{
             const query = e.target.value.toLowerCase().trim();
             document.querySelectorAll('.event-card').forEach(card => {{
-                card.style.display = card.textContent.toLowerCase().includes(query) ? '' : 'none';
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(query) ? '' : 'none';
             }});
         }});
     </script>
