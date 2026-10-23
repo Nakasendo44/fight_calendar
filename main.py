@@ -42,7 +42,7 @@ HEADERS = {
 }
 
 # ==============================================================================
-# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES DISPONIBLES
+# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES DISPONIBLES (MODÈLES TEXTE COMPLETS EN TÊTE)
 # ==============================================================================
 def get_available_models():
     preferred = [
@@ -56,6 +56,7 @@ def get_available_models():
         "gemini-3.1-flash-lite-preview",
         "gemini-3.1-flash-lite",
     ]
+    # Exclusion uniquement des modèles 2.5 (404) et des modèles image/audio non-textuels
     excluded = [
         "embedding", "imagen", "veo", "tts", "audio", "vision", "aqa",
         "2.5", "image", "banana", "transcribe", "argon", "customtools"
@@ -79,7 +80,7 @@ def get_available_models():
 AVAILABLE_MODELS = get_available_models()
 
 # ==============================================================================
-# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS (PROMPTS V1 INTACTS)
+# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS (SOUS-CARTES INTÉGRALES)
 # ==============================================================================
 AGENTS_CONFIG = [
     {
@@ -94,7 +95,7 @@ AGENTS_CONFIG = [
             "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
         ),
         "specific_rules": (
-            "- Vérifie et liste TOUS les combats connus de la carte (Main Event, Co-Main Event et Undercard complète).\n"
+            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé, consulte sa fiche sur Box.live, Tapology ou le site du promoteur et liste TOUS les combats programmés (Main Event, Co-Main Event et l'intégralité des combats de l'Undercard, soit tous les 5 à 10 combats de la soirée).\n"
             "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) sur Box.live, Tapology ou le site du promoteur.\n"
             "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, The Ring ou EBU est en jeu.\n"
             "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
@@ -198,10 +199,11 @@ AGENTS_CONFIG = [
 ]
 
 # ==============================================================================
-# 4. MOTEUR D'EXTRACTION D'AFFICHES (AVEC CORRECTION DU DOUBLON D'IMAGE)
+# 4. MOTEUR D'EXTRACTION D'AFFICHES OFFICIELLES (AVEC RÉSOLUTION DES REDIRECTIONS)
 # ==============================================================================
 POSTER_CACHE = {}
 
+# Sites d'agrégation bannis UNIQUEMENT pour les images (après résolution de l'URL finale)
 BLOCKED_IMAGE_DOMAINS = [
     "ringwalks.com",
     "box.live",
@@ -213,6 +215,7 @@ BLOCKED_IMAGE_DOMAINS = [
     "reddit.com",
 ]
 
+# Sites officiels prioritaires pour la récupération d'affiches ou bannières de promoteurs
 TRUSTED_PROMOTER_DOMAINS = [
     "realamericanfreestyle.com",
     "matchroomboxing.com",
@@ -237,12 +240,14 @@ TRUSTED_PROMOTER_DOMAINS = [
 ]
 
 def is_url_allowed_for_poster(url):
+    """Vérifie uniquement que l'URL n'appartient pas à la liste noire (laisse passer les redirections Google)."""
     if not url or not url.startswith("http"):
         return False
     low = url.lower()
     return not any(b in low for b in BLOCKED_IMAGE_DOMAINS)
 
 def is_valid_poster_image(img_url):
+    """Autorise les affiches et les bannières de promoteurs (comme Matchroom), bloque Ringwalks et les icônes SVG."""
     if not img_url or not img_url.startswith("http"):
         return False
     low = img_url.lower()
@@ -258,6 +263,7 @@ def is_valid_poster_image(img_url):
     return not any(t in low for t in bad_tokens)
 
 def extract_og_image_from_url(url):
+    """Suit les redirections HTTP, vérifie le domaine final et extrait l'affiche officielle ou le poster Tapology."""
     if not is_url_allowed_for_poster(url):
         return None
     if url in POSTER_CACHE:
@@ -267,12 +273,14 @@ def extract_og_image_from_url(url):
         resp = requests.get(url, headers=HEADERS, timeout=8, allow_redirects=True)
         final_url = resp.url if resp else url
 
+        # Si une sous-page d'un promoteur officiel renvoie 404, on tente la racine du site du promoteur
         if resp.status_code >= 400 and any(t in final_url.lower() for t in TRUSTED_PROMOTER_DOMAINS):
             parsed_root = urllib.parse.urlparse(final_url)
             root_url = f"{parsed_root.scheme}://{parsed_root.netloc}/"
             resp = requests.get(root_url, headers=HEADERS, timeout=8, allow_redirects=True)
             final_url = resp.url
 
+        # Vérification de la liste noire sur l'URL finale réelle (après redirection vertexaisearch)
         if not is_url_allowed_for_poster(final_url):
             POSTER_CACHE[url] = None
             return None
@@ -280,6 +288,7 @@ def extract_og_image_from_url(url):
         if resp.status_code == 200:
             raw = resp.text
 
+            # Cas particulier Tapology : on extrait uniquement la vraie affiche d'événement (au-dessus des combattants)
             if "tapology.com" in final_url.lower():
                 tap_match = re.search(
                     r'(https://images\.tapology\.com/poster_images/[0-9]+/profile/[^"\'\s>]+)',
@@ -294,6 +303,7 @@ def extract_og_image_from_url(url):
                 POSTER_CACHE[url] = None
                 return None
 
+            # Extraction standard og:image / twitter:image
             patterns = [
                 r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
                 r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
@@ -318,19 +328,30 @@ def extract_og_image_from_url(url):
     return None
 
 def resolve_event_poster(ev, ev_url, grounding_urls):
-    """
-    Cascade propre : page officielle d'abord, puis fallback promoteur si mentionné.
-    (La recherche globale aveugle dans grounding_urls a été retirée pour empêcher le mélange d'images entre galas).
-    """
+    """Cascade de récupération d'image en 4 niveaux (Affiche directe -> Page officielle -> Liens Google -> Bannière Promoteur)."""
+    # 1. Si l'IA a fourni une URL d'image directe valide
     raw_poster = (ev.get("poster_url") or "").strip()
     if is_url_allowed_for_poster(raw_poster) and is_valid_poster_image(raw_poster):
         return raw_poster
 
+    # 2. Essai sur l'URL officielle de l'événement
     found_poster = extract_og_image_from_url(ev_url)
     if found_poster:
         return found_poster
 
-    # Fallback propre par promoteur basé strictement sur le nom du gala
+    # 3. Essai sur tous les liens visités par Google Search (les redirections vertexaisearch sont suivies par requests.get)
+    trusted_urls = [
+        u for u in grounding_urls if any(t in u.lower() for t in TRUSTED_PROMOTER_DOMAINS)
+    ]
+    other_urls = [
+        u for u in grounding_urls if u not in trusted_urls and is_url_allowed_for_poster(u)
+    ]
+    for g_url in (trusted_urls + other_urls)[:6]:
+        found_poster = extract_og_image_from_url(g_url)
+        if found_poster:
+            return found_poster
+
+    # 4. Filet de sécurité : bannière officielle du promoteur si mentionné dans le titre ou le diffuseur
     gala_context = f"{ev.get('nom_gala', '')} {ev.get('diffuseur_origine', '')}".lower()
     promoter_fallbacks = [
         ("matchroom", "https://www.matchroomboxing.com/"),
@@ -353,6 +374,7 @@ def resolve_event_poster(ev, ev_url, grounding_urls):
     return ""
 
 def extract_grounding_urls(response):
+    """Extrait les URLs réelles visitées par Google Search depuis les métadonnées de la réponse."""
     urls = []
     try:
         candidates = getattr(response, "candidates", []) or []
@@ -370,12 +392,9 @@ def extract_grounding_urls(response):
     return urls
 
 def parse_agent_json(raw_text):
-    """
-    Sécurité robuste : renvoie None si le JSON est invalide ou corrompu 
-    (permettant de basculer sur le modèle suivant au lieu de renvoyer une liste vide par erreur).
-    """
+    """Extrait et parse de manière ultra-tolérante le bloc JSON produit par un agent."""
     if not raw_text:
-        return None
+        return []
     cleaned = raw_text.replace("```json", "").replace("```", "").strip()
 
     first_brace = cleaned.find("{")
@@ -404,16 +423,16 @@ def parse_agent_json(raw_text):
         except Exception:
             pass
 
-    return None
+    return []
 
 # ==============================================================================
-# 5. EXÉCUTION D'UN MICRO-AGENT AVEC RECHERCHE GOOGLE & SÉCURITÉS 404
+# 5. EXÉCUTION D'UN MICRO-AGENT AVEC RECHERCHE GOOGLE & SOUS-CARTES INTÉGRALES
 # ==============================================================================
 def run_micro_agent(agent_cfg):
     discipline_id = agent_cfg["id"]
     print(f"\n--- Lancement Micro-Agent [{discipline_id}] ---")
 
-    prompt = f"""Tu es an agent d'extraction de données factuelles spécialisé dans les sports de combat.
+    prompt = f"""Tu es un agent d'extraction de données factuelles spécialisé dans les sports de combat.
 Date actuelle : {date_str} (Fuseau horaire : Europe/Paris).
 Fenêtre temporelle STRICTE autorisée : {DATE_WINDOW_STR}.
 
@@ -422,6 +441,7 @@ MISSION :
 
 CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
+- RÈGLE ABSOLUE SUR LES SOUS-CARTES : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims répertoriés sur Box.live, Tapology ou le site officiel). Ne tronque jamais une carte à 1 ou 2 combats si d'autres combats sont annoncés.
 - Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
 - ZÉRO HALLUCINATION : N'invente jamais de combat, d'adversaire 'TBA' fictif, ni de palmarès. Si tu n'es pas certain d'un palmarès ou d'une taille, mets "N/C".
 - Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
@@ -429,7 +449,7 @@ CONSIGNES IMPÉRATIVES :
 - Rédige les présentations et analyses en français journalistique précis en conservant les termes techniques (puncher, out-boxer, southpaw, main event, undercard, KO, TKO, undisputed).
 
 FORMAT DE SORTIE OBLIGATOIRE :
-Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma, sans aucun texte avant ni après :
+Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma (en incluant TOUS les combats de la soirée dans la liste "combats"), sans aucun texte avant ni après :
 {{
   "evenements": [
     {{
@@ -446,7 +466,7 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma, sans a
       "presentation": "2 à 3 phrases de présentation factuelle et dynamique des enjeux de l'événement.",
       "combats": [
         {{
-          "statut": "Main Event (ou Co-Main Event / Undercard / Prelims)",
+          "statut": "Main Event",
           "combattant_a": "Prénom Nom",
           "palmares_a": "19-0-0, 14 KOs",
           "taille_a": "1m78",
@@ -456,6 +476,30 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma, sans a
           "categorie_kg": "Super-légers (-63,5 kg)",
           "rounds": "12 rounds",
           "enjeu_et_analyse": "Titre en jeu et courte description stylistique du duel en 1 à 2 phrases."
+        }},
+        {{
+          "statut": "Co-Main Event",
+          "combattant_a": "Prénom Nom",
+          "palmares_a": "14-1-0, 8 KOs",
+          "taille_a": "1m80",
+          "combattant_b": "Prénom Nom",
+          "palmares_b": "16-2-0, 9 KOs",
+          "taille_b": "1m79",
+          "categorie_kg": "Mi-moyens (-66,7 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Enjeu et description stylistique du combat."
+        }},
+        {{
+          "statut": "Undercard",
+          "combattant_a": "Prénom Nom",
+          "palmares_a": "10-0-0, 5 KOs",
+          "taille_a": "1m75",
+          "combattant_b": "Prénom Nom",
+          "palmares_b": "11-3-1, 4 KOs",
+          "taille_b": "1m74",
+          "categorie_kg": "Légers (-61,2 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Enjeu et description stylistique du combat."
         }}
       ]
     }}
@@ -473,40 +517,28 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
                 config=types.GenerateContentConfig(
                     tools=[types.Tool(google_search=types.GoogleSearch())],
                     temperature=0.1,
+                    max_output_tokens=8192,
                 ),
             )
             if response and getattr(response, "text", None):
                 events = parse_agent_json(response.text)
-                
-                # Si le JSON est invalide, on passe au modèle suivant au lieu de renvoyer une liste vide par erreur
-                if events is None:
-                    print(f"  [Info] JSON mal formé avec {model_name}, essai du modèle suivant...")
-                    time.sleep(2)
-                    continue
-
                 grounding_urls = extract_grounding_urls(response)
 
                 for ev in events:
                     ev_url = (ev.get("url_officielle") or "").strip()
-                    if (not ev_url or "google.com" in ev_url) and grounding_urls:
+                    if (not ev_url or "google.com/search" in ev_url) and grounding_urls:
                         ev["url_officielle"] = grounding_urls[0]
                         ev_url = grounding_urls[0]
 
-                    # Sécurité anti-404 pour BKFC et Matchroom
-                    if "bkfc.com/events/" in ev_url.lower() or "matchroomboxing.com/events/" in ev_url.lower():
+                    # Sécurité anti-404 sur les sous-pages BKFC inventées
+                    if "bkfc.com/events/" in ev_url.lower():
                         try:
                             chk = requests.get(ev_url, headers=HEADERS, timeout=5)
                             if chk.status_code == 404:
-                                if "bkfc.com" in ev_url.lower():
-                                    ev_url = "https://www.bkfc.com/events"
-                                else:
-                                    ev_url = "https://www.matchroomboxing.com/events"
+                                ev_url = "https://www.bkfc.com/events"
                                 ev["url_officielle"] = ev_url
                         except Exception:
-                            if "bkfc.com" in ev_url.lower():
-                                ev_url = "https://www.bkfc.com/events"
-                            else:
-                                ev_url = "https://www.matchroomboxing.com/events"
+                            ev_url = "https://www.bkfc.com/events"
                             ev["url_officielle"] = ev_url
 
                     ev["poster_url"] = resolve_event_poster(ev, ev_url, grounding_urls)
