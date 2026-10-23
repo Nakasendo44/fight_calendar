@@ -26,15 +26,24 @@ now_paris = datetime.now(paris_tz)
 date_str = now_paris.strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
-# Génération explicite de la fenêtre des 7 prochains jours pour éviter toute erreur de date par l'IA
+# Génération explicite de la fenêtre des 7 prochains jours (FR, ISO, US et Japonais)
 valid_dates_fr = []
 valid_dates_iso = []
+valid_dates_us = []
+valid_dates_jp = []
 for offset in range(8):
     d = now_paris + timedelta(days=offset)
     valid_dates_fr.append(d.strftime("%d/%m/%Y"))
     valid_dates_iso.append(d.strftime("%Y-%m-%d"))
+    valid_dates_us.append(d.strftime("%m.%d.%Y"))
+    valid_dates_jp.append(f"{d.month}月{d.day}日")
 
-DATE_WINDOW_STR = f"du {valid_dates_fr[0]} au {valid_dates_fr[-1]} inclus (Dates ISO autorisées : {', '.join(valid_dates_iso)})"
+DATE_WINDOW_STR = (
+    f"du {valid_dates_fr[0]} au {valid_dates_fr[-1]} inclus "
+    f"(Dates ISO : {', '.join(valid_dates_iso)} | "
+    f"Format US : {', '.join(valid_dates_us)} | "
+    f"Format JP : {', '.join(valid_dates_jp)})"
+)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
@@ -56,7 +65,7 @@ def get_available_models():
         "gemini-3.1-flash-lite-preview",
         "gemini-3.1-flash-lite",
     ]
-    # Exclusion uniquement des modèles 2.5 (404) et des modèles image/audio non-textuels
+    # Exclusion des modèles 2.5 (404) et des modèles image/audio non-textuels
     excluded = [
         "embedding", "imagen", "veo", "tts", "audio", "vision", "aqa",
         "2.5", "image", "banana", "transcribe", "argon", "customtools"
@@ -80,12 +89,13 @@ def get_available_models():
 AVAILABLE_MODELS = get_available_models()
 
 # ==============================================================================
-# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS (SOUS-CARTES INTÉGRALES)
+# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS (BASE V1 + SOUS-CARTES COMPLÈTES)
 # ==============================================================================
 AGENTS_CONFIG = [
     {
         "id": "boxe-monde",
         "title": "🥊 1. Boxe Anglaise — Galas Internationaux",
+        "fallback_url": "https://box.live/upcoming-fights-schedule/",
         "empty_msg": "Aucun gala international majeur répertorié dans la fenêtre des 7 prochains jours.",
         "search_hint": (
             "Recherche les galas de boxe anglaise prévus cette semaine et leur carte complète (full fight card / undercard) sur : "
@@ -95,7 +105,7 @@ AGENTS_CONFIG = [
             "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
         ),
         "specific_rules": (
-            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé, consulte sa fiche sur Box.live, Tapology ou le site du promoteur et liste TOUS les combats programmés (Main Event, Co-Main Event et l'intégralité des combats de l'Undercard, soit tous les 5 à 10 combats de la soirée).\n"
+            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé (notamment Matchroom, Queensberry, Top Rank, etc.), consulte sa fiche sur Box.live, Tapology ou le site du promoteur et liste TOUS les combats programmés (Main Event, Co-Main Event, Undercard et combats préliminaires 'Before the Bell', soit l'intégralité des 5 à 10 combats de la soirée).\n"
             "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) sur Box.live, Tapology ou le site du promoteur.\n"
             "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, The Ring ou EBU est en jeu.\n"
             "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
@@ -104,11 +114,12 @@ AGENTS_CONFIG = [
     {
         "id": "boxe-japon",
         "title": "🇯🇵 2. Boxe Anglaise — Galas au Japon (Korakuen Hall & Arènes)",
+        "fallback_url": "https://boxmob.jp/sp/schedule/",
         "empty_msg": "Aucun gala professionnel japonais répertorié sur cette période de 7 jours.",
         "search_hint": (
             "Recherche le calendrier de boxe professionnelle japonaise (プロボクシング 日程 後楽園ホール) et les cartes complètes sur : "
             "boxmob.jp (Boxing Mobile), boxingnews.jp, tapology.com/fightcenter, ibu4gin.net, asianboxing.info, box.live. "
-            "Cherche les galas au Korakuen Hall (後楽園ホール), Ariake Arena, Yokohama, Osaka (Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next, etc.)."
+            "Cherche les galas au Korakuen Hall (後楽園ホール), Ariake Arena, Yokohama, Osaka (Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next, Lemino Boxing, etc.)."
         ),
         "specific_rules": (
             "- Liste TOUS les combats programmés pour chaque gala japonais (Main Event, Co-Main et toute la sous-carte).\n"
@@ -121,6 +132,7 @@ AGENTS_CONFIG = [
     {
         "id": "ufc",
         "title": "🔥 3. UFC",
+        "fallback_url": "https://www.ufc.com/events",
         "empty_msg": "Aucun événement UFC programmé cette semaine.",
         "search_hint": (
             "Recherche le prochain événement UFC prévu dans les 7 prochains jours sur : "
@@ -135,6 +147,7 @@ AGENTS_CONFIG = [
     {
         "id": "rizin",
         "title": "🌸 4. Rizin Fighting Federation",
+        "fallback_url": "https://jp.rizinff.com/schedules/",
         "empty_msg": "Aucun événement Rizin programmé cette semaine.",
         "search_hint": (
             "Recherche le calendrier officiel RIZIN (RIZIN 大会日程 対戦カード) sur : "
@@ -148,6 +161,7 @@ AGENTS_CONFIG = [
     {
         "id": "bkfc",
         "title": "👊 5. BKFC (Bare Knuckle)",
+        "fallback_url": "https://www.bkfc.com/events",
         "empty_msg": "Aucun événement BKFC programmé cette semaine.",
         "search_hint": (
             "Recherche le calendrier officiel Bare Knuckle Fighting Championship (BKFC numérotés et BKFC Fight Night) sur : "
@@ -161,6 +175,7 @@ AGENTS_CONFIG = [
     {
         "id": "kick-japon",
         "title": "🦵 6. Kickboxing Japonais (RISE, K-1, Krush)",
+        "fallback_url": "https://www.k-1.co.jp/schedule/",
         "empty_msg": "Aucun gala majeur RISE, K-1 ou Krush programmé cette semaine.",
         "search_hint": (
             "Recherche les prochains événements K-1, Krush et RISE (K-1 Krush RISE 大会日程 対戦カード) sur : "
@@ -174,6 +189,7 @@ AGENTS_CONFIG = [
     {
         "id": "glory",
         "title": "🏆 7. Glory Kickboxing",
+        "fallback_url": "https://glorykickboxing.com/events",
         "empty_msg": "Aucun événement Glory Kickboxing programmé cette semaine.",
         "search_hint": (
             "Recherche le calendrier officiel Glory Kickboxing sur : "
@@ -186,6 +202,7 @@ AGENTS_CONFIG = [
     {
         "id": "raf",
         "title": "🤼 8. RAF (Real American Freestyle Wrestling)",
+        "fallback_url": "https://www.realamericanfreestyle.com/events-gallery",
         "empty_msg": "Aucun événement RAF programmé cette semaine.",
         "search_hint": (
             "Recherche les événements officiels Real American Freestyle wrestling (RAF) et Joe Hand Promotions sur : "
@@ -199,11 +216,11 @@ AGENTS_CONFIG = [
 ]
 
 # ==============================================================================
-# 4. MOTEUR D'EXTRACTION D'AFFICHES OFFICIELLES (AVEC RÉSOLUTION DES REDIRECTIONS)
+# 4. MOTEUR D'EXTRACTION D'AFFICHES + BANNIÈRES OFFICIELLES GARANTIES (SANS DOUBLON)
 # ==============================================================================
 POSTER_CACHE = {}
+USED_EVENT_POSTERS = set()
 
-# Sites d'agrégation bannis UNIQUEMENT pour les images (après résolution de l'URL finale)
 BLOCKED_IMAGE_DOMAINS = [
     "ringwalks.com",
     "box.live",
@@ -215,7 +232,6 @@ BLOCKED_IMAGE_DOMAINS = [
     "reddit.com",
 ]
 
-# Sites officiels prioritaires pour la récupération d'affiches ou bannières de promoteurs
 TRUSTED_PROMOTER_DOMAINS = [
     "realamericanfreestyle.com",
     "matchroomboxing.com",
@@ -239,15 +255,49 @@ TRUSTED_PROMOTER_DOMAINS = [
     "flowrestling.org",
 ]
 
+def make_svg_banner(bg_start, bg_end, accent_color, main_title, subtitle, letter_spacing="8"):
+    """Bannière vectorielle officielle de secours si le site du promoteur bloque le scraping (ex: UFC / RAF)."""
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="100%" height="100%">'
+        f'<defs><radialGradient id="g" cx="50%" cy="45%" r="75%">'
+        f'<stop offset="0%" stop-color="{bg_start}"/><stop offset="100%" stop-color="{bg_end}"/>'
+        f'</radialGradient></defs>'
+        f'<rect width="1200" height="600" fill="url(#g)"/>'
+        f'<rect x="350" y="135" width="500" height="3" fill="{accent_color}" opacity="0.85"/>'
+        f'<text x="600" y="265" text-anchor="middle" fill="#FFFFFF" font-family="Outfit, Arial, sans-serif" '
+        f'font-size="84" font-weight="800" letter-spacing="{letter_spacing}">{main_title}</text>'
+        f'<text x="600" y="335" text-anchor="middle" fill="{accent_color}" font-family="Plus Jakarta Sans, Arial, sans-serif" '
+        f'font-size="28" font-weight="700" letter-spacing="12">{subtitle}</text>'
+        f'<rect x="350" y="375" width="500" height="3" fill="{accent_color}" opacity="0.85"/>'
+        f'</svg>'
+    )
+    return "data:image/svg+xml;utf8," + urllib.parse.quote(svg)
+
+FIXED_PROMOTER_BANNERS = {
+    "matchroom": make_svg_banner("#141414", "#050505", "#E5E5E5", "MATCHROOM", "B O X I N G", "8"),
+    "queensberry": make_svg_banner("#1A140B", "#080604", "#D4AF37", "QUEENSBERRY", "P R O M O T I O N S", "6"),
+    "top rank": make_svg_banner("#1B120C", "#090604", "#C89D54", "TOP RANK", "B O X I N G", "8"),
+    "golden boy": make_svg_banner("#1F1709", "#0A0703", "#E6B84D", "GOLDEN BOY", "P R O M O T I O N S", "7"),
+    "pbc": make_svg_banner("#121824", "#06080E", "#D4AF37", "P B C", "PREMIER BOXING CHAMPIONS", "10"),
+    "the ring": make_svg_banner("#1C130E", "#0A0604", "#E2B049", "THE RING", "OFFICIAL FIGHT NIGHT", "8"),
+    "zuffa": make_svg_banner("#220D0D", "#0A0404", "#D20A0A", "ZUFFA BOXING", "UFC FIGHT PASS", "6"),
+    "ufc": make_svg_banner("#260B0B", "#090303", "#D20A0A", "U F C", "ULTIMATE FIGHTING CHAMPIONSHIP", "14"),
+    "rizin": make_svg_banner("#1A1326", "#08050E", "#E5C158", "R I Z I N", "FIGHTING FEDERATION", "12"),
+    "bkfc": make_svg_banner("#1E190A", "#090703", "#F5C518", "B K F C", "BARE KNUCKLE FIGHTING CHAMPIONSHIP", "12"),
+    "k-1": make_svg_banner("#240C0C", "#090303", "#E63946", "K - 1", "WORLD GRAND PRIX JAPAN", "12"),
+    "krush": make_svg_banner("#1F0E14", "#080406", "#E63946", "K R U S H", "K-1 GROUP OFFICIAL EVENT", "10"),
+    "rise": make_svg_banner("#0E1A2B", "#050910", "#F4A261", "R I S E", "EXTREME FIGHT GAME JAPAN", "12"),
+    "glory": make_svg_banner("#1D160B", "#080603", "#E6B84D", "G L O R Y", "GLORY KICKBOXING WORLD SERIES", "12"),
+    "raf": make_svg_banner("#131C2E", "#070A12", "#E63946", "R A F", "REAL AMERICAN FREESTYLE WRESTLING", "14"),
+}
+
 def is_url_allowed_for_poster(url):
-    """Vérifie uniquement que l'URL n'appartient pas à la liste noire (laisse passer les redirections Google)."""
     if not url or not url.startswith("http"):
         return False
     low = url.lower()
     return not any(b in low for b in BLOCKED_IMAGE_DOMAINS)
 
 def is_valid_poster_image(img_url):
-    """Autorise les affiches et les bannières de promoteurs (comme Matchroom), bloque Ringwalks et les icônes SVG."""
     if not img_url or not img_url.startswith("http"):
         return False
     low = img_url.lower()
@@ -263,7 +313,7 @@ def is_valid_poster_image(img_url):
     return not any(t in low for t in bad_tokens)
 
 def extract_og_image_from_url(url):
-    """Suit les redirections HTTP, vérifie le domaine final et extrait l'affiche officielle ou le poster Tapology."""
+    """Suit les redirections HTTP et extrait l'affiche officielle ou le vrai poster Tapology."""
     if not is_url_allowed_for_poster(url):
         return None
     if url in POSTER_CACHE:
@@ -273,14 +323,12 @@ def extract_og_image_from_url(url):
         resp = requests.get(url, headers=HEADERS, timeout=8, allow_redirects=True)
         final_url = resp.url if resp else url
 
-        # Si une sous-page d'un promoteur officiel renvoie 404, on tente la racine du site du promoteur
         if resp.status_code >= 400 and any(t in final_url.lower() for t in TRUSTED_PROMOTER_DOMAINS):
             parsed_root = urllib.parse.urlparse(final_url)
             root_url = f"{parsed_root.scheme}://{parsed_root.netloc}/"
             resp = requests.get(root_url, headers=HEADERS, timeout=8, allow_redirects=True)
             final_url = resp.url
 
-        # Vérification de la liste noire sur l'URL finale réelle (après redirection vertexaisearch)
         if not is_url_allowed_for_poster(final_url):
             POSTER_CACHE[url] = None
             return None
@@ -288,7 +336,7 @@ def extract_og_image_from_url(url):
         if resp.status_code == 200:
             raw = resp.text
 
-            # Cas particulier Tapology : on extrait uniquement la vraie affiche d'événement (au-dessus des combattants)
+            # Cas particulier Tapology : uniquement le poster officiel situé au-dessus des combattants
             if "tapology.com" in final_url.lower():
                 tap_match = re.search(
                     r'(https://images\.tapology\.com/poster_images/[0-9]+/profile/[^"\'\s>]+)',
@@ -303,7 +351,6 @@ def extract_og_image_from_url(url):
                 POSTER_CACHE[url] = None
                 return None
 
-            # Extraction standard og:image / twitter:image
             patterns = [
                 r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
                 r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
@@ -327,51 +374,110 @@ def extract_og_image_from_url(url):
     POSTER_CACHE[url] = None
     return None
 
-def resolve_event_poster(ev, ev_url, grounding_urls):
-    """Cascade de récupération d'image en 4 niveaux (Affiche directe -> Page officielle -> Liens Google -> Bannière Promoteur)."""
-    # 1. Si l'IA a fourni une URL d'image directe valide
+def get_event_keywords(ev):
+    """Extrait les noms de famille des combattants du Main Event pour vérifier qu'un lien correspond bien à ce gala."""
+    keywords = []
+    combats = ev.get("combats") or []
+    if combats:
+        for field in ["combattant_a", "combattant_b"]:
+            name = (combats[0].get(field) or "").strip()
+            parts = [p.lower() for p in re.split(r"[\s\-]+", name) if len(p) >= 4]
+            keywords.extend(parts)
+    title_words = [w.lower() for w in re.split(r"[\s\-:]+", ev.get("nom_gala") or "") if len(w) >= 5]
+    keywords.extend(title_words)
+    return list(set(keywords))
+
+def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events_in_section):
+    """
+    Cascade sécurisée en 4 étapes :
+    1. Poster direct valide
+    2. Page officielle du gala (ev_url)
+    3. Liens Google Search (uniquement s'ils correspondent à ce combat précis, sans jamais dupliquer une photo)
+    4. Bannière officielle du promoteur (web ou SVG haute définition garanti pour UFC, RAF, Matchroom, etc.)
+    """
+    # 1. URL de poster directe fournie par l'agent
     raw_poster = (ev.get("poster_url") or "").strip()
     if is_url_allowed_for_poster(raw_poster) and is_valid_poster_image(raw_poster):
-        return raw_poster
+        if raw_poster not in USED_EVENT_POSTERS:
+            USED_EVENT_POSTERS.add(raw_poster)
+            return raw_poster
 
-    # 2. Essai sur l'URL officielle de l'événement
+    # 2. Extraction depuis l'URL officielle de l'événement
     found_poster = extract_og_image_from_url(ev_url)
-    if found_poster:
+    if found_poster and found_poster not in USED_EVENT_POSTERS:
+        USED_EVENT_POSTERS.add(found_poster)
         return found_poster
 
-    # 3. Essai sur tous les liens visités par Google Search (les redirections vertexaisearch sont suivies par requests.get)
-    trusted_urls = [
-        u for u in grounding_urls if any(t in u.lower() for t in TRUSTED_PROMOTER_DOMAINS)
-    ]
-    other_urls = [
-        u for u in grounding_urls if u not in trusted_urls and is_url_allowed_for_poster(u)
-    ]
-    for g_url in (trusted_urls + other_urls)[:6]:
-        found_poster = extract_og_image_from_url(g_url)
-        if found_poster:
-            return found_poster
+    # 3. Recherche dans grounding_urls : autorisée si 1 seul événement dans la section
+    #    ou si l'URL contient le nom d'un combattant du gala (empêche le doublon Navarrete / Top Tier Boxing)
+    ev_keywords = get_event_keywords(ev)
+    for g_url in grounding_urls[:6]:
+        g_low = g_url.lower()
+        if total_events_in_section == 1 or any(kw in g_low for kw in ev_keywords):
+            candidate = extract_og_image_from_url(g_url)
+            if candidate and candidate not in USED_EVENT_POSTERS:
+                USED_EVENT_POSTERS.add(candidate)
+                return candidate
 
-    # 4. Filet de sécurité : bannière officielle du promoteur si mentionné dans le titre ou le diffuseur
-    gala_context = f"{ev.get('nom_gala', '')} {ev.get('diffuseur_origine', '')}".lower()
-    promoter_fallbacks = [
-        ("matchroom", "https://www.matchroomboxing.com/"),
-        ("queensberry", "https://www.queensberry.co.uk/"),
-        ("top rank", "https://www.toprank.com/"),
-        ("golden boy", "https://www.goldenboy.com/"),
-        ("pbc", "https://www.premierboxingchampions.com/"),
-        ("the ring", "https://www.ringtv.com/"),
-        ("bkfc", "https://www.bkfc.com/events"),
-        ("ufc", "https://www.ufc.com/events"),
-        ("raf", "https://www.realamericanfreestyle.com/events-gallery"),
-        ("glory", "https://glorykickboxing.com/events"),
+    # 4. Filet de sécurité : Bannière officielle du promoteur ou de la ligue
+    gala_context = f"{ev.get('nom_gala', '')} {ev.get('diffuseur_origine', '')} {discipline_id}".lower()
+    promoter_sites = [
+        ("matchroom", "https://www.matchroomboxing.com/", "matchroom"),
+        ("queensberry", "https://www.queensberry.co.uk/", "queensberry"),
+        ("top rank", "https://www.toprank.com/", "top rank"),
+        ("golden boy", "https://www.goldenboy.com/", "golden boy"),
+        ("pbc", "https://www.premierboxingchampions.com/", "pbc"),
+        ("premier boxing", "https://www.premierboxingchampions.com/", "pbc"),
+        ("the ring", "https://www.ringtv.com/", "the ring"),
+        ("riyadh season", "https://www.ringtv.com/", "the ring"),
+        ("zuffa", "https://www.ufcfightpass.com/", "zuffa"),
+        ("bkfc", "https://www.bkfc.com/events", "bkfc"),
+        ("ufc", "https://www.ufc.com/events", "ufc"),
+        ("rizin", "https://jp.rizinff.com/", "rizin"),
+        ("krush", "https://www.k-1.co.jp/", "krush"),
+        ("k-1", "https://www.k-1.co.jp/", "k-1"),
+        ("rise", "https://rise-rc.com/", "rise"),
+        ("glory", "https://glorykickboxing.com/events", "glory"),
+        ("raf", "https://www.realamericanfreestyle.com/events-gallery", "raf"),
     ]
-    for keyword, fallback_site in promoter_fallbacks:
+    for keyword, site_url, svg_key in promoter_sites:
         if keyword in gala_context:
-            found_poster = extract_og_image_from_url(fallback_site)
-            if found_poster:
-                return found_poster
+            web_banner = extract_og_image_from_url(site_url)
+            if web_banner:
+                return web_banner
+            return FIXED_PROMOTER_BANNERS.get(svg_key, "")
 
     return ""
+
+def verify_and_fix_official_url(ev_url, ev, fallback_url, grounding_urls):
+    """Corrige les liens vides ou les sous-pages en erreur 404 (notamment BKFC et Matchroom)."""
+    url = (ev_url or "").strip()
+    if (not url or "google.com/search" in url) and grounding_urls:
+        url = grounding_urls[0]
+    if not url.startswith("http"):
+        url = fallback_url
+
+    low_url = url.lower()
+    if any(d in low_url for d in ["bkfc.com/events/", "matchroomboxing.com/events/", "queensberry.co.uk/"]):
+        try:
+            chk = requests.get(url, headers=HEADERS, timeout=6, allow_redirects=True)
+            head_txt = chk.text[:2000].lower() if chk.text else ""
+            if chk.status_code == 404 or chk.status_code >= 500 or "page not found" in head_txt or "doesn't exist" in head_txt:
+                if "bkfc.com" in low_url:
+                    return "https://www.bkfc.com/events"
+                if "matchroomboxing.com" in low_url:
+                    return "https://www.matchroomboxing.com/events/"
+                if "queensberry.co.uk" in low_url:
+                    return "https://www.queensberry.co.uk/"
+                return fallback_url
+        except Exception:
+            if "bkfc.com" in low_url:
+                return "https://www.bkfc.com/events"
+            if "matchroomboxing.com" in low_url:
+                return "https://www.matchroomboxing.com/events/"
+            return fallback_url
+
+    return url
 
 def extract_grounding_urls(response):
     """Extrait les URLs réelles visitées par Google Search depuis les métadonnées de la réponse."""
@@ -392,9 +498,12 @@ def extract_grounding_urls(response):
     return urls
 
 def parse_agent_json(raw_text):
-    """Extrait et parse de manière ultra-tolérante le bloc JSON produit par un agent."""
+    """
+    Extrait et parse le bloc JSON produit par un agent.
+    Renvoie None si le JSON est mal formé (pour forcer l'essai du modèle suivant).
+    """
     if not raw_text:
-        return []
+        return None
     cleaned = raw_text.replace("```json", "").replace("```", "").strip()
 
     first_brace = cleaned.find("{")
@@ -423,13 +532,14 @@ def parse_agent_json(raw_text):
         except Exception:
             pass
 
-    return []
+    return None
 
 # ==============================================================================
-# 5. EXÉCUTION D'UN MICRO-AGENT AVEC RECHERCHE GOOGLE & SOUS-CARTES INTÉGRALES
+# 5. EXÉCUTION D'UN MICRO-AGENT AVEC LIMITE ÉTENDUE (16384 TOKENS)
 # ==============================================================================
 def run_micro_agent(agent_cfg):
     discipline_id = agent_cfg["id"]
+    fallback_url = agent_cfg.get("fallback_url", "https://box.live/upcoming-fights-schedule/")
     print(f"\n--- Lancement Micro-Agent [{discipline_id}] ---")
 
     prompt = f"""Tu es un agent d'extraction de données factuelles spécialisé dans les sports de combat.
@@ -441,7 +551,7 @@ MISSION :
 
 CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
-- RÈGLE ABSOLUE SUR LES SOUS-CARTES : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims répertoriés sur Box.live, Tapology ou le site officiel). Ne tronque jamais une carte à 1 ou 2 combats si d'autres combats sont annoncés.
+- RÈGLE ABSOLUE SUR LES SOUS-CARTES : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims répertoriés sur Box.live, Tapology, Boxing Mobile ou le site officiel). Ne tronque jamais une carte à 1 ou 2 combats si d'autres combats sont annoncés.
 - Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
 - ZÉRO HALLUCINATION : N'invente jamais de combat, d'adversaire 'TBA' fictif, ni de palmarès. Si tu n'es pas certain d'un palmarès ou d'une taille, mets "N/C".
 - Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
@@ -517,31 +627,27 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
                 config=types.GenerateContentConfig(
                     tools=[types.Tool(google_search=types.GoogleSearch())],
                     temperature=0.1,
-                    max_output_tokens=8192,
+                    max_output_tokens=16384,
                 ),
             )
             if response and getattr(response, "text", None):
                 events = parse_agent_json(response.text)
+
+                if events is None:
+                    print(f"  [Info] JSON incomplet ou mal formé avec {model_name}, essai du modèle suivant...")
+                    time.sleep(3)
+                    continue
+
                 grounding_urls = extract_grounding_urls(response)
+                total_ev = len(events)
 
                 for ev in events:
-                    ev_url = (ev.get("url_officielle") or "").strip()
-                    if (not ev_url or "google.com/search" in ev_url) and grounding_urls:
-                        ev["url_officielle"] = grounding_urls[0]
-                        ev_url = grounding_urls[0]
-
-                    # Sécurité anti-404 sur les sous-pages BKFC inventées
-                    if "bkfc.com/events/" in ev_url.lower():
-                        try:
-                            chk = requests.get(ev_url, headers=HEADERS, timeout=5)
-                            if chk.status_code == 404:
-                                ev_url = "https://www.bkfc.com/events"
-                                ev["url_officielle"] = ev_url
-                        except Exception:
-                            ev_url = "https://www.bkfc.com/events"
-                            ev["url_officielle"] = ev_url
-
-                    ev["poster_url"] = resolve_event_poster(ev, ev_url, grounding_urls)
+                    raw_ev_url = (ev.get("url_officielle") or "").strip()
+                    ev_url = verify_and_fix_official_url(raw_ev_url, ev, fallback_url, grounding_urls)
+                    ev["url_officielle"] = ev_url
+                    ev["poster_url"] = resolve_event_poster(
+                        ev, ev_url, grounding_urls, discipline_id, total_ev
+                    )
 
                 print(f"  -> {len(events)} événement(s) vérifié(s) extrait(s) pour [{discipline_id}].")
                 return events
@@ -550,7 +656,7 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
             err_str = str(e)
             print(f"  [Avertissement] {model_name} sur [{discipline_id}] : {err_str[:160]}")
             if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                wait_time = 35 if idx == 0 else 20
+                wait_time = 40 if idx == 0 else 25
                 print(f"  Pause de sécurité de {wait_time}s (quota API) avant rotation de modèle...")
                 time.sleep(wait_time)
             else:
@@ -577,7 +683,7 @@ def render_event_card_html(ev):
     combats = ev.get("combats") or []
 
     belt_badge = f'<div class="poster-belt">👑 {enjeu}</div>' if enjeu else ""
-    if poster_url.startswith("http"):
+    if poster_url.startswith("http") or poster_url.startswith("data:image/"):
         poster_block = f"""
         <div class="poster-container">
             <img src="{html.escape(poster_url)}" alt="{nom_gala}" class="event-poster-img"
@@ -664,7 +770,7 @@ def render_event_card_html(ev):
     </article>
     """
 
-# Exécution séquentielle des 8 Micro-Agents avec temporisation anti-quota
+# Exécution séquentielle des 8 Micro-Agents avec pause de régénération du quota par minute (45s)
 sections_html = []
 total_events_found = 0
 
@@ -685,7 +791,8 @@ for idx, cfg in enumerate(AGENTS_CONFIG):
     sections_html.append(section_block)
 
     if idx < len(AGENTS_CONFIG) - 1:
-        time.sleep(14)
+        print("  Pause de 45s pour régénérer le quota de jetons par minute (RPM/TPM)...")
+        time.sleep(45)
 
 if total_events_found == 0 and os.path.exists("index.html"):
     print("\n[ALERTE QUOTA API] 0 événement extrait. Conservation des fichiers existants.")
