@@ -26,12 +26,12 @@ now_paris = datetime.now(paris_tz)
 date_str = now_paris.strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
-# Fenêtre de J-1 (veille, pour conserver les galas US de la nuit de vendredi à samedi) à J+7
+# Fenêtre stricte de 7 jours (d'aujourd'hui J à J+7) aux formats FR, ISO, US et Japonais
 valid_dates_fr = []
 valid_dates_iso = []
 valid_dates_us = []
 valid_dates_jp = []
-for offset in range(-1, 8):
+for offset in range(8):
     d = now_paris + timedelta(days=offset)
     valid_dates_fr.append(d.strftime("%d/%m/%Y"))
     valid_dates_iso.append(d.strftime("%Y-%m-%d"))
@@ -51,32 +51,31 @@ HEADERS = {
 }
 
 # ==============================================================================
-# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES DISPONIBLES (MODÈLES TEXTE COMPLETS EN TÊTE)
+# 2. DÉCOUVERTE DES MODÈLES COMPLETS (EXCLUSION STRICTE DES MODÈLES "LITE")
 # ==============================================================================
 def get_available_models():
     preferred = [
         "gemini-3.8-flash",
-        "gemini-3.8-flash-lite",
         "gemini-3.5-flash",
         "gemini-flash-latest",
-        "gemini-flash-lite-latest",
         "gemini-pro-latest",
         "gemini-3-flash-preview",
-        "gemini-3.1-flash-lite-preview",
-        "gemini-3.1-flash-lite",
+        "gemini-3.1-pro-preview",
+        "gemini-3.6-flash",
+        "gemini-3.7-flash",
     ]
-    # Exclusion des modèles 2.5 (404) et des modèles image/audio non-textuels
+    # Exclusion stricte des modèles "lite" (qui résument/tronquent les cartes), des modèles 2.5 (404) et image/audio
     excluded = [
-        "embedding", "imagen", "veo", "tts", "audio", "vision", "aqa",
+        "lite", "embedding", "imagen", "veo", "tts", "audio", "vision", "aqa",
         "2.5", "image", "banana", "transcribe", "argon", "customtools"
     ]
     discovered = []
     try:
         for m in client.models.list():
             short = getattr(m, "name", "").replace("models/", "")
-            if "gemini" in short and not any(ex in short for ex in excluded):
+            if "gemini" in short and not any(ex in short.lower() for ex in excluded):
                 discovered.append(short)
-        print(f"Modèles actifs détectés : {discovered}")
+        print(f"Modèles complets actifs détectés : {discovered}")
     except Exception as e:
         print(f"Info liste modèles : {e}")
 
@@ -89,7 +88,7 @@ def get_available_models():
 AVAILABLE_MODELS = get_available_models()
 
 # ==============================================================================
-# 3. CONFIGURATION DES 8 MICRO-AGENTS (16384 TOKENS POUR LA BOXE, 8192 POUR LE RESTE)
+# 3. CONFIGURATION DES 6 MICRO-AGENTS SPÉCIALISÉS
 # ==============================================================================
 AGENTS_CONFIG = [
     {
@@ -99,14 +98,14 @@ AGENTS_CONFIG = [
         "fallback_url": "https://box.live/upcoming-fights-schedule/",
         "empty_msg": "Aucun gala international majeur répertorié dans la fenêtre des 7 prochains jours.",
         "search_hint": (
-            "Recherche les galas de boxe anglaise prévus cette semaine et leur carte complète (full fight card / undercard) sur : "
+            "Recherche tous les galas de boxe anglaise prévus cette semaine et leur carte complète (full fight card / undercard) sur : "
             "box.live, tapology.com/fightcenter, ringtv.com/schedule, matchroomboxing.com/events, queensberry.co.uk, "
             "dazn.com, espn.com/boxing/schedule, fightnights.com, ufcfightpass.com. "
             "Inclus impérativement les cartes Matchroom, Queensberry, Top Rank, PBC, Golden Boy, "
             "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
         ),
         "specific_rules": (
-            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé (notamment Matchroom, Queensberry, Top Rank, etc.), consulte sa fiche sur Box.live, Tapology ou le site du promoteur et liste TOUS les combats programmés (Main Event, Co-Main Event, Undercard et combats préliminaires 'Before the Bell', soit l'intégralité des 5 à 10 combats de la soirée).\n"
+            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé (notamment Matchroom, Queensberry, Top Rank, PBC, Golden Boy, etc.), consulte sa fiche sur Box.live, Tapology ou le site du promoteur et liste TOUS les combats programmés (Main Event, Co-Main Event, Undercard et combats préliminaires 'Before the Bell', soit l'intégralité des 5 à 10 combats de la soirée).\n"
             "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) sur Box.live, Tapology ou le site du promoteur.\n"
             "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, The Ring ou EBU est en jeu.\n"
             "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
@@ -114,21 +113,25 @@ AGENTS_CONFIG = [
     },
     {
         "id": "boxe-japon",
-        "title": "🇯🇵 2. Boxe Anglaise — Galas au Japon (Korakuen Hall & Arènes)",
+        "title": "🇯🇵 2. Boxe Anglaise — Galas au Japon (Arènes & Korakuen Hall)",
         "max_tokens": 16384,
         "fallback_url": "https://boxmob.jp/sp/schedule/",
         "empty_msg": "Aucun gala professionnel japonais répertorié sur cette période de 7 jours.",
         "search_hint": (
-            "Recherche le calendrier de boxe professionnelle japonaise (プロボクシング 日程 後楽園ホール) et les cartes complètes sur : "
+            f"Recherche le calendrier complet de boxe professionnelle japonaise (プロボクシング 日程 結果 / {', '.join(valid_dates_jp)}) sur : "
             "boxmob.jp (Boxing Mobile), boxingnews.jp, tapology.com/fightcenter, ibu4gin.net, asianboxing.info, box.live. "
-            "Cherche les galas au Korakuen Hall (後楽園ホール), Ariake Arena, Yokohama, Osaka (Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next, Lemino Boxing, etc.)."
+            "Cherche à la fois les grands galas en arènes (Ariake Arena, Yokohama Arena, Saitama Super Arena, Osaka, Tokyo) "
+            "et les réunions du Korakuen Hall (後楽園ホール : Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next, Lemino Boxing, etc.)."
         ),
         "specific_rules": (
+            "- HIÉRARCHIE ET EXHAUSTIVITÉ JAPON :\n"
+            "  1. Priorité absolue aux grands galas en arènes et championnats mondiaux/internationaux diffusés sur Prime Video JP, Lemino, U-NEXT, WOWOW ou ABEMA.\n"
+            "  2. Inclus impérativement toutes les réunions majeures et championnats JBC / OPBF / WBO Asia-Pacific (Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next).\n"
+            "  3. Inclus également en complément les autres réunions professionnelles programmées au Korakuen Hall sur la période.\n"
+            "- GESTION DU DÉCALAGE HORAIRE (JST = UTC+9) : Inclus impérativement les galas ayant lieu aujourd'hui (" + date_str + " / " + valid_dates_jp[0] + ") même s'ils viennent de se terminer au Japon (vérifie les pages日程/Schedule ET 結果/Results du jour sur boxmob.jp et boxingnews.jp).\n"
             "- Liste TOUS les combats programmés pour chaque gala japonais (Main Event, Co-Main et toute la sous-carte).\n"
             "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn).\n"
-            "- Convertis les horaires japonais (JST = UTC+9) en heure de Paris (souvent entre 10h00 et 14h00 heure de Paris pour le Korakuen Hall).\n"
-            "- Précise les diffuseurs japonais d'origine (Lemino, Boxing Raise, U-NEXT, ABEMA, Prime Video JP, WOWOW) et la disponibilité en France.\n"
-            "- Mentionne les titres nationaux JBC, OPBF ou WBO Asia-Pacific en jeu."
+            "- Convertis les horaires japonais (JST = UTC+9) en heure de Paris."
         ),
     },
     {
@@ -138,12 +141,12 @@ AGENTS_CONFIG = [
         "fallback_url": "https://www.ufc.com/events",
         "empty_msg": "Aucun événement UFC programmé cette semaine.",
         "search_hint": (
-            "Recherche l'événement UFC prévu aujourd'hui ou dans les 7 prochains jours (UFC numéroté type UFC 333 ou UFC Fight Night) et sa carte complète sur : "
+            "Recherche l'événement UFC prévu aujourd'hui ou dans les 7 prochains jours (UFC numéroté ou UFC Fight Night) et sa carte complète sur : "
             "ufc.com/events, espn.com/mma/schedule, tapology.com/fightcenter, sherdog.com/events."
         ),
         "specific_rules": (
-            "- Inclus impérativement l'événement UFC ayant lieu aujourd'hui même (" + date_str + ") ou cette semaine.\n"
-            "- Liste la carte complète (Main Card, Prelims, Early Prelims) avec tous les combats programmés.\n"
+            "- Inclus impérativement l'événement UFC ayant lieu aujourd'hui même (" + date_str + ") ou dans les 7 prochains jours.\n"
+            "- Liste la carte complète (les 10 à 14 combats : Main Card, Prelims, Early Prelims).\n"
             "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur.\n"
             "- Convertis les heures du début des Prelims et de la Main Card à l'heure de Paris."
         ),
@@ -159,8 +162,8 @@ AGENTS_CONFIG = [
             "jp.rizinff.com/schedules, tapology.com/fightcenter, sherdog.com."
         ),
         "specific_rules": (
-            "- Vérifie strictement si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre autorisée.\n"
-            "- Si aucun gala Rizin n'a lieu dans cette période, renvoie immédiatement une liste vide []."
+            "- Vérifie strictement si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre des 7 prochains jours.\n"
+            "- Si aucun gala Rizin n'a lieu dans les 7 prochains jours, renvoie immédiatement une liste vide []."
         ),
     },
     {
@@ -170,7 +173,7 @@ AGENTS_CONFIG = [
         "fallback_url": "https://www.bkfc.com/events",
         "empty_msg": "Aucun événement BKFC programmé cette semaine.",
         "search_hint": (
-            "Recherche le calendrier officiel Bare Knuckle Fighting Championship (BKFC numérotés et BKFC Fight Night, incluant ceux d'hier soir et de cette semaine) sur : "
+            "Recherche le calendrier officiel Bare Knuckle Fighting Championship (BKFC numérotés et BKFC Fight Night) sur : "
             "bkfc.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
@@ -179,23 +182,8 @@ AGENTS_CONFIG = [
         ),
     },
     {
-        "id": "kick-japon",
-        "title": "🦵 6. Kickboxing Japonais (RISE, K-1, Krush)",
-        "max_tokens": 8192,
-        "fallback_url": "https://www.k-1.co.jp/schedule/",
-        "empty_msg": "Aucun gala majeur RISE, K-1 ou Krush programmé cette semaine.",
-        "search_hint": (
-            "Recherche les événements K-1, Krush et RISE (K-1 Krush RISE 大会日程 対戦カード / K-1 World GP) prévus cette semaine sur : "
-            "k-1.co.jp/schedule, k-1.world, rise-rc.com/schedule, tapology.com/fightcenter."
-        ),
-        "specific_rules": (
-            "- Identifie clairement s'il s'agit de K-1, Krush ou RISE, précise la salle et liste tous les combats de la carte.\n"
-            "- Indique ABEMA TV (格闘チャンネル) ou DAZN comme diffuseur d'origine lorsque applicable et convertis l'heure en heure de Paris."
-        ),
-    },
-    {
         "id": "glory",
-        "title": "🏆 7. Glory Kickboxing",
+        "title": "🏆 6. Glory Kickboxing",
         "max_tokens": 8192,
         "fallback_url": "https://glorykickboxing.com/events",
         "empty_msg": "Aucun événement Glory Kickboxing programmé cette semaine.",
@@ -205,21 +193,6 @@ AGENTS_CONFIG = [
         ),
         "specific_rules": (
             "- Liste tous les combats annoncés (tournois Grand Prix, championnats du monde Glory, Superfights et Prelims)."
-        ),
-    },
-    {
-        "id": "raf",
-        "title": "🤼 8. RAF (Real American Freestyle Wrestling)",
-        "max_tokens": 8192,
-        "fallback_url": "https://www.realamericanfreestyle.com/events-gallery",
-        "empty_msg": "Aucun événement RAF programmé cette semaine.",
-        "search_hint": (
-            "Recherche les événements officiels Real American Freestyle wrestling (RAF) et Joe Hand Promotions sur : "
-            "realamericanfreestyle.com/events-gallery, realamericanfreestyle.com, flowrestling.org, themat.com et les communiqués officiels RAF."
-        ),
-        "specific_rules": (
-            "- Liste tous les combats (matchups) programmés lors de l'événement RAF de la période autorisée.\n"
-            "- Si aucun événement RAF n'a lieu dans la fenêtre autorisée, renvoie une liste vide []."
         ),
     },
 ]
@@ -242,7 +215,6 @@ BLOCKED_IMAGE_DOMAINS = [
 ]
 
 TRUSTED_PROMOTER_DOMAINS = [
-    "realamericanfreestyle.com",
     "matchroomboxing.com",
     "queensberry.co.uk",
     "ufc.com",
@@ -250,9 +222,6 @@ TRUSTED_PROMOTER_DOMAINS = [
     "bkfc.com",
     "glorykickboxing.com",
     "rizinff.com",
-    "k-1.co.jp",
-    "k-1.world",
-    "rise-rc.com",
     "dazn.com",
     "ringtv.com",
     "toprank.com",
@@ -262,11 +231,10 @@ TRUSTED_PROMOTER_DOMAINS = [
     "boxingnews.jp",
     "ibu4gin.net",
     "asianboxing.info",
-    "flowrestling.org",
 ]
 
 def make_svg_banner(bg_start, bg_end, accent_color, main_title, subtitle, letter_spacing="8"):
-    """Bannière vectorielle officielle de secours si le site du promoteur bloque le scraping (ex: UFC / RAF)."""
+    """Bannière vectorielle officielle de secours si le site du promoteur bloque le scraping."""
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="100%" height="100%">'
         f'<defs><radialGradient id="g" cx="50%" cy="45%" r="75%">'
@@ -294,11 +262,7 @@ FIXED_PROMOTER_BANNERS = {
     "ufc": make_svg_banner("#260B0B", "#090303", "#D20A0A", "U F C", "ULTIMATE FIGHTING CHAMPIONSHIP", "14"),
     "rizin": make_svg_banner("#1A1326", "#08050E", "#E5C158", "R I Z I N", "FIGHTING FEDERATION", "12"),
     "bkfc": make_svg_banner("#1E190A", "#090703", "#F5C518", "B K F C", "BARE KNUCKLE FIGHTING CHAMPIONSHIP", "12"),
-    "k-1": make_svg_banner("#240C0C", "#090303", "#E63946", "K - 1", "WORLD GRAND PRIX", "12"),
-    "krush": make_svg_banner("#1F0E14", "#080406", "#E63946", "K R U S H", "K-1 GROUP OFFICIAL EVENT", "10"),
-    "rise": make_svg_banner("#0E1A2B", "#050910", "#F4A261", "R I S E", "EXTREME FIGHT GAME JAPAN", "12"),
     "glory": make_svg_banner("#1D160B", "#080603", "#E6B84D", "G L O R Y", "GLORY KICKBOXING WORLD SERIES", "12"),
-    "raf": make_svg_banner("#131C2E", "#070A12", "#E63946", "R A F", "REAL AMERICAN FREESTYLE WRESTLING", "14"),
 }
 
 def is_url_allowed_for_poster(url):
@@ -385,7 +349,7 @@ def extract_og_image_from_url(url):
     return None
 
 def get_event_keywords(ev):
-    """Extrait les noms de famille des combattants du Main Event pour vérifier qu'un lien correspond bien à ce gala."""
+    """Extrait les noms des combattants du Main Event pour vérifier qu'un lien correspond bien à ce gala."""
     keywords = []
     combats = ev.get("combats") or []
     if combats:
@@ -400,10 +364,10 @@ def get_event_keywords(ev):
 def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events_in_section):
     """
     Cascade sécurisée en 4 étapes :
-    1. Poster direct valide
+    1. Poster direct valide (sans doublon)
     2. Page officielle du gala (ev_url)
     3. Liens Google Search (uniquement s'ils correspondent à ce combat précis, sans jamais dupliquer une photo)
-    4. Bannière officielle du promoteur (web ou SVG haute définition garanti pour UFC, RAF, Matchroom, etc.)
+    4. Bannière officielle du promoteur (web ou SVG haute définition garanti pour UFC, Matchroom, etc.)
     """
     # 1. URL de poster directe fournie par l'agent
     raw_poster = (ev.get("poster_url") or "").strip()
@@ -419,7 +383,7 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
         return found_poster
 
     # 3. Recherche dans grounding_urls : autorisée si 1 seul événement dans la section
-    #    ou si l'URL contient le nom d'un combattant du gala (empêche le doublon Navarrete / Top Tier Boxing)
+    #    ou si l'URL contient le nom d'un combattant du gala (empêche tout doublon entre deux soirées)
     ev_keywords = get_event_keywords(ev)
     for g_url in grounding_urls[:6]:
         g_low = g_url.lower()
@@ -444,11 +408,7 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
         ("bkfc", "https://www.bkfc.com/events", "bkfc"),
         ("ufc", "https://www.ufc.com/events", "ufc"),
         ("rizin", "https://jp.rizinff.com/", "rizin"),
-        ("krush", "https://www.k-1.co.jp/", "krush"),
-        ("k-1", "https://www.k-1.co.jp/", "k-1"),
-        ("rise", "https://rise-rc.com/", "rise"),
         ("glory", "https://glorykickboxing.com/events", "glory"),
-        ("raf", "https://www.realamericanfreestyle.com/events-gallery", "raf"),
     ]
     for keyword, site_url, svg_key in promoter_sites:
         if keyword in gala_context:
@@ -510,7 +470,7 @@ def extract_grounding_urls(response):
 def parse_agent_json(raw_text):
     """
     Extrait et parse le bloc JSON produit par un agent.
-    Inclut une réparation automatique si une longue carte (ex: 14 combats UFC) a été coupée en fin de réponse.
+    Inclut une réparation automatique si une longue carte a été coupée en fin de réponse.
     """
     if not raw_text:
         return None
@@ -641,7 +601,7 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma (en inc
     }}
   ]
 }}
-Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : {{"evenements": []}}
+Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie exactement : {{"evenements": []}}
 """
 
     for idx, model_name in enumerate(AVAILABLE_MODELS):
@@ -658,7 +618,6 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
                     ),
                 )
             except Exception as token_err:
-                # Si un modèle secondaire sur la Boxe n'accepte que 8192 tokens max, repli immédiat à 8192
                 if target_tokens > 8192 and ("400" in str(token_err) or "token" in str(token_err).lower()):
                     print(f"  [Adaptation] Repli à 8192 tokens pour compatibilité avec {model_name}...")
                     response = client.models.generate_content(
@@ -813,7 +772,7 @@ def render_event_card_html(ev):
     </article>
     """
 
-# Exécution séquentielle des 8 Micro-Agents avec pause de régénération du quota par minute (45s)
+# Exécution séquentielle des 6 Micro-Agents avec pause de régénération du quota par minute (45s)
 sections_html = []
 total_events_found = 0
 
@@ -1253,7 +1212,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
     <div class="container">
         <header class="hero">
             <h1>🥊 Calendrier des Sports de Combat</h1>
-            <p>Programmation officielle vérifiée : Boxe Mondiale & Japonaise, The Ring, Zuffa, UFC, Rizin, BKFC, Kickboxing & RAF</p>
+            <p>Programmation officielle vérifiée : Boxe Mondiale & Japonaise, The Ring, Zuffa, UFC, Rizin, BKFC & Glory</p>
             <span class="update-pill">🔄 Mis à jour le {date_str} à {heure_str} (Heure de Paris) • Période : {valid_dates_fr[0]} au {valid_dates_fr[-1]}</span>
         </header>
 
@@ -1264,9 +1223,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
                 <a href="#ufc">🔥 UFC</a>
                 <a href="#rizin">🌸 Rizin</a>
                 <a href="#bkfc">👊 BKFC</a>
-                <a href="#kick-japon">🦵 Kick JP</a>
                 <a href="#glory">🏆 Glory</a>
-                <a href="#raf">🤼 RAF</a>
             </nav>
             <div class="toolbar">
                 <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom, Queensberry, The Ring...), ville ou chaîne...">
