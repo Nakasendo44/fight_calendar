@@ -50,45 +50,11 @@ HEADERS = {
     "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6",
 }
 
-# ==============================================================================
-# 2. DÉCOUVERTE DES MODÈLES COMPLETS (EXCLUSION STRICTE DES MODÈLES "LITE")
-# ==============================================================================
-def get_available_models():
-    preferred = [
-        "gemini-3.8-flash",
-        "gemini-3.5-flash",
-        "gemini-flash-latest",
-        "gemini-pro-latest",
-        "gemini-3-flash-preview",
-        "gemini-3.1-pro-preview",
-        "gemini-3.6-flash",
-        "gemini-3.7-flash",
-    ]
-    # Exclusion stricte des modèles "lite" (qui résument/tronquent les cartes), des modèles 2.5 (404) et image/audio
-    excluded = [
-        "lite", "embedding", "imagen", "veo", "tts", "audio", "vision", "aqa",
-        "2.5", "image", "banana", "transcribe", "argon", "customtools"
-    ]
-    discovered = []
-    try:
-        for m in client.models.list():
-            short = getattr(m, "name", "").replace("models/", "")
-            if "gemini" in short and not any(ex in short.lower() for ex in excluded):
-                discovered.append(short)
-        print(f"Modèles complets actifs détectés : {discovered}")
-    except Exception as e:
-        print(f"Info liste modèles : {e}")
-
-    final_list = [p for p in preferred if not discovered or p in discovered]
-    for d in discovered:
-        if d not in final_list:
-            final_list.append(d)
-    return final_list or ["gemini-3.8-flash"]
-
-AVAILABLE_MODELS = get_available_models()
+# Modèle unique verrouillé pour garantir la qualité d'extraction (Zéro modèle Lite)
+TARGET_MODEL = "gemini-3.8-flash"
 
 # ==============================================================================
-# 3. CONFIGURATION DES 6 MICRO-AGENTS SPÉCIALISÉS
+# 2. CONFIGURATION DES 6 MICRO-AGENTS SPÉCIALISÉS
 # ==============================================================================
 AGENTS_CONFIG = [
     {
@@ -105,7 +71,6 @@ AGENTS_CONFIG = [
             "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
         ),
         "specific_rules": (
-            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé (notamment Matchroom, Queensberry, Top Rank, PBC, Golden Boy, etc.), consulte sa fiche sur Box.live, Tapology ou le site du promoteur et liste TOUS les combats programmés (Main Event, Co-Main Event, Undercard et combats préliminaires 'Before the Bell', soit l'intégralité des 5 à 10 combats de la soirée).\n"
             "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) sur Box.live, Tapology ou le site du promoteur.\n"
             "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, The Ring ou EBU est en jeu.\n"
             "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
@@ -129,9 +94,7 @@ AGENTS_CONFIG = [
             "  2. Inclus impérativement toutes les réunions majeures et championnats JBC / OPBF / WBO Asia-Pacific (Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next).\n"
             "  3. Inclus également en complément les autres réunions professionnelles programmées au Korakuen Hall sur la période.\n"
             "- GESTION DU DÉCALAGE HORAIRE (JST = UTC+9) : Inclus impérativement les galas ayant lieu aujourd'hui (" + date_str + " / " + valid_dates_jp[0] + ") même s'ils viennent de se terminer au Japon (vérifie les pages日程/Schedule ET 結果/Results du jour sur boxmob.jp et boxingnews.jp).\n"
-            "- Liste TOUS les combats programmés pour chaque gala japonais (Main Event, Co-Main et toute la sous-carte).\n"
-            "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn).\n"
-            "- Convertis les horaires japonais (JST = UTC+9) en heure de Paris."
+            "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn)."
         ),
     },
     {
@@ -146,9 +109,8 @@ AGENTS_CONFIG = [
         ),
         "specific_rules": (
             "- Inclus impérativement l'événement UFC ayant lieu aujourd'hui même (" + date_str + ") ou dans les 7 prochains jours.\n"
-            "- Liste la carte complète (les 10 à 14 combats : Main Card, Prelims, Early Prelims).\n"
-            "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur.\n"
-            "- Convertis les heures du début des Prelims et de la Main Card à l'heure de Paris."
+            "- Sépare clairement le statut de chaque combat (Main Card, Prelims, Early Prelims).\n"
+            "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur."
         ),
     },
     {
@@ -177,7 +139,6 @@ AGENTS_CONFIG = [
             "bkfc.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
-            "- Liste TOUS les combats confirmés de la carte (Main Event, Co-Main Event et toute l'Undercard).\n"
             "- Indique 'BKFC App / TrillerTV / DAZN' selon le diffuseur officiel de l'événement."
         ),
     },
@@ -192,45 +153,27 @@ AGENTS_CONFIG = [
             "glorykickboxing.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
-            "- Liste tous les combats annoncés (tournois Grand Prix, championnats du monde Glory, Superfights et Prelims)."
+            "- Précise s'il s'agit d'un tournoi Grand Prix, championnat du monde Glory ou Superfights."
         ),
     },
 ]
 
 # ==============================================================================
-# 4. MOTEUR D'EXTRACTION D'AFFICHES + BANNIÈRES OFFICIELLES GARANTIES (SANS DOUBLON)
+# 3. MOTEUR D'EXTRACTION D'AFFICHES + BANNIÈRES OFFICIELLES (SANS DOUBLON)
 # ==============================================================================
 POSTER_CACHE = {}
 USED_EVENT_POSTERS = set()
 
 BLOCKED_IMAGE_DOMAINS = [
-    "ringwalks.com",
-    "box.live",
-    "sherdog.com",
-    "boxrec.com",
-    "fightnights.com",
-    "wikipedia.org",
-    "wikimedia.org",
-    "reddit.com",
+    "ringwalks.com", "box.live", "sherdog.com", "boxrec.com", 
+    "fightnights.com", "wikipedia.org", "wikimedia.org", "reddit.com"
 ]
 
 TRUSTED_PROMOTER_DOMAINS = [
-    "matchroomboxing.com",
-    "queensberry.co.uk",
-    "ufc.com",
-    "ufcfightpass.com",
-    "bkfc.com",
-    "glorykickboxing.com",
-    "rizinff.com",
-    "dazn.com",
-    "ringtv.com",
-    "toprank.com",
-    "goldenboy.com",
-    "premierboxingchampions.com",
-    "boxmob.jp",
-    "boxingnews.jp",
-    "ibu4gin.net",
-    "asianboxing.info",
+    "matchroomboxing.com", "queensberry.co.uk", "ufc.com", "ufcfightpass.com",
+    "bkfc.com", "glorykickboxing.com", "rizinff.com", "dazn.com", "ringtv.com",
+    "toprank.com", "goldenboy.com", "premierboxingchampions.com", "boxmob.jp",
+    "boxingnews.jp", "ibu4gin.net", "asianboxing.info"
 ]
 
 def make_svg_banner(bg_start, bg_end, accent_color, main_title, subtitle, letter_spacing="8"):
@@ -266,32 +209,20 @@ FIXED_PROMOTER_BANNERS = {
 }
 
 def is_url_allowed_for_poster(url):
-    if not url or not url.startswith("http"):
-        return False
+    if not url or not url.startswith("http"): return False
     low = url.lower()
     return not any(b in low for b in BLOCKED_IMAGE_DOMAINS)
 
 def is_valid_poster_image(img_url):
-    if not img_url or not img_url.startswith("http"):
-        return False
+    if not img_url or not img_url.startswith("http"): return False
     low = img_url.lower()
-    bad_tokens = [
-        "ringwalks",
-        "favicon",
-        "logo.svg",
-        "default-share",
-        "placeholder",
-        "avatar",
-        ".svg",
-    ]
+    bad_tokens = ["ringwalks", "favicon", "logo.svg", "default-share", "placeholder", "avatar", ".svg"]
     return not any(t in low for t in bad_tokens)
 
 def extract_og_image_from_url(url):
     """Suit les redirections HTTP et extrait l'affiche officielle ou le vrai poster Tapology."""
-    if not is_url_allowed_for_poster(url):
-        return None
-    if url in POSTER_CACHE:
-        return POSTER_CACHE[url]
+    if not is_url_allowed_for_poster(url): return None
+    if url in POSTER_CACHE: return POSTER_CACHE[url]
 
     try:
         resp = requests.get(url, headers=HEADERS, timeout=8, allow_redirects=True)
@@ -309,14 +240,8 @@ def extract_og_image_from_url(url):
 
         if resp.status_code == 200:
             raw = resp.text
-
-            # Cas particulier Tapology : uniquement le poster officiel situé au-dessus des combattants
             if "tapology.com" in final_url.lower():
-                tap_match = re.search(
-                    r'(https://images\.tapology\.com/poster_images/[0-9]+/profile/[^"\'\s>]+)',
-                    raw,
-                    flags=re.IGNORECASE,
-                )
+                tap_match = re.search(r'(https://images\.tapology\.com/poster_images/[0-9]+/profile/[^"\'\s>]+)', raw, flags=re.IGNORECASE)
                 if tap_match:
                     tap_img = html.unescape(tap_match.group(1).strip())
                     if is_valid_poster_image(tap_img):
@@ -334,8 +259,7 @@ def extract_og_image_from_url(url):
                 m = re.search(pat, raw, flags=re.IGNORECASE)
                 if m:
                     img = html.unescape(m.group(1).strip())
-                    if img.startswith("//"):
-                        img = "https:" + img
+                    if img.startswith("//"): img = "https:" + img
                     elif img.startswith("/"):
                         parsed = urllib.parse.urlparse(final_url)
                         img = f"{parsed.scheme}://{parsed.netloc}{img}"
@@ -349,7 +273,6 @@ def extract_og_image_from_url(url):
     return None
 
 def get_event_keywords(ev):
-    """Extrait les noms des combattants du Main Event pour vérifier qu'un lien correspond bien à ce gala."""
     keywords = []
     combats = ev.get("combats") or []
     if combats:
@@ -362,28 +285,18 @@ def get_event_keywords(ev):
     return list(set(keywords))
 
 def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events_in_section):
-    """
-    Cascade sécurisée en 4 étapes :
-    1. Poster direct valide (sans doublon)
-    2. Page officielle du gala (ev_url)
-    3. Liens Google Search (uniquement s'ils correspondent à ce combat précis, sans jamais dupliquer une photo)
-    4. Bannière officielle du promoteur (web ou SVG haute définition garanti pour UFC, Matchroom, etc.)
-    """
-    # 1. URL de poster directe fournie par l'agent
+    """Cascade : Poster direct valide -> URL officielle -> Google Search (filtré) -> Bannière SVG"""
     raw_poster = (ev.get("poster_url") or "").strip()
     if is_url_allowed_for_poster(raw_poster) and is_valid_poster_image(raw_poster):
         if raw_poster not in USED_EVENT_POSTERS:
             USED_EVENT_POSTERS.add(raw_poster)
             return raw_poster
 
-    # 2. Extraction depuis l'URL officielle de l'événement
     found_poster = extract_og_image_from_url(ev_url)
     if found_poster and found_poster not in USED_EVENT_POSTERS:
         USED_EVENT_POSTERS.add(found_poster)
         return found_poster
 
-    # 3. Recherche dans grounding_urls : autorisée si 1 seul événement dans la section
-    #    ou si l'URL contient le nom d'un combattant du gala (empêche tout doublon entre deux soirées)
     ev_keywords = get_event_keywords(ev)
     for g_url in grounding_urls[:6]:
         g_low = g_url.lower()
@@ -393,7 +306,6 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
                 USED_EVENT_POSTERS.add(candidate)
                 return candidate
 
-    # 4. Filet de sécurité : Bannière officielle du promoteur ou de la ligue
     gala_context = f"{ev.get('nom_gala', '')} {ev.get('diffuseur_origine', '')} {discipline_id}".lower()
     promoter_sites = [
         ("matchroom", "https://www.matchroomboxing.com/", "matchroom"),
@@ -401,9 +313,7 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
         ("top rank", "https://www.toprank.com/", "top rank"),
         ("golden boy", "https://www.goldenboy.com/", "golden boy"),
         ("pbc", "https://www.premierboxingchampions.com/", "pbc"),
-        ("premier boxing", "https://www.premierboxingchampions.com/", "pbc"),
         ("the ring", "https://www.ringtv.com/", "the ring"),
-        ("riyadh season", "https://www.ringtv.com/", "the ring"),
         ("zuffa", "https://www.ufcfightpass.com/", "zuffa"),
         ("bkfc", "https://www.bkfc.com/events", "bkfc"),
         ("ufc", "https://www.ufc.com/events", "ufc"),
@@ -413,19 +323,16 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
     for keyword, site_url, svg_key in promoter_sites:
         if keyword in gala_context:
             web_banner = extract_og_image_from_url(site_url)
-            if web_banner:
-                return web_banner
+            if web_banner: return web_banner
             return FIXED_PROMOTER_BANNERS.get(svg_key, "")
 
     return ""
 
 def verify_and_fix_official_url(ev_url, ev, fallback_url, grounding_urls):
-    """Corrige les liens vides ou les sous-pages en erreur 404 (notamment BKFC et Matchroom)."""
+    """Corrige les liens vides ou les sous-pages en erreur 404 (BKFC et Matchroom)."""
     url = (ev_url or "").strip()
-    if (not url or "google.com/search" in url) and grounding_urls:
-        url = grounding_urls[0]
-    if not url.startswith("http"):
-        url = fallback_url
+    if (not url or "google.com/search" in url) and grounding_urls: url = grounding_urls[0]
+    if not url.startswith("http"): url = fallback_url
 
     low_url = url.lower()
     if any(d in low_url for d in ["bkfc.com/events/", "matchroomboxing.com/events/", "queensberry.co.uk/"]):
@@ -433,31 +340,24 @@ def verify_and_fix_official_url(ev_url, ev, fallback_url, grounding_urls):
             chk = requests.get(url, headers=HEADERS, timeout=6, allow_redirects=True)
             head_txt = chk.text[:2000].lower() if chk.text else ""
             if chk.status_code == 404 or chk.status_code >= 500 or "page not found" in head_txt or "doesn't exist" in head_txt:
-                if "bkfc.com" in low_url:
-                    return "https://www.bkfc.com/events"
-                if "matchroomboxing.com" in low_url:
-                    return "https://www.matchroomboxing.com/events/"
-                if "queensberry.co.uk" in low_url:
-                    return "https://www.queensberry.co.uk/"
+                if "bkfc.com" in low_url: return "https://www.bkfc.com/events"
+                if "matchroomboxing.com" in low_url: return "https://www.matchroomboxing.com/events/"
+                if "queensberry.co.uk" in low_url: return "https://www.queensberry.co.uk/"
                 return fallback_url
         except Exception:
-            if "bkfc.com" in low_url:
-                return "https://www.bkfc.com/events"
-            if "matchroomboxing.com" in low_url:
-                return "https://www.matchroomboxing.com/events/"
+            if "bkfc.com" in low_url: return "https://www.bkfc.com/events"
+            if "matchroomboxing.com" in low_url: return "https://www.matchroomboxing.com/events/"
             return fallback_url
 
     return url
 
 def extract_grounding_urls(response):
-    """Extrait les URLs réelles visitées par Google Search depuis les métadonnées de la réponse."""
     urls = []
     try:
         candidates = getattr(response, "candidates", []) or []
         for cand in candidates:
             gm = getattr(cand, "grounding_metadata", None)
-            if not gm:
-                continue
+            if not gm: continue
             chunks = getattr(gm, "grounding_chunks", []) or []
             for ch in chunks:
                 web = getattr(ch, "web", None)
@@ -468,41 +368,23 @@ def extract_grounding_urls(response):
     return urls
 
 def parse_agent_json(raw_text):
-    """
-    Extrait et parse le bloc JSON produit par un agent.
-    Inclut une réparation automatique si une longue carte a été coupée en fin de réponse.
-    """
-    if not raw_text:
-        return None
+    """Extrait et parse le bloc JSON avec réparation automatique de la dernière balise si tronqué."""
+    if not raw_text: return None
     cleaned = raw_text.replace("```json", "").replace("```", "").strip()
-
     first_brace = cleaned.find("{")
     last_brace = cleaned.rfind("}")
+    
     if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
         candidate = cleaned[first_brace : last_brace + 1]
         candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
         try:
             data = json.loads(candidate)
-            if isinstance(data, dict):
-                return data.get("evenements", [])
-            if isinstance(data, list):
-                return data
+            if isinstance(data, dict): return data.get("evenements", [])
+            if isinstance(data, list): return data
         except Exception:
             pass
 
-    first_bracket = cleaned.find("[")
-    last_bracket = cleaned.rfind("]")
-    if first_bracket != -1 and last_bracket != -1 and last_bracket > first_bracket:
-        candidate = cleaned[first_bracket : last_bracket + 1]
-        candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
-        try:
-            data = json.loads(candidate)
-            if isinstance(data, list):
-                return data
-        except Exception:
-            pass
-
-    # Réparation de secours si le JSON a été coupé au milieu du dernier combat d'une longue sous-carte
+    # Réparation de secours si coupé
     if first_brace != -1 and '"evenements"' in cleaned and '"combats"' in cleaned:
         last_complete_bout = cleaned.rfind("}")
         while last_complete_bout > first_brace:
@@ -511,16 +393,14 @@ def parse_agent_json(raw_text):
                 attempt = re.sub(r",\s*([}\]])", r"\1", attempt)
                 try:
                     data = json.loads(attempt)
-                    if isinstance(data, dict) and "evenements" in data:
-                        return data["evenements"]
+                    if isinstance(data, dict) and "evenements" in data: return data["evenements"]
                 except Exception:
                     pass
             last_complete_bout = cleaned.rfind("}", first_brace, last_complete_bout)
-
     return None
 
 # ==============================================================================
-# 5. EXÉCUTION D'UN MICRO-AGENT (16384 TOKENS BOXE / 8192 AUTRES + REPLI AUTO)
+# 4. EXÉCUTION D'UN MICRO-AGENT (AVEC RETRY BOUCLÉ SUR GEMINI 3.8 FLASH)
 # ==============================================================================
 def run_micro_agent(agent_cfg):
     discipline_id = agent_cfg["id"]
@@ -537,15 +417,14 @@ MISSION :
 
 CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
-- RÈGLE ABSOLUE SUR LES SOUS-CARTES : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims répertoriés sur Box.live, Tapology, Boxing Mobile ou le site officiel). Ne tronque jamais une carte à 1 ou 2 combats si d'autres combats sont annoncés.
+- EXHAUSTIVITÉ NUMÉRIQUE STRICTE : Interdiction formelle de résumer la carte à 2 ou 3 combats. Si la source (Box.live, Tapology, etc.) liste 8, 10 ou 14 combats, la liste "combats" JSON doit OBLIGATOIREMENT contenir tous les combats annoncés (du premier préliminaire jusqu'au Main Event) sans exception.
+- HORAIRES ET RINGWALK : Utilise 'heure_debut_paris' pour le lancement des premiers combats. Utilise 'heure_ringwalk_paris' pour indiquer l'heure estimée ou annoncée de la marche vers le ring du Main Event (ex: "vers 23h30", "05h15 (estimation)"). Convertis tout à l'heure de Paris (CET/CEST).
 - Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
-- ZÉRO HALLUCINATION : N'invente jamais de combat, d'adversaire 'TBA' fictif, ni de palmarès. Si tu n'es pas certain d'un palmarès ou d'une taille, mets "N/C".
+- ZÉRO HALLUCINATION : N'invente jamais d'adversaire 'TBA' ni de palmarès. Mets "N/C" en cas de doute.
 - Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
-- Convertis toutes les heures à l'heure de Paris (CET/CEST).
-- Rédige les présentations et analyses en français journalistique précis en conservant les termes techniques (puncher, out-boxer, southpaw, main event, undercard, KO, TKO, undisputed).
+- Rédige les présentations en français journalistique précis.
 
-FORMAT DE SORTIE OBLIGATOIRE :
-Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma (en incluant TOUS les combats de la soirée dans la liste "combats"), sans aucun texte avant ni après :
+FORMAT DE SORTIE OBLIGATOIRE (JSON SEUL) :
 {{
   "evenements": [
     {{
@@ -555,11 +434,11 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma (en inc
       "url_officielle": "https://...",
       "poster_url": "https://... (ou vide si inconnu)",
       "heure_debut_paris": "19h00",
-      "heure_main_event_paris": "23h15",
+      "heure_ringwalk_paris": "vers 23h45 (estimation)",
       "diffuseur_origine": "DAZN Global",
       "diffuseur_france": "DAZN France",
       "enjeu_principal": "Titre mondial WBC Super-Légers (-63,5 kg)",
-      "presentation": "2 à 3 phrases de présentation factuelle et dynamique des enjeux de l'événement.",
+      "presentation": "2 à 3 phrases de présentation factuelle des enjeux de l'événement.",
       "combats": [
         {{
           "statut": "Main Event",
@@ -571,72 +450,35 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma (en inc
           "taille_b": "1m75",
           "categorie_kg": "Super-légers (-63,5 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Titre en jeu et courte description stylistique du duel en 1 à 2 phrases."
-        }},
-        {{
-          "statut": "Co-Main Event",
-          "combattant_a": "Prénom Nom",
-          "palmares_a": "14-1-0, 8 KOs",
-          "taille_a": "1m80",
-          "combattant_b": "Prénom Nom",
-          "palmares_b": "16-2-0, 9 KOs",
-          "taille_b": "1m79",
-          "categorie_kg": "Mi-moyens (-66,7 kg)",
-          "rounds": "10 rounds",
-          "enjeu_et_analyse": "Enjeu et description stylistique du combat."
-        }},
-        {{
-          "statut": "Undercard",
-          "combattant_a": "Prénom Nom",
-          "palmares_a": "10-0-0, 5 KOs",
-          "taille_a": "1m75",
-          "combattant_b": "Prénom Nom",
-          "palmares_b": "11-3-1, 4 KOs",
-          "taille_b": "1m74",
-          "categorie_kg": "Légers (-61,2 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Enjeu et description stylistique du combat."
+          "enjeu_et_analyse": "Titre en jeu et courte description stylistique du duel."
         }}
+        // ... INCLUS TOUS LES AUTRES COMBATS ANNONCÉS SANS EXCEPTION ...
       ]
     }}
   ]
 }}
-Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie exactement : {{"evenements": []}}
+Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : {{"evenements": []}}
 """
 
-    for idx, model_name in enumerate(AVAILABLE_MODELS):
+    max_retries = 3
+    for attempt in range(max_retries):
         try:
-            print(f"  Appel {model_name} avec Google Search Grounding...")
-            try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        tools=[types.Tool(google_search=types.GoogleSearch())],
-                        temperature=0.1,
-                        max_output_tokens=target_tokens,
-                    ),
-                )
-            except Exception as token_err:
-                if target_tokens > 8192 and ("400" in str(token_err) or "token" in str(token_err).lower()):
-                    print(f"  [Adaptation] Repli à 8192 tokens pour compatibilité avec {model_name}...")
-                    response = client.models.generate_content(
-                        model=model_name,
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            tools=[types.Tool(google_search=types.GoogleSearch())],
-                            temperature=0.1,
-                            max_output_tokens=8192,
-                        ),
-                    )
-                else:
-                    raise token_err
-
+            print(f"  Appel {TARGET_MODEL} avec Google Search (Essai {attempt + 1}/{max_retries})...")
+            response = client.models.generate_content(
+                model=TARGET_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    tools=[types.Tool(google_search=types.GoogleSearch())],
+                    temperature=0.1,
+                    max_output_tokens=target_tokens,
+                ),
+            )
+            
             if response and getattr(response, "text", None):
                 events = parse_agent_json(response.text)
 
                 if events is None:
-                    print(f"  [Info] JSON incomplet ou mal formé avec {model_name}, essai du modèle suivant...")
+                    print(f"  [Info] JSON incomplet/mal formé, nouvel essai...")
                     time.sleep(3)
                     continue
 
@@ -647,28 +489,26 @@ Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie ex
                     raw_ev_url = (ev.get("url_officielle") or "").strip()
                     ev_url = verify_and_fix_official_url(raw_ev_url, ev, fallback_url, grounding_urls)
                     ev["url_officielle"] = ev_url
-                    ev["poster_url"] = resolve_event_poster(
-                        ev, ev_url, grounding_urls, discipline_id, total_ev
-                    )
+                    ev["poster_url"] = resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_ev)
 
                 print(f"  -> {len(events)} événement(s) vérifié(s) extrait(s) pour [{discipline_id}].")
                 return events
 
         except Exception as e:
             err_str = str(e)
-            print(f"  [Avertissement] {model_name} sur [{discipline_id}] : {err_str[:160]}")
             if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                wait_time = 40 if idx == 0 else 25
-                print(f"  Pause de sécurité de {wait_time}s (quota API) avant rotation de modèle...")
+                wait_time = 30
+                print(f"  [429 Quota] Saturation temporaire API. Pause de {wait_time}s avant nouvel essai...")
                 time.sleep(wait_time)
             else:
-                time.sleep(4)
+                print(f"  [Avertissement] Erreur inattendue : {err_str[:120]}")
+                time.sleep(5)
 
-    print(f"  [Info] Aucun résultat récupéré pour [{discipline_id}], affichage de l'état vide sécurisé.")
+    print(f"  [Échec] Impossible de générer un flux valide après {max_retries} essais. Renvoi vide.")
     return []
 
 # ==============================================================================
-# 6. CONSTRUCTION DU HTML PAR SECTION À PARTIR DU JSON VÉRIFIÉ
+# 5. CONSTRUCTION DU HTML PAR SECTION À PARTIR DU JSON VÉRIFIÉ
 # ==============================================================================
 def render_event_card_html(ev):
     nom_gala = html.escape(ev.get("nom_gala") or "Événement Officiel")
@@ -677,7 +517,7 @@ def render_event_card_html(ev):
     url_off = (ev.get("url_officielle") or "").strip()
     poster_url = (ev.get("poster_url") or "").strip()
     h_debut = html.escape(ev.get("heure_debut_paris") or "N/C")
-    h_main = html.escape(ev.get("heure_main_event_paris") or "N/C")
+    h_ringwalk = html.escape(ev.get("heure_ringwalk_paris") or "N/C")
     diff_orig = html.escape(ev.get("diffuseur_origine") or "International")
     diff_fr = html.escape(ev.get("diffuseur_france") or "Streaming officiel")
     enjeu = html.escape(ev.get("enjeu_principal") or "")
@@ -759,7 +599,7 @@ def render_event_card_html(ev):
         </div>
         <div class="meta-grid">
             <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">{date_paris}</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> {lieu}</div>
-            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>{h_debut}</strong> &nbsp;|&nbsp; Main Event vers <strong>{h_main}</strong></div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>{h_debut}</strong> &nbsp;|&nbsp; 🥊 <strong>Ringwalk Main Event :</strong> {h_ringwalk}</div>
             <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : {diff_orig}</span> <span class="badge-tv badge-fr">France : {diff_fr}</span></div>
         </div>
         <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> {presentation}</p>
@@ -803,7 +643,7 @@ if total_events_found == 0 and os.path.exists("index.html"):
 all_sections_content = "\n".join(sections_html)
 
 # ==============================================================================
-# 7. ASSEMBLAGE DU SITE FINAL (DESIGN BEIGE/MARRON + POSTERS CONTAIN SANS ROGNAGE)
+# 6. ASSEMBLAGE DU SITE FINAL (DESIGN BEIGE/MARRON + POSTERS CONTAIN SANS ROGNAGE)
 # ==============================================================================
 FINAL_HTML = f"""<!DOCTYPE html>
 <html lang="fr">
@@ -972,7 +812,6 @@ FINAL_HTML = f"""<!DOCTYPE html>
             box-shadow: var(--shadow-soft);
             overflow: hidden;
         }}
-        /* Bannière Poster Officiel avec object-fit: contain (Zéro rognage des portraits ou affiches) */
         .poster-container {{
             position: relative;
             width: 100%;
@@ -1226,7 +1065,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
                 <a href="#glory">🏆 Glory</a>
             </nav>
             <div class="toolbar">
-                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom, Queensberry, The Ring...), ville ou chaîne...">
+                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom, Queensberry...), ville ou chaîne...">
                 <button type="button" id="toggleAllBtn" class="toggle-all-btn">📂 Tout déplier</button>
             </div>
         </div>
