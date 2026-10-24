@@ -26,12 +26,12 @@ now_paris = datetime.now(paris_tz)
 date_str = now_paris.strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
-# Génération explicite de la fenêtre des 7 prochains jours (FR, ISO, US et Japonais)
+# Fenêtre de J-1 (veille, pour conserver les galas US de la nuit de vendredi à samedi) à J+7
 valid_dates_fr = []
 valid_dates_iso = []
 valid_dates_us = []
 valid_dates_jp = []
-for offset in range(8):
+for offset in range(-1, 8):
     d = now_paris + timedelta(days=offset)
     valid_dates_fr.append(d.strftime("%d/%m/%Y"))
     valid_dates_iso.append(d.strftime("%Y-%m-%d"))
@@ -89,12 +89,13 @@ def get_available_models():
 AVAILABLE_MODELS = get_available_models()
 
 # ==============================================================================
-# 3. CONFIGURATION DES 8 MICRO-AGENTS SPÉCIALISÉS (BASE V1 + SOUS-CARTES COMPLÈTES)
+# 3. CONFIGURATION DES 8 MICRO-AGENTS (16384 TOKENS POUR LA BOXE, 8192 POUR LE RESTE)
 # ==============================================================================
 AGENTS_CONFIG = [
     {
         "id": "boxe-monde",
         "title": "🥊 1. Boxe Anglaise — Galas Internationaux",
+        "max_tokens": 16384,
         "fallback_url": "https://box.live/upcoming-fights-schedule/",
         "empty_msg": "Aucun gala international majeur répertorié dans la fenêtre des 7 prochains jours.",
         "search_hint": (
@@ -114,6 +115,7 @@ AGENTS_CONFIG = [
     {
         "id": "boxe-japon",
         "title": "🇯🇵 2. Boxe Anglaise — Galas au Japon (Korakuen Hall & Arènes)",
+        "max_tokens": 16384,
         "fallback_url": "https://boxmob.jp/sp/schedule/",
         "empty_msg": "Aucun gala professionnel japonais répertorié sur cette période de 7 jours.",
         "search_hint": (
@@ -132,14 +134,16 @@ AGENTS_CONFIG = [
     {
         "id": "ufc",
         "title": "🔥 3. UFC",
+        "max_tokens": 8192,
         "fallback_url": "https://www.ufc.com/events",
         "empty_msg": "Aucun événement UFC programmé cette semaine.",
         "search_hint": (
-            "Recherche le prochain événement UFC prévu dans les 7 prochains jours sur : "
-            "ufc.com/events, tapology.com/fightcenter, sherdog.com/events."
+            "Recherche l'événement UFC prévu aujourd'hui ou dans les 7 prochains jours (UFC numéroté type UFC 333 ou UFC Fight Night) et sa carte complète sur : "
+            "ufc.com/events, espn.com/mma/schedule, tapology.com/fightcenter, sherdog.com/events."
         ),
         "specific_rules": (
-            "- Liste la carte complète (les 10 à 14 combats) en séparant clairement le statut de chaque combat (Main Card, Prelims, Early Prelims).\n"
+            "- Inclus impérativement l'événement UFC ayant lieu aujourd'hui même (" + date_str + ") ou cette semaine.\n"
+            "- Liste la carte complète (Main Card, Prelims, Early Prelims) avec tous les combats programmés.\n"
             "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur.\n"
             "- Convertis les heures du début des Prelims et de la Main Card à l'heure de Paris."
         ),
@@ -147,6 +151,7 @@ AGENTS_CONFIG = [
     {
         "id": "rizin",
         "title": "🌸 4. Rizin Fighting Federation",
+        "max_tokens": 8192,
         "fallback_url": "https://jp.rizinff.com/schedules/",
         "empty_msg": "Aucun événement Rizin programmé cette semaine.",
         "search_hint": (
@@ -154,17 +159,18 @@ AGENTS_CONFIG = [
             "jp.rizinff.com/schedules, tapology.com/fightcenter, sherdog.com."
         ),
         "specific_rules": (
-            "- Vérifie strictement si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre des 7 prochains jours.\n"
-            "- Si aucun gala Rizin n'a lieu dans les 7 prochains jours, renvoie immédiatement une liste vide []."
+            "- Vérifie strictement si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre autorisée.\n"
+            "- Si aucun gala Rizin n'a lieu dans cette période, renvoie immédiatement une liste vide []."
         ),
     },
     {
         "id": "bkfc",
         "title": "👊 5. BKFC (Bare Knuckle)",
+        "max_tokens": 8192,
         "fallback_url": "https://www.bkfc.com/events",
         "empty_msg": "Aucun événement BKFC programmé cette semaine.",
         "search_hint": (
-            "Recherche le calendrier officiel Bare Knuckle Fighting Championship (BKFC numérotés et BKFC Fight Night) sur : "
+            "Recherche le calendrier officiel Bare Knuckle Fighting Championship (BKFC numérotés et BKFC Fight Night, incluant ceux d'hier soir et de cette semaine) sur : "
             "bkfc.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
@@ -175,20 +181,22 @@ AGENTS_CONFIG = [
     {
         "id": "kick-japon",
         "title": "🦵 6. Kickboxing Japonais (RISE, K-1, Krush)",
+        "max_tokens": 8192,
         "fallback_url": "https://www.k-1.co.jp/schedule/",
         "empty_msg": "Aucun gala majeur RISE, K-1 ou Krush programmé cette semaine.",
         "search_hint": (
-            "Recherche les prochains événements K-1, Krush et RISE (K-1 Krush RISE 大会日程 対戦カード) sur : "
-            "k-1.co.jp/schedule, rise-rc.com/schedule, tapology.com/fightcenter."
+            "Recherche les événements K-1, Krush et RISE (K-1 Krush RISE 大会日程 対戦カード / K-1 World GP) prévus cette semaine sur : "
+            "k-1.co.jp/schedule, k-1.world, rise-rc.com/schedule, tapology.com/fightcenter."
         ),
         "specific_rules": (
-            "- Identifie clairement s'il s'agit de K-1, Krush ou RISE, précise la salle (ex: Korakuen Hall, Yoyogi) et liste tous les combats de la carte.\n"
-            "- Indique ABEMA TV (格闘チャンネル) comme diffuseur d'origine lorsque applicable et convertis l'heure JST en heure de Paris."
+            "- Identifie clairement s'il s'agit de K-1, Krush ou RISE, précise la salle et liste tous les combats de la carte.\n"
+            "- Indique ABEMA TV (格闘チャンネル) ou DAZN comme diffuseur d'origine lorsque applicable et convertis l'heure en heure de Paris."
         ),
     },
     {
         "id": "glory",
         "title": "🏆 7. Glory Kickboxing",
+        "max_tokens": 8192,
         "fallback_url": "https://glorykickboxing.com/events",
         "empty_msg": "Aucun événement Glory Kickboxing programmé cette semaine.",
         "search_hint": (
@@ -202,6 +210,7 @@ AGENTS_CONFIG = [
     {
         "id": "raf",
         "title": "🤼 8. RAF (Real American Freestyle Wrestling)",
+        "max_tokens": 8192,
         "fallback_url": "https://www.realamericanfreestyle.com/events-gallery",
         "empty_msg": "Aucun événement RAF programmé cette semaine.",
         "search_hint": (
@@ -209,8 +218,8 @@ AGENTS_CONFIG = [
             "realamericanfreestyle.com/events-gallery, realamericanfreestyle.com, flowrestling.org, themat.com et les communiqués officiels RAF."
         ),
         "specific_rules": (
-            "- Liste tous les combats (matchups) programmés lors de l'événement RAF de la semaine.\n"
-            "- Applique une rigueur absolue : si aucun événement RAF n'a lieu exactement dans les 7 prochains jours, renvoie une liste vide []."
+            "- Liste tous les combats (matchups) programmés lors de l'événement RAF de la période autorisée.\n"
+            "- Si aucun événement RAF n'a lieu dans la fenêtre autorisée, renvoie une liste vide []."
         ),
     },
 ]
@@ -242,6 +251,7 @@ TRUSTED_PROMOTER_DOMAINS = [
     "glorykickboxing.com",
     "rizinff.com",
     "k-1.co.jp",
+    "k-1.world",
     "rise-rc.com",
     "dazn.com",
     "ringtv.com",
@@ -284,7 +294,7 @@ FIXED_PROMOTER_BANNERS = {
     "ufc": make_svg_banner("#260B0B", "#090303", "#D20A0A", "U F C", "ULTIMATE FIGHTING CHAMPIONSHIP", "14"),
     "rizin": make_svg_banner("#1A1326", "#08050E", "#E5C158", "R I Z I N", "FIGHTING FEDERATION", "12"),
     "bkfc": make_svg_banner("#1E190A", "#090703", "#F5C518", "B K F C", "BARE KNUCKLE FIGHTING CHAMPIONSHIP", "12"),
-    "k-1": make_svg_banner("#240C0C", "#090303", "#E63946", "K - 1", "WORLD GRAND PRIX JAPAN", "12"),
+    "k-1": make_svg_banner("#240C0C", "#090303", "#E63946", "K - 1", "WORLD GRAND PRIX", "12"),
     "krush": make_svg_banner("#1F0E14", "#080406", "#E63946", "K R U S H", "K-1 GROUP OFFICIAL EVENT", "10"),
     "rise": make_svg_banner("#0E1A2B", "#050910", "#F4A261", "R I S E", "EXTREME FIGHT GAME JAPAN", "12"),
     "glory": make_svg_banner("#1D160B", "#080603", "#E6B84D", "G L O R Y", "GLORY KICKBOXING WORLD SERIES", "12"),
@@ -500,7 +510,7 @@ def extract_grounding_urls(response):
 def parse_agent_json(raw_text):
     """
     Extrait et parse le bloc JSON produit par un agent.
-    Renvoie None si le JSON est mal formé (pour forcer l'essai du modèle suivant).
+    Inclut une réparation automatique si une longue carte (ex: 14 combats UFC) a été coupée en fin de réponse.
     """
     if not raw_text:
         return None
@@ -532,15 +542,31 @@ def parse_agent_json(raw_text):
         except Exception:
             pass
 
+    # Réparation de secours si le JSON a été coupé au milieu du dernier combat d'une longue sous-carte
+    if first_brace != -1 and '"evenements"' in cleaned and '"combats"' in cleaned:
+        last_complete_bout = cleaned.rfind("}")
+        while last_complete_bout > first_brace:
+            for suffix in ["]}]}", "]}]"]:
+                attempt = cleaned[first_brace : last_complete_bout + 1] + suffix
+                attempt = re.sub(r",\s*([}\]])", r"\1", attempt)
+                try:
+                    data = json.loads(attempt)
+                    if isinstance(data, dict) and "evenements" in data:
+                        return data["evenements"]
+                except Exception:
+                    pass
+            last_complete_bout = cleaned.rfind("}", first_brace, last_complete_bout)
+
     return None
 
 # ==============================================================================
-# 5. EXÉCUTION D'UN MICRO-AGENT AVEC LIMITE ÉTENDUE (16384 TOKENS)
+# 5. EXÉCUTION D'UN MICRO-AGENT (16384 TOKENS BOXE / 8192 AUTRES + REPLI AUTO)
 # ==============================================================================
 def run_micro_agent(agent_cfg):
     discipline_id = agent_cfg["id"]
+    target_tokens = agent_cfg.get("max_tokens", 8192)
     fallback_url = agent_cfg.get("fallback_url", "https://box.live/upcoming-fights-schedule/")
-    print(f"\n--- Lancement Micro-Agent [{discipline_id}] ---")
+    print(f"\n--- Lancement Micro-Agent [{discipline_id}] (Plafond : {target_tokens} tokens) ---")
 
     prompt = f"""Tu es un agent d'extraction de données factuelles spécialisé dans les sports de combat.
 Date actuelle : {date_str} (Fuseau horaire : Europe/Paris).
@@ -615,21 +641,38 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement ce schéma (en inc
     }}
   ]
 }}
-Si aucun événement n'est programmé dans cette fenêtre de 7 jours, renvoie exactement : {{"evenements": []}}
+Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : {{"evenements": []}}
 """
 
     for idx, model_name in enumerate(AVAILABLE_MODELS):
         try:
             print(f"  Appel {model_name} avec Google Search Grounding...")
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    tools=[types.Tool(google_search=types.GoogleSearch())],
-                    temperature=0.1,
-                    max_output_tokens=16384,
-                ),
-            )
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        tools=[types.Tool(google_search=types.GoogleSearch())],
+                        temperature=0.1,
+                        max_output_tokens=target_tokens,
+                    ),
+                )
+            except Exception as token_err:
+                # Si un modèle secondaire sur la Boxe n'accepte que 8192 tokens max, repli immédiat à 8192
+                if target_tokens > 8192 and ("400" in str(token_err) or "token" in str(token_err).lower()):
+                    print(f"  [Adaptation] Repli à 8192 tokens pour compatibilité avec {model_name}...")
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            tools=[types.Tool(google_search=types.GoogleSearch())],
+                            temperature=0.1,
+                            max_output_tokens=8192,
+                        ),
+                    )
+                else:
+                    raise token_err
+
             if response and getattr(response, "text", None):
                 events = parse_agent_json(response.text)
 
