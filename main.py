@@ -26,12 +26,12 @@ now_paris = datetime.now(paris_tz)
 date_str = now_paris.strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
-# Fenêtre stricte de 7 jours (d'aujourd'hui J à J+7) aux formats FR, ISO, US et Japonais
+# Fenêtre de J-1 (pour garder les galas US de la nuit précédente) à J+7
 valid_dates_fr = []
 valid_dates_iso = []
 valid_dates_us = []
 valid_dates_jp = []
-for offset in range(8):
+for offset in range(-1, 8):
     d = now_paris + timedelta(days=offset)
     valid_dates_fr.append(d.strftime("%d/%m/%Y"))
     valid_dates_iso.append(d.strftime("%Y-%m-%d"))
@@ -40,25 +40,86 @@ for offset in range(8):
 
 DATE_WINDOW_STR = (
     f"du {valid_dates_fr[0]} au {valid_dates_fr[-1]} inclus "
-    f"(Dates ISO : {', '.join(valid_dates_iso)} | "
+    f"(Dates ISO autorisées : {', '.join(valid_dates_iso)} | "
     f"Format US : {', '.join(valid_dates_us)} | "
     f"Format JP : {', '.join(valid_dates_jp)})"
 )
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
     "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6",
 }
 
-# Modèle unique verrouillé pour garantir la qualité d'extraction (Zéro modèle Lite)
-TARGET_MODEL = "gemini-3.8-flash"
+CACHE_FILE = "cache_calendar.json"
+
+def load_cache():
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_cache(cache_data):
+    try:
+        with open(CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(cache_data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [Info Cache] Impossible d'écrire le cache : {e}")
 
 # ==============================================================================
-# 2. CONFIGURATION DES 6 MICRO-AGENTS SPÉCIALISÉS
+# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES COMPLETS (ZÉRO MODÈLE "LITE")
+# ==============================================================================
+def get_available_models():
+    """
+    Interroge l'API pour lister uniquement les modèles complets réellement actifs sur la clé,
+    en excluant strictement les versions 'lite' (qui résument les sous-cartes) et non-textuelles.
+    """
+    preferred_order = [
+        "gemini-2.5-flash",
+        "gemini-3-flash-preview",
+        "gemini-flash-latest",
+        "gemini-2.5-pro",
+        "gemini-pro-latest",
+        "gemini-2.0-flash",
+    ]
+    excluded_tokens = [
+        "lite", "embedding", "imagen", "veo", "tts", "audio",
+        "vision", "aqa", "image", "banana", "transcribe",
+        "argon", "customtools", "thinking", "exp"
+    ]
+    discovered = []
+    try:
+        for m in client.models.list():
+            short = getattr(m, "name", "").replace("models/", "")
+            low = short.lower()
+            if "gemini" in low and not any(ex in low for ex in excluded_tokens):
+                discovered.append(short)
+        print(f"Modèles complets détectés sur l'API : {discovered}")
+    except Exception as e:
+        print(f"Avertissement lors du listage des modèles : {e}")
+
+    final_models = []
+    for pref in preferred_order:
+        if not discovered or pref in discovered:
+            final_models.append(pref)
+    for d in discovered:
+        if d not in final_models:
+            final_models.append(d)
+
+    return final_models or ["gemini-2.5-flash", "gemini-flash-latest"]
+
+AVAILABLE_MODELS = get_available_models()
+print(f"Ordre de priorité des modèles retenus : {AVAILABLE_MODELS}")
+
+# ==============================================================================
+# 3. CONFIGURATION DES 6 MICRO-AGENTS PILIERS
 # ==============================================================================
 AGENTS_CONFIG = [
     {
         "id": "boxe-monde",
+        "nav_label": "🥊 Boxe Monde",
         "title": "🥊 1. Boxe Anglaise — Galas Internationaux",
         "max_tokens": 16384,
         "fallback_url": "https://box.live/upcoming-fights-schedule/",
@@ -71,13 +132,15 @@ AGENTS_CONFIG = [
             "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
         ),
         "specific_rules": (
+            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé, consulte sa fiche complète et liste TOUS les combats programmés (Main Event, Co-Main Event, Undercard et combats préliminaires, soit l'intégralité des 5 à 12 combats de la soirée).\n"
             "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) sur Box.live, Tapology ou le site du promoteur.\n"
-            "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, The Ring ou EBU est en jeu.\n"
+            "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, IBO, The Ring ou EBU est en jeu.\n"
             "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
         ),
     },
     {
         "id": "boxe-japon",
+        "nav_label": "🇯🇵 Boxe Japon",
         "title": "🇯🇵 2. Boxe Anglaise — Galas au Japon (Arènes & Korakuen Hall)",
         "max_tokens": 16384,
         "fallback_url": "https://boxmob.jp/sp/schedule/",
@@ -93,43 +156,47 @@ AGENTS_CONFIG = [
             "  1. Priorité absolue aux grands galas en arènes et championnats mondiaux/internationaux diffusés sur Prime Video JP, Lemino, U-NEXT, WOWOW ou ABEMA.\n"
             "  2. Inclus impérativement toutes les réunions majeures et championnats JBC / OPBF / WBO Asia-Pacific (Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next).\n"
             "  3. Inclus également en complément les autres réunions professionnelles programmées au Korakuen Hall sur la période.\n"
-            "- GESTION DU DÉCALAGE HORAIRE (JST = UTC+9) : Inclus impérativement les galas ayant lieu aujourd'hui (" + date_str + " / " + valid_dates_jp[0] + ") même s'ils viennent de se terminer au Japon (vérifie les pages日程/Schedule ET 結果/Results du jour sur boxmob.jp et boxingnews.jp).\n"
+            "- GESTION DU DÉCALAGE HORAIRE (JST = UTC+9) : Inclus impérativement les galas ayant lieu aujourd'hui (" + date_str + ") même s'ils viennent de se terminer au Japon.\n"
+            "- Liste TOUS les combats programmés pour chaque gala japonais (Main Event, Co-Main et toute la sous-carte).\n"
             "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn)."
         ),
     },
     {
         "id": "ufc",
+        "nav_label": "🔥 UFC",
         "title": "🔥 3. UFC",
         "max_tokens": 8192,
         "fallback_url": "https://www.ufc.com/events",
         "empty_msg": "Aucun événement UFC programmé cette semaine.",
         "search_hint": (
-            "Recherche l'événement UFC prévu aujourd'hui ou dans les 7 prochains jours (UFC numéroté ou UFC Fight Night) et sa carte complète sur : "
+            "Recherche l'événement UFC prévu cette semaine (UFC numéroté ou UFC Fight Night, par exemple à l'UFC Apex ou en arène) et sa carte complète sur : "
             "ufc.com/events, espn.com/mma/schedule, tapology.com/fightcenter, sherdog.com/events."
         ),
         "specific_rules": (
-            "- Inclus impérativement l'événement UFC ayant lieu aujourd'hui même (" + date_str + ") ou dans les 7 prochains jours.\n"
-            "- Sépare clairement le statut de chaque combat (Main Card, Prelims, Early Prelims).\n"
+            "- Inclus impérativement l'événement UFC ayant lieu ce week-end ou dans les 7 prochains jours.\n"
+            "- Liste l'intégralité des 10 à 14 combats annoncés en séparant clairement le statut (Main Card, Prelims, Early Prelims).\n"
             "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur."
         ),
     },
     {
         "id": "rizin",
+        "nav_label": "🌸 Rizin",
         "title": "🌸 4. Rizin Fighting Federation",
         "max_tokens": 8192,
         "fallback_url": "https://jp.rizinff.com/schedules/",
         "empty_msg": "Aucun événement Rizin programmé cette semaine.",
         "search_hint": (
-            "Recherche le calendrier officiel RIZIN (RIZIN 大会日程 対戦カード) sur : "
+            "Recherche le calendrier officiel RIZIN (RIZIN 大会日程 対戦カード / RIZIN LANDMARK) sur : "
             "jp.rizinff.com/schedules, tapology.com/fightcenter, sherdog.com."
         ),
         "specific_rules": (
-            "- Vérifie strictement si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre des 7 prochains jours.\n"
-            "- Si aucun gala Rizin n'a lieu dans les 7 prochains jours, renvoie immédiatement une liste vide []."
+            "- Vérifie si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre autorisée.\n"
+            "- Si un gala Rizin a lieu cette semaine, liste TOUS les combats de la carte. Sinon, renvoie une liste vide []."
         ),
     },
     {
         "id": "bkfc",
+        "nav_label": "👊 BKFC",
         "title": "👊 5. BKFC (Bare Knuckle)",
         "max_tokens": 8192,
         "fallback_url": "https://www.bkfc.com/events",
@@ -139,11 +206,13 @@ AGENTS_CONFIG = [
             "bkfc.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
+            "- Liste TOUS les combats confirmés de la carte (Main Event, Co-Main Event et toute l'Undercard).\n"
             "- Indique 'BKFC App / TrillerTV / DAZN' selon le diffuseur officiel de l'événement."
         ),
     },
     {
         "id": "glory",
+        "nav_label": "🏆 Glory",
         "title": "🏆 6. Glory Kickboxing",
         "max_tokens": 8192,
         "fallback_url": "https://glorykickboxing.com/events",
@@ -153,19 +222,19 @@ AGENTS_CONFIG = [
             "glorykickboxing.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
-            "- Précise s'il s'agit d'un tournoi Grand Prix, championnat du monde Glory ou Superfights."
+            "- Liste tous les combats annoncés (tournois Grand Prix, championnats du monde Glory, Superfights et Prelims)."
         ),
     },
 ]
 
 # ==============================================================================
-# 3. MOTEUR D'EXTRACTION D'AFFICHES + BANNIÈRES OFFICIELLES (SANS DOUBLON)
+# 4. MOTEUR D'EXTRACTION D'AFFICHES + BANNIÈRES OFFICIELLES (ZÉRO DOUBLON)
 # ==============================================================================
 POSTER_CACHE = {}
 USED_EVENT_POSTERS = set()
 
 BLOCKED_IMAGE_DOMAINS = [
-    "ringwalks.com", "box.live", "sherdog.com", "boxrec.com", 
+    "ringwalks.com", "box.live", "sherdog.com", "boxrec.com",
     "fightnights.com", "wikipedia.org", "wikimedia.org", "reddit.com"
 ]
 
@@ -177,7 +246,7 @@ TRUSTED_PROMOTER_DOMAINS = [
 ]
 
 def make_svg_banner(bg_start, bg_end, accent_color, main_title, subtitle, letter_spacing="8"):
-    """Bannière vectorielle officielle de secours si le site du promoteur bloque le scraping."""
+    """Bannière vectorielle officielle haute définition si le site bloque le scraping."""
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="100%" height="100%">'
         f'<defs><radialGradient id="g" cx="50%" cy="45%" r="75%">'
@@ -209,20 +278,23 @@ FIXED_PROMOTER_BANNERS = {
 }
 
 def is_url_allowed_for_poster(url):
-    if not url or not url.startswith("http"): return False
+    if not url or not url.startswith("http"):
+        return False
     low = url.lower()
     return not any(b in low for b in BLOCKED_IMAGE_DOMAINS)
 
 def is_valid_poster_image(img_url):
-    if not img_url or not img_url.startswith("http"): return False
+    if not img_url or not img_url.startswith("http"):
+        return False
     low = img_url.lower()
     bad_tokens = ["ringwalks", "favicon", "logo.svg", "default-share", "placeholder", "avatar", ".svg"]
     return not any(t in low for t in bad_tokens)
 
 def extract_og_image_from_url(url):
-    """Suit les redirections HTTP et extrait l'affiche officielle ou le vrai poster Tapology."""
-    if not is_url_allowed_for_poster(url): return None
-    if url in POSTER_CACHE: return POSTER_CACHE[url]
+    if not is_url_allowed_for_poster(url):
+        return None
+    if url in POSTER_CACHE:
+        return POSTER_CACHE[url]
 
     try:
         resp = requests.get(url, headers=HEADERS, timeout=8, allow_redirects=True)
@@ -241,7 +313,11 @@ def extract_og_image_from_url(url):
         if resp.status_code == 200:
             raw = resp.text
             if "tapology.com" in final_url.lower():
-                tap_match = re.search(r'(https://images\.tapology\.com/poster_images/[0-9]+/profile/[^"\'\s>]+)', raw, flags=re.IGNORECASE)
+                tap_match = re.search(
+                    r'(https://images\.tapology\.com/poster_images/[0-9]+/profile/[^"\'\s>]+)',
+                    raw,
+                    flags=re.IGNORECASE,
+                )
                 if tap_match:
                     tap_img = html.unescape(tap_match.group(1).strip())
                     if is_valid_poster_image(tap_img):
@@ -259,7 +335,8 @@ def extract_og_image_from_url(url):
                 m = re.search(pat, raw, flags=re.IGNORECASE)
                 if m:
                     img = html.unescape(m.group(1).strip())
-                    if img.startswith("//"): img = "https:" + img
+                    if img.startswith("//"):
+                        img = "https:" + img
                     elif img.startswith("/"):
                         parsed = urllib.parse.urlparse(final_url)
                         img = f"{parsed.scheme}://{parsed.netloc}{img}"
@@ -285,8 +362,9 @@ def get_event_keywords(ev):
     return list(set(keywords))
 
 def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events_in_section):
-    """Cascade : Poster direct valide -> URL officielle -> Google Search (filtré) -> Bannière SVG"""
     raw_poster = (ev.get("poster_url") or "").strip()
+    if raw_poster.startswith("data:image/"):
+        return raw_poster
     if is_url_allowed_for_poster(raw_poster) and is_valid_poster_image(raw_poster):
         if raw_poster not in USED_EVENT_POSTERS:
             USED_EVENT_POSTERS.add(raw_poster)
@@ -313,7 +391,9 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
         ("top rank", "https://www.toprank.com/", "top rank"),
         ("golden boy", "https://www.goldenboy.com/", "golden boy"),
         ("pbc", "https://www.premierboxingchampions.com/", "pbc"),
+        ("premier boxing", "https://www.premierboxingchampions.com/", "pbc"),
         ("the ring", "https://www.ringtv.com/", "the ring"),
+        ("riyadh season", "https://www.ringtv.com/", "the ring"),
         ("zuffa", "https://www.ufcfightpass.com/", "zuffa"),
         ("bkfc", "https://www.bkfc.com/events", "bkfc"),
         ("ufc", "https://www.ufc.com/events", "ufc"),
@@ -323,16 +403,18 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
     for keyword, site_url, svg_key in promoter_sites:
         if keyword in gala_context:
             web_banner = extract_og_image_from_url(site_url)
-            if web_banner: return web_banner
+            if web_banner:
+                return web_banner
             return FIXED_PROMOTER_BANNERS.get(svg_key, "")
 
     return ""
 
 def verify_and_fix_official_url(ev_url, ev, fallback_url, grounding_urls):
-    """Corrige les liens vides ou les sous-pages en erreur 404 (BKFC et Matchroom)."""
     url = (ev_url or "").strip()
-    if (not url or "google.com/search" in url) and grounding_urls: url = grounding_urls[0]
-    if not url.startswith("http"): url = fallback_url
+    if (not url or "google.com/search" in url) and grounding_urls:
+        url = grounding_urls[0]
+    if not url.startswith("http"):
+        url = fallback_url
 
     low_url = url.lower()
     if any(d in low_url for d in ["bkfc.com/events/", "matchroomboxing.com/events/", "queensberry.co.uk/"]):
@@ -340,13 +422,18 @@ def verify_and_fix_official_url(ev_url, ev, fallback_url, grounding_urls):
             chk = requests.get(url, headers=HEADERS, timeout=6, allow_redirects=True)
             head_txt = chk.text[:2000].lower() if chk.text else ""
             if chk.status_code == 404 or chk.status_code >= 500 or "page not found" in head_txt or "doesn't exist" in head_txt:
-                if "bkfc.com" in low_url: return "https://www.bkfc.com/events"
-                if "matchroomboxing.com" in low_url: return "https://www.matchroomboxing.com/events/"
-                if "queensberry.co.uk" in low_url: return "https://www.queensberry.co.uk/"
+                if "bkfc.com" in low_url:
+                    return "https://www.bkfc.com/events"
+                if "matchroomboxing.com" in low_url:
+                    return "https://www.matchroomboxing.com/events/"
+                if "queensberry.co.uk" in low_url:
+                    return "https://www.queensberry.co.uk/"
                 return fallback_url
         except Exception:
-            if "bkfc.com" in low_url: return "https://www.bkfc.com/events"
-            if "matchroomboxing.com" in low_url: return "https://www.matchroomboxing.com/events/"
+            if "bkfc.com" in low_url:
+                return "https://www.bkfc.com/events"
+            if "matchroomboxing.com" in low_url:
+                return "https://www.matchroomboxing.com/events/"
             return fallback_url
 
     return url
@@ -357,7 +444,8 @@ def extract_grounding_urls(response):
         candidates = getattr(response, "candidates", []) or []
         for cand in candidates:
             gm = getattr(cand, "grounding_metadata", None)
-            if not gm: continue
+            if not gm:
+                continue
             chunks = getattr(gm, "grounding_chunks", []) or []
             for ch in chunks:
                 web = getattr(ch, "web", None)
@@ -368,41 +456,63 @@ def extract_grounding_urls(response):
     return urls
 
 def parse_agent_json(raw_text):
-    """Extrait et parse le bloc JSON avec réparation automatique de la dernière balise si tronqué."""
-    if not raw_text: return None
+    """
+    Nettoie les balises Markdown, supprime d'éventuels commentaires JS hors chaînes,
+    corrige les virgules traînantes et répare les listes JSON coupées.
+    """
+    if not raw_text:
+        return None
     cleaned = raw_text.replace("```json", "").replace("```", "").strip()
+    # Suppression des lignes de commentaires // éventuelles
+    cleaned = re.sub(r"^\s*//.*$", "", cleaned, flags=re.MULTILINE)
+
     first_brace = cleaned.find("{")
     last_brace = cleaned.rfind("}")
-    
     if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
         candidate = cleaned[first_brace : last_brace + 1]
         candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
         try:
             data = json.loads(candidate)
-            if isinstance(data, dict): return data.get("evenements", [])
-            if isinstance(data, list): return data
+            if isinstance(data, dict):
+                return data.get("evenements", [])
+            if isinstance(data, list):
+                return data
         except Exception:
             pass
 
-    # Réparation de secours si coupé
+    first_bracket = cleaned.find("[")
+    last_bracket = cleaned.rfind("]")
+    if first_bracket != -1 and last_bracket != -1 and last_bracket > first_bracket:
+        candidate = cleaned[first_bracket : last_bracket + 1]
+        candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
+        try:
+            data = json.loads(candidate)
+            if isinstance(data, list):
+                return data
+        except Exception:
+            pass
+
+    # Réparation automatique si le JSON a été coupé sur une très longue sous-carte
     if first_brace != -1 and '"evenements"' in cleaned and '"combats"' in cleaned:
         last_complete_bout = cleaned.rfind("}")
         while last_complete_bout > first_brace:
-            for suffix in ["]}]}", "]}]"]:
+            for suffix in ["]}]}", "]}]\"}"]:
                 attempt = cleaned[first_brace : last_complete_bout + 1] + suffix
                 attempt = re.sub(r",\s*([}\]])", r"\1", attempt)
                 try:
                     data = json.loads(attempt)
-                    if isinstance(data, dict) and "evenements" in data: return data["evenements"]
+                    if isinstance(data, dict) and "evenements" in data:
+                        return data["evenements"]
                 except Exception:
                     pass
             last_complete_bout = cleaned.rfind("}", first_brace, last_complete_bout)
+
     return None
 
 # ==============================================================================
-# 4. EXÉCUTION D'UN MICRO-AGENT (AVEC RETRY BOUCLÉ SUR GEMINI 3.8 FLASH)
+# 5. EXÉCUTION D'UN MICRO-AGENT (AVEC DISTINCTION 404/429 & CACHE DE SECOURS)
 # ==============================================================================
-def run_micro_agent(agent_cfg):
+def run_micro_agent(agent_cfg, cached_data):
     discipline_id = agent_cfg["id"]
     target_tokens = agent_cfg.get("max_tokens", 8192)
     fallback_url = agent_cfg.get("fallback_url", "https://box.live/upcoming-fights-schedule/")
@@ -417,28 +527,30 @@ MISSION :
 
 CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
-- EXHAUSTIVITÉ NUMÉRIQUE STRICTE : Interdiction formelle de résumer la carte à 2 ou 3 combats. Si la source (Box.live, Tapology, etc.) liste 8, 10 ou 14 combats, la liste "combats" JSON doit OBLIGATOIREMENT contenir tous les combats annoncés (du premier préliminaire jusqu'au Main Event) sans exception.
-- HORAIRES ET RINGWALK : Utilise 'heure_debut_paris' pour le lancement des premiers combats. Utilise 'heure_ringwalk_paris' pour indiquer l'heure estimée ou annoncée de la marche vers le ring du Main Event (ex: "vers 23h30", "05h15 (estimation)"). Convertis tout à l'heure de Paris (CET/CEST).
+- EXHAUSTIVITÉ ABSOLUE SUR LES SOUS-CARTES : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims répertoriés sur Box.live, Tapology, Boxing Mobile ou le site officiel). Si une carte comporte 8, 10 ou 14 combats, la liste "combats" doit contenir les 8, 10 ou 14 combats. Pour économiser de l'espace et ne jamais tronquer la liste, rédige 1 à 2 phrases d'analyse pour le Main Event et le Co-Main Event, et 1 phrase courte et percutante pour chaque combat de l'Undercard.
+- DOUBLE INDICATION HORAIRE (HEURE DE PARIS) :
+  1. 'heure_debut_paris' : Heure du lancement du gala / début des combats préliminaires (ex: "19h00", "01h00").
+  2. 'heure_ringwalk_paris' : Heure annoncée ou estimée de la marche vers le ring (ringwalk) du Main Event à l'heure de Paris (ex: "vers 23h30", "vers 05h00 (estimation)").
 - Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
-- ZÉRO HALLUCINATION : N'invente jamais d'adversaire 'TBA' ni de palmarès. Mets "N/C" en cas de doute.
+- ZÉRO HALLUCINATION : N'invente jamais de combat ni de palmarès. Mets "N/C" si une donnée est inconnue.
 - Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
-- Rédige les présentations en français journalistique précis.
 
-FORMAT DE SORTIE OBLIGATOIRE (JSON SEUL) :
+FORMAT DE SORTIE OBLIGATOIRE :
+Renvoie UNIQUEMENT un objet JSON valide respectant exactement cette structure, sans commentaire ni texte autour :
 {{
   "evenements": [
     {{
       "nom_gala": "Nom officiel du gala : Combattant A vs. Combattant B",
-      "date_paris": "Samedi 24/10/2026",
+      "date_paris": "Samedi 07/11/2026",
       "lieu": "Salle / Arène, Ville, Pays",
       "url_officielle": "https://...",
-      "poster_url": "https://... (ou vide si inconnu)",
+      "poster_url": "https://...",
       "heure_debut_paris": "19h00",
-      "heure_ringwalk_paris": "vers 23h45 (estimation)",
+      "heure_ringwalk_paris": "vers 23h30",
       "diffuseur_origine": "DAZN Global",
       "diffuseur_france": "DAZN France",
       "enjeu_principal": "Titre mondial WBC Super-Légers (-63,5 kg)",
-      "presentation": "2 à 3 phrases de présentation factuelle des enjeux de l'événement.",
+      "presentation": "2 phrases de présentation factuelle des enjeux de l'événement.",
       "combats": [
         {{
           "statut": "Main Event",
@@ -450,9 +562,32 @@ FORMAT DE SORTIE OBLIGATOIRE (JSON SEUL) :
           "taille_b": "1m75",
           "categorie_kg": "Super-légers (-63,5 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Titre en jeu et courte description stylistique du duel."
+          "enjeu_et_analyse": "Titre en jeu et description stylistique du duel."
+        }},
+        {{
+          "statut": "Co-Main Event",
+          "combattant_a": "Prénom Nom",
+          "palmares_a": "14-1-0, 8 KOs",
+          "taille_a": "1m80",
+          "combattant_b": "Prénom Nom",
+          "palmares_b": "16-2-0, 9 KOs",
+          "taille_b": "1m79",
+          "categorie_kg": "Mi-moyens (-66,7 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Enjeu et opposition de styles."
+        }},
+        {{
+          "statut": "Undercard",
+          "combattant_a": "Prénom Nom",
+          "palmares_a": "10-0-0, 5 KOs",
+          "taille_a": "1m75",
+          "combattant_b": "Prénom Nom",
+          "palmares_b": "11-3-1, 4 KOs",
+          "taille_b": "1m74",
+          "categorie_kg": "Légers (-61,2 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Combat de classement en 8 reprises."
         }}
-        // ... INCLUS TOUS LES AUTRES COMBATS ANNONCÉS SANS EXCEPTION ...
       ]
     }}
   ]
@@ -460,55 +595,81 @@ FORMAT DE SORTIE OBLIGATOIRE (JSON SEUL) :
 Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : {{"evenements": []}}
 """
 
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            print(f"  Appel {TARGET_MODEL} avec Google Search (Essai {attempt + 1}/{max_retries})...")
-            response = client.models.generate_content(
-                model=TARGET_MODEL,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    tools=[types.Tool(google_search=types.GoogleSearch())],
-                    temperature=0.1,
-                    max_output_tokens=target_tokens,
-                ),
-            )
-            
-            if response and getattr(response, "text", None):
-                events = parse_agent_json(response.text)
+    for model_name in AVAILABLE_MODELS[:4]:
+        # Jusqu'à 2 tentatives sur le même modèle en cas de quota 429
+        for attempt in range(2):
+            try:
+                print(f"  Appel {model_name} (Essai {attempt + 1}/2)...")
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            tools=[types.Tool(google_search=types.GoogleSearch())],
+                            temperature=0.1,
+                            max_output_tokens=target_tokens,
+                        ),
+                    )
+                except Exception as tok_err:
+                    if target_tokens > 8192 and ("400" in str(tok_err) or "token" in str(tok_err).lower()):
+                        print(f"  [Adaptation] Repli à 8192 tokens pour {model_name}...")
+                        response = client.models.generate_content(
+                            model=model_name,
+                            contents=prompt,
+                            config=types.GenerateContentConfig(
+                                tools=[types.Tool(google_search=types.GoogleSearch())],
+                                temperature=0.1,
+                                max_output_tokens=8192,
+                            ),
+                        )
+                    else:
+                        raise tok_err
 
-                if events is None:
-                    print(f"  [Info] JSON incomplet/mal formé, nouvel essai...")
-                    time.sleep(3)
-                    continue
+                if response and getattr(response, "text", None):
+                    events = parse_agent_json(response.text)
+                    if events is None:
+                        print(f"  [Info] JSON mal formé sur {model_name}, nouvel essai...")
+                        time.sleep(3)
+                        continue
 
-                grounding_urls = extract_grounding_urls(response)
-                total_ev = len(events)
+                    grounding_urls = extract_grounding_urls(response)
+                    total_ev = len(events)
 
-                for ev in events:
-                    raw_ev_url = (ev.get("url_officielle") or "").strip()
-                    ev_url = verify_and_fix_official_url(raw_ev_url, ev, fallback_url, grounding_urls)
-                    ev["url_officielle"] = ev_url
-                    ev["poster_url"] = resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_ev)
+                    for ev in events:
+                        raw_ev_url = (ev.get("url_officielle") or "").strip()
+                        ev_url = verify_and_fix_official_url(raw_ev_url, ev, fallback_url, grounding_urls)
+                        ev["url_officielle"] = ev_url
+                        ev["poster_url"] = resolve_event_poster(
+                            ev, ev_url, grounding_urls, discipline_id, total_ev
+                        )
 
-                print(f"  -> {len(events)} événement(s) vérifié(s) extrait(s) pour [{discipline_id}].")
-                return events
+                    print(f"  -> Succès : {len(events)} événement(s) extrait(s) pour [{discipline_id}].")
+                    cached_data[discipline_id] = events
+                    return events, True
 
-        except Exception as e:
-            err_str = str(e)
-            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                wait_time = 30
-                print(f"  [429 Quota] Saturation temporaire API. Pause de {wait_time}s avant nouvel essai...")
-                time.sleep(wait_time)
-            else:
-                print(f"  [Avertissement] Erreur inattendue : {err_str[:120]}")
-                time.sleep(5)
+            except Exception as e:
+                err_str = str(e)
+                print(f"  [Avertissement] {model_name} sur [{discipline_id}] : {err_str[:140]}")
+                # Si le modèle n'existe pas (404) ou ne supporte pas Search (400), on change de modèle immédiatement
+                if "404" in err_str or "NOT_FOUND" in err_str or "400" in err_str:
+                    break
+                # Si quota 429, on attend 35s et on réessaie ce modèle
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                    print("  [Quota 429] Pause de 35s pour recharger le quota par minute...")
+                    time.sleep(35)
+                else:
+                    time.sleep(5)
 
-    print(f"  [Échec] Impossible de générer un flux valide après {max_retries} essais. Renvoi vide.")
-    return []
+    # Si tous les modèles ont échoué à cause du réseau/quota, on restaure le cache récent de la section
+    if discipline_id in cached_data and cached_data[discipline_id]:
+        print(f"  [Secours Cache] Restauration des événements en cache pour [{discipline_id}].")
+        return cached_data[discipline_id], False
+
+    print(f"  [Info] Aucun résultat récupéré pour [{discipline_id}].")
+    return [], False
 
 # ==============================================================================
-# 5. CONSTRUCTION DU HTML PAR SECTION À PARTIR DU JSON VÉRIFIÉ
+# 6. CONSTRUCTION DU HTML PAR SECTION À PARTIR DU JSON VÉRIFIÉ
 # ==============================================================================
 def render_event_card_html(ev):
     nom_gala = html.escape(ev.get("nom_gala") or "Événement Officiel")
@@ -517,12 +678,16 @@ def render_event_card_html(ev):
     url_off = (ev.get("url_officielle") or "").strip()
     poster_url = (ev.get("poster_url") or "").strip()
     h_debut = html.escape(ev.get("heure_debut_paris") or "N/C")
-    h_ringwalk = html.escape(ev.get("heure_ringwalk_paris") or "N/C")
+    h_ringwalk = html.escape(ev.get("heure_ringwalk_paris") or ev.get("heure_main_event_paris") or "N/C")
     diff_orig = html.escape(ev.get("diffuseur_origine") or "International")
     diff_fr = html.escape(ev.get("diffuseur_france") or "Streaming officiel")
     enjeu = html.escape(ev.get("enjeu_principal") or "")
     presentation = html.escape(ev.get("presentation") or "")
     combats = ev.get("combats") or []
+
+    # Badge spécial si l'événement a lieu aujourd'hui
+    is_today = date_str in date_paris
+    today_badge = '<span class="today-pill">🔴 AUJOURD\'HUI</span>' if is_today else ""
 
     belt_badge = f'<div class="poster-belt">👑 {enjeu}</div>' if enjeu else ""
     if poster_url.startswith("http") or poster_url.startswith("data:image/"):
@@ -571,7 +736,15 @@ def render_event_card_html(ev):
         str_b = f"{fb} ({meta_b})" if meta_b else fb
 
         pill_text = " — ".join(x for x in [statut, cat, rds] if x)
-        pill_html = f'<span class="weight-pill">{pill_text}</span>' if pill_text else ""
+        low_statut = statut.lower()
+        if "main event" in low_statut and "co" not in low_statut:
+            pill_class = "weight-pill pill-main"
+        elif "co-main" in low_statut or "main card" in low_statut:
+            pill_class = "weight-pill pill-comain"
+        else:
+            pill_class = "weight-pill"
+
+        pill_html = f'<span class="{pill_class}">{pill_text}</span>' if pill_text else ""
 
         bouts_html_list.append(f"""
         <div class="bout-item">
@@ -594,12 +767,12 @@ def render_event_card_html(ev):
     <article class="event-card">
         {poster_block}
         <div class="card-header-row">
-            <h3 class="event-title">{nom_gala}</h3>
+            <h3 class="event-title">{today_badge}{nom_gala}</h3>
             {source_btn}
         </div>
         <div class="meta-grid">
             <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">{date_paris}</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> {lieu}</div>
-            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>{h_debut}</strong> &nbsp;|&nbsp; 🥊 <strong>Ringwalk Main Event :</strong> {h_ringwalk}</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>{h_debut}</strong> &nbsp;|&nbsp; 🥊 <strong>Ringwalk Main Event :</strong> <span class="highlight-ringwalk">{h_ringwalk}</span></div>
             <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : {diff_orig}</span> <span class="badge-tv badge-fr">France : {diff_fr}</span></div>
         </div>
         <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> {presentation}</p>
@@ -610,17 +783,32 @@ def render_event_card_html(ev):
             </div>
         </details>
     </article>
-    """
+    """, len(bouts_html_list)
 
-# Exécution séquentielle des 6 Micro-Agents avec pause de régénération du quota par minute (45s)
+# Exécution séquentielle des 6 Micro-Agents
+cached_calendar = load_cache()
 sections_html = []
+nav_links = []
 total_events_found = 0
+total_bouts_found = 0
+successful_api_calls = 0
 
 for idx, cfg in enumerate(AGENTS_CONFIG):
-    events_list = run_micro_agent(cfg)
-    total_events_found += len(events_list)
+    events_list, api_ok = run_micro_agent(cfg, cached_calendar)
+    if api_ok:
+        successful_api_calls += 1
+
+    ev_count = len(events_list)
+    total_events_found += ev_count
+    nav_links.append(f'<a href="#{cfg["id"]}">{cfg["nav_label"]} <span class="nav-count">{ev_count}</span></a>')
+
     if events_list:
-        cards_rendered = "\n".join(render_event_card_html(ev) for ev in events_list)
+        rendered_cards = []
+        for ev in events_list:
+            c_html, b_count = render_event_card_html(ev)
+            rendered_cards.append(c_html)
+            total_bouts_found += b_count
+        cards_rendered = "\n".join(rendered_cards)
     else:
         cards_rendered = f'<div class="empty-state">🗓️ {html.escape(cfg["empty_msg"])}</div>'
 
@@ -633,17 +821,20 @@ for idx, cfg in enumerate(AGENTS_CONFIG):
     sections_html.append(section_block)
 
     if idx < len(AGENTS_CONFIG) - 1:
-        print("  Pause de 45s pour régénérer le quota de jetons par minute (RPM/TPM)...")
-        time.sleep(45)
+        print("  Pause de 35s pour préserver le quota de jetons par minute (RPM/TPM)...")
+        time.sleep(35)
 
-if total_events_found == 0 and os.path.exists("index.html"):
-    print("\n[ALERTE QUOTA API] 0 événement extrait. Conservation des fichiers existants.")
-    sys.exit(0)
+# Si aucun appel API n'a réussi et que total_events_found == 0, on alerte GitHub Actions (exit 1)
+if successful_api_calls == 0 and total_events_found == 0:
+    print("\n[ERREUR CRITIQUE API] Aucun agent n'a pu extraire de données. Conservation de l'index.html existant.")
+    sys.exit(1)
 
+save_cache(cached_calendar)
+nav_links_html = "\n                ".join(nav_links)
 all_sections_content = "\n".join(sections_html)
 
 # ==============================================================================
-# 6. ASSEMBLAGE DU SITE FINAL (DESIGN BEIGE/MARRON + POSTERS CONTAIN SANS ROGNAGE)
+# 7. ASSEMBLAGE DU SITE FINAL (DESIGN BEIGE/MARRON + RECHERCHE AUTO-EXPAND)
 # ==============================================================================
 FINAL_HTML = f"""<!DOCTYPE html>
 <html lang="fr">
@@ -714,9 +905,15 @@ FINAL_HTML = f"""<!DOCTYPE html>
             background-color: rgba(255, 253, 249, 0.14);
             border: 1px solid rgba(255, 253, 249, 0.25);
             color: #FFFDF9;
-            padding: 0.35rem 0.9rem;
+            padding: 0.35rem 0.95rem;
             border-radius: 99px;
             font-size: 0.85rem;
+            font-weight: 600;
+        }}
+        .stats-banner {{
+            margin-top: 0.65rem;
+            font-size: 0.84rem;
+            color: #F7D388;
             font-weight: 600;
         }}
         .sticky-bar {{
@@ -747,9 +944,22 @@ FINAL_HTML = f"""<!DOCTYPE html>
             font-size: 0.84rem;
             font-weight: 700;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
         }}
         .quick-nav a:hover {{
             background-color: var(--accent-main);
+            color: #FFFFFF;
+        }}
+        .nav-count {{
+            background-color: rgba(74, 40, 18, 0.14);
+            padding: 0.05rem 0.42rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+        }}
+        .quick-nav a:hover .nav-count {{
+            background-color: rgba(255, 255, 255, 0.25);
             color: #FFFFFF;
         }}
         .toolbar {{
@@ -895,6 +1105,19 @@ FINAL_HTML = f"""<!DOCTYPE html>
             font-weight: 700;
             color: var(--accent-dark);
             margin: 0;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }}
+        .today-pill {{
+            background-color: #C92A2A;
+            color: #FFFFFF;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 0.18rem 0.55rem;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
         }}
         .source-btn {{
             text-decoration: none;
@@ -925,6 +1148,13 @@ FINAL_HTML = f"""<!DOCTYPE html>
         }}
         .highlight-date {{
             color: var(--accent-main);
+            font-weight: 700;
+        }}
+        .highlight-ringwalk {{
+            color: var(--accent-dark);
+            background-color: #F3E4C8;
+            padding: 0.1rem 0.5rem;
+            border-radius: 5px;
             font-weight: 700;
         }}
         .badge-tv {{
@@ -1023,6 +1253,14 @@ FINAL_HTML = f"""<!DOCTYPE html>
             padding: 0.18rem 0.6rem;
             border-radius: 6px;
         }}
+        .pill-main {{
+            background-color: #C4882B;
+            color: #FFFDF9;
+        }}
+        .pill-comain {{
+            background-color: #9A4E24;
+            color: #FFFDF9;
+        }}
         .empty-state {{
             background-color: var(--bg-card);
             border: 1px dashed var(--border-warm);
@@ -1053,19 +1291,15 @@ FINAL_HTML = f"""<!DOCTYPE html>
             <h1>🥊 Calendrier des Sports de Combat</h1>
             <p>Programmation officielle vérifiée : Boxe Mondiale & Japonaise, The Ring, Zuffa, UFC, Rizin, BKFC & Glory</p>
             <span class="update-pill">🔄 Mis à jour le {date_str} à {heure_str} (Heure de Paris) • Période : {valid_dates_fr[0]} au {valid_dates_fr[-1]}</span>
+            <div class="stats-banner">📊 {total_events_found} gala(s) et {total_bouts_found} combat(s) répertoriés sur la période</div>
         </header>
 
         <div class="sticky-bar">
             <nav class="quick-nav">
-                <a href="#boxe-monde">🥊 Boxe Monde</a>
-                <a href="#boxe-japon">🇯🇵 Boxe Japon</a>
-                <a href="#ufc">🔥 UFC</a>
-                <a href="#rizin">🌸 Rizin</a>
-                <a href="#bkfc">👊 BKFC</a>
-                <a href="#glory">🏆 Glory</a>
+                {nav_links_html}
             </nav>
             <div class="toolbar">
-                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom, Queensberry...), ville ou chaîne...">
+                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom, Queensberry, UFC...), ville ou chaîne...">
                 <button type="button" id="toggleAllBtn" class="toggle-all-btn">📂 Tout déplier</button>
             </div>
         </div>
@@ -1095,7 +1329,14 @@ FINAL_HTML = f"""<!DOCTYPE html>
             const query = e.target.value.toLowerCase().trim();
             document.querySelectorAll('.event-card').forEach(card => {{
                 const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(query) ? '' : 'none';
+                const isMatch = text.includes(query);
+                card.style.display = isMatch ? '' : 'none';
+                const details = card.querySelector('details.card-details');
+                if (details && query.length >= 2 && isMatch) {{
+                    details.open = true;
+                }} else if (details && query.length === 0 && !allOpen) {{
+                    details.open = false;
+                }}
             }});
         }});
     </script>
@@ -1109,4 +1350,4 @@ with open("index.html", "w", encoding="utf-8") as f:
 with open("calendrier.html", "w", encoding="utf-8") as f:
     f.write(FINAL_HTML)
 
-print("\nSynchronisation terminée avec succès : index.html et calendrier.html sont à jour.")
+print(f"\nSynchronisation terminée avec succès : {total_events_found} événements et {total_bouts_found} combats écrits dans index.html.")
