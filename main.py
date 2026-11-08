@@ -25,6 +25,7 @@ client = genai.Client(api_key=api_key)
 paris_tz = pytz.timezone("Europe/Paris")
 now_paris = datetime.now(paris_tz)
 date_str = now_paris.strftime("%d/%m/%Y")
+yesterday_str = (now_paris + timedelta(days=-1)).strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
 # Fenêtre de J-1 (pour garder les galas US de la nuit précédente) à J+7
@@ -73,14 +74,9 @@ def save_cache(cache_data):
         print(f"  [Info Cache] Impossible d'écrire le cache : {e}")
 
 # ==============================================================================
-# 2. DÉCOUVERTE DES MODÈLES (MODÈLES COMPLETS EN PRIORITÉ + LITE EN SECOURS)
+# 2. DÉCOUVERTE DES MODÈLES (COMPLETS EN PRIORITÉ + LITE EN SECOURS)
 # ==============================================================================
 def get_available_models():
-    """
-    Classe les modèles disponibles en 2 paliers :
-    1. Les modèles complets (3.8-flash, 3.7-flash, 3.6-flash, 3-flash-preview, etc.)
-    2. Les modèles 'lite' en filet de sécurité si les modèles complets ont un quota limit: 0 sur le Free Tier.
-    """
     tier1_preferred = [
         "gemini-3.8-flash",
         "gemini-3.7-flash",
@@ -137,12 +133,12 @@ def get_available_models():
     return final_models or ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-flash-latest"]
 
 AVAILABLE_MODELS = get_available_models()
-DEAD_MODELS_SEARCH = set()   # Modèles dont l'outil Google Search est en 429
-DEAD_MODELS_TOTAL = set()    # Modèles totalement indisponibles (404 ou 429 même sans Search)
-print(f"Ordre global des modèles (Complets -> Secours Lite) : {AVAILABLE_MODELS}")
+DEAD_MODELS_SEARCH = set()
+DEAD_MODELS_TOTAL = set()
+print(f"Ordre global des modèles retenus : {AVAILABLE_MODELS}")
 
 # ==============================================================================
-# 3. MOTEUR DE PRÉ-COLLECTE WEB DIRECTE (CONTOURNE LES QUOTAS GOOGLE SEARCH)
+# 3. MOTEUR DE PRÉ-COLLECTE WEB PROFONDE (MULTI-PAGES + RSS + ESPN API)
 # ==============================================================================
 JOURS_FR = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
@@ -155,11 +151,53 @@ def format_iso_to_paris(iso_str):
     except Exception:
         return date_str, "20h00"
 
+def clean_html_to_text(raw_html, max_chars=22000):
+    """Supprime les scripts, styles, menus et pieds de page pour conserver un maximum de données utiles."""
+    if not raw_html:
+        return ""
+    txt = re.sub(r"<script.*?</script>", " ", raw_html, flags=re.DOTALL | re.IGNORECASE)
+    txt = re.sub(r"<style.*?</style>", " ", txt, flags=re.DOTALL | re.IGNORECASE)
+    txt = re.sub(r"<svg.*?</svg>", " ", txt, flags=re.DOTALL | re.IGNORECASE)
+    txt = re.sub(r"<nav.*?</nav>", " ", txt, flags=re.DOTALL | re.IGNORECASE)
+    txt = re.sub(r"<footer.*?</footer>", " ", txt, flags=re.DOTALL | re.IGNORECASE)
+    txt = re.sub(r"<[^>]+>", " ", txt)
+    txt = html.unescape(re.sub(r"\s+", " ", txt)).strip()
+    return txt[:max_chars]
+
+def fetch_webpage_and_sublinks(url, link_pattern=None, max_subpages=5, max_chars=22000):
+    """
+    Récupère le texte complet d'une page calendrier ET suit automatiquement les liens
+    des événements de la semaine pour extraire l'intégralité des sous-cartes.
+    """
+    combined_texts = []
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=10)
+        if r.status_code == 200 and r.text:
+            main_txt = clean_html_to_text(r.text, max_chars=max_chars)
+            combined_texts.append(f"[PAGE PRINCIPALE {url}] :\n{main_txt}")
+
+            if link_pattern:
+                found_links = []
+                for m in re.finditer(link_pattern, r.text, flags=re.IGNORECASE):
+                    sub_url = html.unescape(m.group(1))
+                    if sub_url.startswith("/"):
+                        parsed = urllib.parse.urlparse(url)
+                        sub_url = f"{parsed.scheme}://{parsed.netloc}{sub_url}"
+                    if sub_url not in found_links:
+                        found_links.append(sub_url)
+                for sub_u in found_links[:max_subpages]:
+                    try:
+                        sr = requests.get(sub_u, headers=HEADERS, timeout=6)
+                        if sr.status_code == 200 and sr.text:
+                            sub_txt = clean_html_to_text(sr.text, max_chars=4500)
+                            combined_texts.append(f"[SOUS-CARTE DÉTAILLÉE {sub_u}] :\n{sub_txt}")
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+    return "\n\n".join(combined_texts)
+
 def fetch_espn_events_direct(sport_slug, league_slug):
-    """
-    Interroge l'API publique JSON d'ESPN (sans clé API, zéro quota) pour obtenir
-    les événements officiels et leurs cartes complètes (UFC / Boxe).
-    """
     url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_slug}/{league_slug}/scoreboard?dates={START_YMD}-{END_YMD}"
     extracted_events = []
     try:
@@ -183,8 +221,6 @@ def fetch_espn_events_direct(sport_slug, league_slug):
 
             combats_list = []
             total_comps = len(competitions)
-            # Sur ESPN, les compétitions sont souvent classées des préliminaires vers le Main Event (ou inversement)
-            # On les parcourt en plaçant le Main Event en haut
             ordered_comps = list(reversed(competitions)) if total_comps > 1 else competitions
             for idx_c, comp in enumerate(ordered_comps):
                 competitors = comp.get("competitors") or []
@@ -194,8 +230,10 @@ def fetch_espn_events_direct(sport_slug, league_slug):
                 c_b = competitors[1]
                 ath_a = c_a.get("athlete") or {}
                 ath_b = c_b.get("athlete") or {}
-                name_a = ath_a.get("displayName") or "Combattant A"
-                name_b = ath_b.get("displayName") or "Combattant B"
+                name_a = (ath_a.get("displayName") or "").strip()
+                name_b = (ath_b.get("displayName") or "").strip()
+                if not name_a or not name_b or name_a == "TBA" or name_b == "TBA":
+                    continue
 
                 rec_a_list = c_a.get("records") or []
                 rec_b_list = c_b.get("records") or []
@@ -252,8 +290,7 @@ def fetch_espn_events_direct(sport_slug, league_slug):
         print(f"  [Info ESPN Direct] {e}")
     return extracted_events
 
-def fetch_rss_snippets(query, lang="en-US", country="US"):
-    """Récupère les derniers articles d'actualité via Google News RSS (gratuit, sans quota)."""
+def fetch_rss_snippets(query, lang="en-US", country="US", max_items=18):
     encoded_q = urllib.parse.quote(query)
     rss_url = f"https://news.google.com/rss/search?q={encoded_q}&hl={lang}&gl={country}&ceid={country}:{lang.split('-')[0]}"
     items_txt = []
@@ -261,30 +298,17 @@ def fetch_rss_snippets(query, lang="en-US", country="US"):
         r = requests.get(rss_url, headers=HEADERS, timeout=8)
         if r.status_code == 200:
             root = ET.fromstring(r.content)
-            for item in root.findall(".//item")[:12]:
+            for item in root.findall(".//item")[:max_items]:
                 title = item.findtext("title") or ""
                 pub_date = item.findtext("pubDate") or ""
-                items_txt.append(f"- [{pub_date}] {title}")
+                desc = clean_html_to_text(item.findtext("description") or "", 400)
+                items_txt.append(f"- [{pub_date}] {title} :: {desc}")
     except Exception:
         pass
     return "\n".join(items_txt)
 
-def fetch_webpage_text_snippet(url, max_chars=7000):
-    """Télécharge une page officielle et en extrait le texte propre pour alimenter Gemini sans outil Search."""
-    try:
-        r = requests.get(url, headers=HEADERS, timeout=8)
-        if r.status_code == 200 and r.text:
-            txt = re.sub(r"<script.*?</script>", " ", r.text, flags=re.DOTALL | re.IGNORECASE)
-            txt = re.sub(r"<style.*?</style>", " ", txt, flags=re.DOTALL | re.IGNORECASE)
-            txt = re.sub(r"<[^>]+>", " ", txt)
-            txt = html.unescape(re.sub(r"\s+", " ", txt)).strip()
-            return txt[:max_chars]
-    except Exception:
-        pass
-    return ""
-
 def build_prefetched_context(discipline_id):
-    """Construit un dossier documentaire en direct pour chaque agent."""
+    """Construit un dossier complet (pages principales + sous-pages de cartes + RSS + API) pour chaque discipline."""
     chunks = []
     if discipline_id == "ufc":
         espn_ufc = fetch_espn_events_direct("mma", "ufc")
@@ -293,38 +317,75 @@ def build_prefetched_context(discipline_id):
         rss = fetch_rss_snippets("UFC Fight Night OR UFC full fight card schedule when:7d")
         if rss:
             chunks.append("ACTUALITÉS RÉCENTES UFC :\n" + rss)
+
     elif discipline_id == "boxe-monde":
-        box_txt = fetch_webpage_text_snippet("https://box.live/upcoming-fights-schedule/", 8000)
-        if box_txt:
-            chunks.append("EXTRAIT BOX.LIVE SCHEDULE :\n" + box_txt)
-        rss = fetch_rss_snippets("boxing full fight card undercard Matchroom OR Queensberry OR Top Rank OR DAZN when:7d")
-        if rss:
-            chunks.append("ACTUALITÉS BOXE MONDE :\n" + rss)
+        espn_box = fetch_espn_events_direct("boxing", "boxing")
+        if espn_box:
+            chunks.append("DONNÉES ESPN BOXING API :\n" + json.dumps(espn_box, ensure_ascii=False))
+        box_deep = fetch_webpage_and_sublinks(
+            "https://box.live/upcoming-fights-schedule/",
+            link_pattern=r'href=["\'](https://box\.live/fights/[^"\']+)["\']',
+            max_subpages=6,
+            max_chars=22000,
+        )
+        if box_deep:
+            chunks.append(box_deep)
+        rss1 = fetch_rss_snippets("boxing full fight card undercard Matchroom OR Queensberry OR Top Rank OR PBC OR DAZN when:7d")
+        rss2 = fetch_rss_snippets("boxing schedule fight card next saturday OR friday when:7d")
+        if rss1 or rss2:
+            chunks.append("ACTUALITÉS ET CARTES BOXE MONDE :\n" + rss1 + "\n" + rss2)
+
     elif discipline_id == "boxe-japon":
-        jp_txt = fetch_webpage_text_snippet("https://boxmob.jp/sp/schedule/", 7000)
-        if jp_txt:
-            chunks.append("EXTRAIT BOXING MOBILE JAPON (boxmob.jp) :\n" + jp_txt)
-        rss_jp = fetch_rss_snippets("プロボクシング 後楽園ホール OR 興行 日程 when:7d", lang="ja", country="JP")
+        jp_deep = fetch_webpage_and_sublinks(
+            "https://boxmob.jp/sp/schedule/",
+            link_pattern=r'href=["\'](/sp/schedule/index\.html\?sid=[0-9]+[^"\']*)["\']',
+            max_subpages=6,
+            max_chars=20000,
+        )
+        if jp_deep:
+            chunks.append(jp_deep)
+        bn_txt = fetch_webpage_and_sublinks("https://boxingnews.jp/", max_subpages=0, max_chars=8000)
+        if bn_txt:
+            chunks.append(bn_txt)
+        rss_jp = fetch_rss_snippets("プロボクシング 後楽園ホール OR フェニックスバトル OR ダイナミックグローブ OR 興行 when:7d", lang="ja", country="JP")
         if rss_jp:
             chunks.append("ACTUALITÉS BOXE JAPON :\n" + rss_jp)
+
     elif discipline_id == "rizin":
-        rz_txt = fetch_webpage_text_snippet("https://jp.rizinff.com/schedules/", 5000)
+        rz_txt = fetch_webpage_and_sublinks(
+            "https://jp.rizinff.com/schedules/",
+            link_pattern=r'href=["\'](https://jp\.rizinff\.com/schedules/[^"\']+)["\']',
+            max_subpages=2,
+            max_chars=12000,
+        )
         if rz_txt:
-            chunks.append("EXTRAIT RIZIN SCHEDULE :\n" + rz_txt)
+            chunks.append(rz_txt)
         rss_rz = fetch_rss_snippets("RIZIN 対戦カード OR RIZIN LANDMARK when:7d", lang="ja", country="JP")
         if rss_rz:
             chunks.append("ACTUALITÉS RIZIN :\n" + rss_rz)
+
     elif discipline_id == "bkfc":
-        bk_txt = fetch_webpage_text_snippet("https://www.bkfc.com/events", 6000)
+        bk_txt = fetch_webpage_and_sublinks(
+            "https://www.bkfc.com/events",
+            link_pattern=r'href=["\'](/events/[^"\']+)["\']',
+            max_subpages=3,
+            max_chars=15000,
+        )
         if bk_txt:
-            chunks.append("EXTRAIT BKFC EVENTS :\n" + bk_txt)
+            chunks.append(bk_txt)
         rss_bk = fetch_rss_snippets("BKFC fight card schedule when:7d")
         if rss_bk:
             chunks.append("ACTUALITÉS BKFC :\n" + rss_bk)
+
     elif discipline_id == "glory":
-        gl_txt = fetch_webpage_text_snippet("https://glorykickboxing.com/events", 6000)
+        gl_txt = fetch_webpage_and_sublinks(
+            "https://glorykickboxing.com/events",
+            link_pattern=r'href=["\'](/events/[^"\']+)["\']',
+            max_subpages=2,
+            max_chars=15000,
+        )
         if gl_txt:
-            chunks.append("EXTRAIT GLORY EVENTS :\n" + gl_txt)
+            chunks.append(gl_txt)
         rss_gl = fetch_rss_snippets("Glory Kickboxing fight card schedule when:7d")
         if rss_gl:
             chunks.append("ACTUALITÉS GLORY :\n" + rss_gl)
@@ -343,17 +404,17 @@ AGENTS_CONFIG = [
         "fallback_url": "https://box.live/upcoming-fights-schedule/",
         "empty_msg": "Aucun gala international majeur répertorié dans la fenêtre des 7 prochains jours.",
         "search_hint": (
-            "Recherche tous les galas de boxe anglaise prévus cette semaine et leur carte complète (full fight card / undercard) sur : "
+            "Recherche tous les galas de boxe anglaise prévus cette semaine (du " + valid_dates_fr[0] + " au " + valid_dates_fr[-1] + ") "
+            "et leur carte complète (full fight card / undercard) sur : "
             "box.live, tapology.com/fightcenter, ringtv.com/schedule, matchroomboxing.com/events, queensberry.co.uk, "
             "dazn.com, espn.com/boxing/schedule, fightnights.com, ufcfightpass.com. "
-            "Inclus impérativement les cartes Matchroom, Queensberry, Top Rank, PBC, Golden Boy, "
-            "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
+            "Inclus à la fois les galas de ce week-end ET impérativement ceux du week-end prochain (Matchroom, Queensberry, Top Rank, PBC, Golden Boy, The Ring, Zuffa)."
         ),
         "specific_rules": (
-            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé, liste TOUS les combats programmés (Main Event, Co-Main Event, Undercard et combats préliminaires, soit l'intégralité des 5 à 12 combats de la soirée).\n"
-            "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs).\n"
-            "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, IBO, The Ring ou EBU est en jeu.\n"
-            "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
+            "- COUVERTURE COMPLÈTE DES 7 PROCHAINS JOURS : Ne t'arrête pas aux galas d'hier ou d'aujourd'hui, inclus impérativement tous les galas programmés jusqu'au " + valid_dates_fr[-1] + ".\n"
+            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé, liste TOUS les combats programmés dont les deux adversaires sont connus.\n"
+            "- INTERDICTION DES 'vs. N/C' : Ne crée jamais un combat avec 'N/C' ou 'TBA' comme nom d'adversaire, et indique toujours le Prénom et le Nom des boxeurs.\n"
+            "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, IBO, The Ring ou EBU est en jeu."
         ),
     },
     {
@@ -373,9 +434,8 @@ AGENTS_CONFIG = [
             "- HIÉRARCHIE ET EXHAUSTIVITÉ JAPON :\n"
             "  1. Priorité absolue aux grands galas en arènes et championnats mondiaux/internationaux diffusés sur Prime Video JP, Lemino, U-NEXT, WOWOW ou ABEMA.\n"
             "  2. Inclus impérativement toutes les réunions majeures et championnats JBC / OPBF / WBO Asia-Pacific (Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next).\n"
-            "  3. Inclus également en complément les autres réunions professionnelles programmées au Korakuen Hall sur la période.\n"
-            "- GESTION DU DÉCALAGE HORAIRE (JST = UTC+9) : Inclus impérativement les galas ayant lieu aujourd'hui (" + date_str + ") même s'ils viennent de se terminer au Japon.\n"
-            "- Liste TOUS les combats programmés pour chaque gala japonais (Main Event, Co-Main et toute la sous-carte).\n"
+            "  3. Inclus également en complément les autres réunions professionnelles programmées au Korakuen Hall jusqu'au " + valid_dates_fr[-1] + ".\n"
+            "- INTERDICTION DES 'vs. N/C' : Ne crée jamais de ligne de combat avec 'vs. N/C'. Si l'adversaire d'un boxeur (ex: Kenichi Ogawa) n'est pas précisé dans l'extrait, mentionne simplement sa présence dans 'presentation', ou indique le vrai nom de son adversaire.\n"
             "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn)."
         ),
     },
@@ -387,12 +447,11 @@ AGENTS_CONFIG = [
         "fallback_url": "https://www.ufc.com/events",
         "empty_msg": "Aucun événement UFC programmé cette semaine.",
         "search_hint": (
-            "Recherche l'événement UFC prévu cette semaine (UFC numéroté ou UFC Fight Night) et sa carte complète sur : "
+            "Recherche les événements UFC prévus sur la période (UFC numéroté et UFC Fight Night) et leur carte complète sur : "
             "ufc.com/events, espn.com/mma/schedule, tapology.com/fightcenter, sherdog.com/events."
         ),
         "specific_rules": (
-            "- Inclus impérativement l'événement UFC ayant lieu ce week-end ou dans les 7 prochains jours.\n"
-            "- Liste l'intégralité des 10 à 14 combats annoncés en séparant clairement le statut (Main Card, Prelims, Early Prelims).\n"
+            "- Liste l'intégralité des 10 à 14 combats annoncés pour chaque événement UFC de la période en séparant clairement le statut (Main Card, Prelims, Early Prelims).\n"
             "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur."
         ),
     },
@@ -408,8 +467,8 @@ AGENTS_CONFIG = [
             "jp.rizinff.com/schedules, tapology.com/fightcenter, sherdog.com."
         ),
         "specific_rules": (
-            "- Vérifie si un gala Rizin (Landmark, numéroté ou Super Rizin) tombe dans la fenêtre autorisée.\n"
-            "- Si un gala Rizin a lieu cette semaine, liste TOUS les combats de la carte. Sinon, renvoie une liste vide []."
+            "- Vérifie si un gala Rizin tombe dans la fenêtre autorisée.\n"
+            "- Si un gala Rizin a lieu sur cette période, liste TOUS les combats connus de la carte. Sinon, renvoie une liste vide []."
         ),
     },
     {
@@ -446,7 +505,7 @@ AGENTS_CONFIG = [
 ]
 
 # ==============================================================================
-# 5. MOTEUR D'EXTRACTION D'AFFICHES + BANNIÈRES OFFICIELLES (ZÉRO DOUBLON)
+# 5. MOTEUR D'EXTRACTION D'AFFICHES + BANNIÈRES OFFICIELLES GARANTIES
 # ==============================================================================
 POSTER_CACHE = {}
 USED_EVENT_POSTERS = set()
@@ -472,9 +531,9 @@ def make_svg_banner(bg_start, bg_end, accent_color, main_title, subtitle, letter
         f'<rect width="1200" height="600" fill="url(#g)"/>'
         f'<rect x="350" y="135" width="500" height="3" fill="{accent_color}" opacity="0.85"/>'
         f'<text x="600" y="265" text-anchor="middle" fill="#FFFFFF" font-family="Outfit, Arial, sans-serif" '
-        f'font-size="84" font-weight="800" letter-spacing="{letter_spacing}">{main_title}</text>'
+        f'font-size="80" font-weight="800" letter-spacing="{letter_spacing}">{main_title}</text>'
         f'<text x="600" y="335" text-anchor="middle" fill="{accent_color}" font-family="Plus Jakarta Sans, Arial, sans-serif" '
-        f'font-size="28" font-weight="700" letter-spacing="12">{subtitle}</text>'
+        f'font-size="26" font-weight="700" letter-spacing="11">{subtitle}</text>'
         f'<rect x="350" y="375" width="500" height="3" fill="{accent_color}" opacity="0.85"/>'
         f'</svg>'
     )
@@ -487,11 +546,16 @@ FIXED_PROMOTER_BANNERS = {
     "golden boy": make_svg_banner("#1F1709", "#0A0703", "#E6B84D", "GOLDEN BOY", "P R O M O T I O N S", "7"),
     "pbc": make_svg_banner("#121824", "#06080E", "#D4AF37", "P B C", "PREMIER BOXING CHAMPIONS", "10"),
     "the ring": make_svg_banner("#1C130E", "#0A0604", "#E2B049", "THE RING", "OFFICIAL FIGHT NIGHT", "8"),
+    "dazn": make_svg_banner("#161616", "#050505", "#F7D388", "DAZN BOXING", "WORLD CHAMPIONSHIP NIGHT", "8"),
+    "lemino": make_svg_banner("#101B2B", "#060A11", "#E2B049", "LEMINO BOXING", "PHOENIX BATTLE TOKYO", "7"),
+    "u-next": make_svg_banner("#141A24", "#07090E", "#D4AF37", "U-NEXT BOXING", "DYNAMIC GLOVE KORAKUEN HALL", "6"),
     "zuffa": make_svg_banner("#220D0D", "#0A0404", "#D20A0A", "ZUFFA BOXING", "UFC FIGHT PASS", "6"),
     "ufc": make_svg_banner("#260B0B", "#090303", "#D20A0A", "U F C", "ULTIMATE FIGHTING CHAMPIONSHIP", "14"),
     "rizin": make_svg_banner("#1A1326", "#08050E", "#E5C158", "R I Z I N", "FIGHTING FEDERATION", "12"),
     "bkfc": make_svg_banner("#1E190A", "#090703", "#F5C518", "B K F C", "BARE KNUCKLE FIGHTING CHAMPIONSHIP", "12"),
     "glory": make_svg_banner("#1D160B", "#080603", "#E6B84D", "G L O R Y", "GLORY KICKBOXING WORLD SERIES", "12"),
+    "boxe-monde": make_svg_banner("#24150E", "#0C0604", "#D4AF37", "WORLD BOXING", "CHAMPIONSHIP FIGHT NIGHT", "8"),
+    "boxe-japon": make_svg_banner("#260E12", "#0D0406", "#E8C574", "BOXING JAPAN", "KORAKUEN HALL & ARENAS", "8"),
 }
 
 def is_url_allowed_for_poster(url):
@@ -504,7 +568,11 @@ def is_valid_poster_image(img_url):
     if not img_url or not img_url.startswith("http"):
         return False
     low = img_url.lower()
-    bad_tokens = ["ringwalks", "favicon", "logo.svg", "default-share", "placeholder", "avatar", ".svg"]
+    bad_tokens = [
+        "ringwalks", "favicon", "logo.svg", "default-share", "placeholder",
+        "avatar", ".svg", "assets/icons/", "/icons/image.png", "apple-touch-icon",
+        "site-logo", "og-default"
+    ]
     return not any(t in low for t in bad_tokens)
 
 def extract_og_image_from_url(url):
@@ -611,6 +679,11 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
         ("premier boxing", "https://www.premierboxingchampions.com/", "pbc"),
         ("the ring", "https://www.ringtv.com/", "the ring"),
         ("riyadh season", "https://www.ringtv.com/", "the ring"),
+        ("lemino", "", "lemino"),
+        ("phoenix battle", "", "lemino"),
+        ("u-next", "", "u-next"),
+        ("dynamic glove", "", "u-next"),
+        ("dazn", "", "dazn"),
         ("zuffa", "https://www.ufcfightpass.com/", "zuffa"),
         ("bkfc", "https://www.bkfc.com/events", "bkfc"),
         ("ufc", "https://www.ufc.com/events", "ufc"),
@@ -619,12 +692,14 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
     ]
     for keyword, site_url, svg_key in promoter_sites:
         if keyword in gala_context:
-            web_banner = extract_og_image_from_url(site_url)
-            if web_banner:
-                return web_banner
+            if site_url:
+                web_banner = extract_og_image_from_url(site_url)
+                if web_banner and web_banner not in USED_EVENT_POSTERS:
+                    USED_EVENT_POSTERS.add(web_banner)
+                    return web_banner
             return FIXED_PROMOTER_BANNERS.get(svg_key, "")
 
-    return ""
+    return FIXED_PROMOTER_BANNERS.get(discipline_id, "")
 
 def verify_and_fix_official_url(ev_url, ev, fallback_url, grounding_urls):
     url = (ev_url or "").strip()
@@ -672,6 +747,34 @@ def extract_grounding_urls(response):
         pass
     return urls
 
+def clean_and_validate_events(events_list):
+    """
+    Supprime tout combat dont l'un des deux adversaires est 'N/C', 'TBA', 'TBD' ou vide
+    afin de garantir des cartes 100 % propres à l'affichage.
+    """
+    if not isinstance(events_list, list):
+        return []
+    invalid_names = {"n/c", "nc", "tba", "tbd", "inconnu", "unknown", "à déterminer", "a determiner", "-"}
+    cleaned_events = []
+    for ev in events_list:
+        if not isinstance(ev, dict):
+            continue
+        raw_bouts = ev.get("combats") or []
+        valid_bouts = []
+        for b in raw_bouts:
+            if not isinstance(b, dict):
+                continue
+            fa = (b.get("combattant_a") or "").strip()
+            fb = (b.get("combattant_b") or "").strip()
+            if not fa or not fb:
+                continue
+            if fa.lower() in invalid_names or fb.lower() in invalid_names:
+                continue
+            valid_bouts.append(b)
+        ev["combats"] = valid_bouts
+        cleaned_events.append(ev)
+    return cleaned_events
+
 def parse_agent_json(raw_text):
     if not raw_text:
         return None
@@ -686,9 +789,9 @@ def parse_agent_json(raw_text):
         try:
             data = json.loads(candidate)
             if isinstance(data, dict):
-                return data.get("evenements", [])
+                return clean_and_validate_events(data.get("evenements", []))
             if isinstance(data, list):
-                return data
+                return clean_and_validate_events(data)
         except Exception:
             pass
 
@@ -700,7 +803,7 @@ def parse_agent_json(raw_text):
         try:
             data = json.loads(candidate)
             if isinstance(data, list):
-                return data
+                return clean_and_validate_events(data)
         except Exception:
             pass
 
@@ -713,7 +816,7 @@ def parse_agent_json(raw_text):
                 try:
                     data = json.loads(attempt)
                     if isinstance(data, dict) and "evenements" in data:
-                        return data["evenements"]
+                        return clean_and_validate_events(data["evenements"])
                 except Exception:
                     pass
             last_complete_bout = cleaned.rfind("}", first_brace, last_complete_bout)
@@ -724,7 +827,6 @@ def parse_agent_json(raw_text):
 # 6. EXÉCUTION D'UN MICRO-AGENT (AVEC REPLI SANS SEARCH GROUNDING + DIRECT API)
 # ==============================================================================
 def call_gemini_smart(model_name, prompt, target_tokens, use_search_tool):
-    """Appelle Gemini avec ou sans l'outil Google Search et gère le repli 8192 tokens."""
     cfg_kwargs = {
         "temperature": 0.1,
         "max_output_tokens": target_tokens,
@@ -755,7 +857,6 @@ def run_micro_agent(agent_cfg, cached_data):
     fallback_url = agent_cfg.get("fallback_url", "https://box.live/upcoming-fights-schedule/")
     print(f"\n--- Lancement Micro-Agent [{discipline_id}] (Plafond : {target_tokens} tokens) ---")
 
-    # 1. Pré-collecte web directe en Python (garantit les données fraîches même si Google Search Grounding est en 429)
     live_web_context = build_prefetched_context(discipline_id)
 
     base_prompt = f"""Tu es un agent d'extraction de données factuelles spécialisé dans les sports de combat.
@@ -767,15 +868,14 @@ MISSION :
 
 CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
-- EXHAUSTIVITÉ ABSOLUE SUR LES SOUS-CARTES : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims). Si une carte comporte 8, 10 ou 14 combats, la liste "combats" doit contenir les 8, 10 ou 14 combats. Rédige 1 à 2 phrases d'analyse pour le Main Event et le Co-Main Event, et 1 phrase courte pour chaque combat de l'Undercard.
+- EXHAUSTIVITÉ DES SOUS-CARTES ET DES GALAS À VENIR : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims). Inclus à la fois les événements du week-end en cours ET tous les événements programmés la semaine prochaine jusqu'au {valid_dates_fr[-1]}.
+- INTERDICTION ABSOLUE DES ADVERSAIRES "N/C" OU "TBA" : Chaque combat listé dans "combats" DOIT avoir le Prénom et Nom de combattant_a ET le Prénom et Nom de combattant_b. Si l'adversaire d'un combattant n'est pas connu, ne crée pas de combat "vs. N/C" (mentionne-le seulement dans "presentation").
 - DOUBLE INDICATION HORAIRE (HEURE DE PARIS) :
   1. 'heure_debut_paris' : Heure du lancement du gala / début des combats préliminaires (ex: "19h00", "01h00").
   2. 'heure_ringwalk_paris' : Heure annoncée ou estimée de la marche vers le ring (ringwalk) du Main Event à l'heure de Paris (ex: "vers 23h30", "vers 05h00 (estimation)").
-- Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
-- ZÉRO HALLUCINATION : N'invente jamais de combat ni de palmarès. Mets "N/C" si une donnée est inconnue.
 - Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
 
-DONNÉES EN DIRECT PRÉ-COLLECTÉES PAR LE SYSTÈME (À UTILISER ET COMPLÉTER) :
+DONNÉES EN DIRECT PRÉ-COLLECTÉES PAR LE SYSTÈME (CONTIENT LES PAGES PRINCIPALES ET SOUS-CARTES) :
 {live_web_context if live_web_context else "Aucune donnée pré-collectée, utilise ta recherche."}
 
 FORMAT DE SORTIE OBLIGATOIRE :
@@ -784,7 +884,7 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement cette structure, s
   "evenements": [
     {{
       "nom_gala": "Nom officiel du gala : Combattant A vs. Combattant B",
-      "date_paris": "Samedi 07/11/2026",
+      "date_paris": "Samedi 14/11/2026",
       "lieu": "Salle / Arène, Ville, Pays",
       "url_officielle": "https://...",
       "poster_url": "https://...",
@@ -814,12 +914,9 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement cette structure, s
 Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : {{"evenements": []}}
 """
 
-    # On ne teste QUE les modèles qui ne sont pas dans DEAD_MODELS_TOTAL (sans JAMAIS réinitialiser la liste)
     active_candidates = [m for m in AVAILABLE_MODELS if m not in DEAD_MODELS_TOTAL]
 
     for model_name in active_candidates:
-        # Étape A : Essai avec Google Search Grounding (si non bloqué pour ce modèle)
-        # Étape B : Si Google Search Grounding renvoie 429, essai immédiat SANS Google Search (utilise live_web_context)
         modes_to_try = [True, False] if model_name not in DEAD_MODELS_SEARCH else [False]
 
         for use_search in modes_to_try:
@@ -851,7 +948,6 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
 
             except Exception as e:
                 err_str = str(e)
-                # Affichage complet de l'erreur (jusqu'à 380 caractères) pour voir la métrique exacte de Google
                 print(f"  [Avertissement] {model_name} ({mode_label}) : {err_str[:380]}")
 
                 if "404" in err_str or "NOT_FOUND" in err_str:
@@ -860,13 +956,11 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
 
                 if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
                     if use_search:
-                        # Le quota Google Search est saturé sur ce modèle : on tente immédiatement le mode sans Search
                         DEAD_MODELS_SEARCH.add(model_name)
                         print(f"  [Bascule] Quota Search atteint sur {model_name}, test immédiat en mode Direct...")
                         time.sleep(2)
                         continue
                     else:
-                        # Même sans Google Search, ce modèle est à 0 quota : mise en quarantaine définitive pour ce run
                         DEAD_MODELS_TOTAL.add(model_name)
                         if "limit: 0" not in err_str.lower():
                             time.sleep(5)
@@ -874,7 +968,6 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
 
                 time.sleep(2)
 
-    # Niveau 3 : Si toute l'API Gemini est en 429, extraction autonome directe Python (ESPN API + Cache)
     if discipline_id == "ufc":
         direct_ufc = fetch_espn_events_direct("mma", "ufc")
         if direct_ufc:
@@ -895,7 +988,7 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
 
     if discipline_id in cached_data and cached_data[discipline_id]:
         print(f"  [Secours Cache] Restauration des événements en cache pour [{discipline_id}].")
-        return cached_data[discipline_id], False
+        return clean_and_validate_events(cached_data[discipline_id]), False
 
     print(f"  [Info] Aucun résultat récupéré pour [{discipline_id}].")
     return [], False
@@ -917,8 +1010,12 @@ def render_event_card_html(ev):
     presentation = html.escape(ev.get("presentation") or "")
     combats = ev.get("combats") or []
 
-    is_today = date_str in date_paris
-    today_badge = '<span class="today-pill">🔴 AUJOURD\'HUI</span>' if is_today else ""
+    if date_str in date_paris:
+        status_badge = '<span class="today-pill">🔴 AUJOURD\'HUI</span>'
+    elif yesterday_str in date_paris:
+        status_badge = '<span class="yesterday-pill">⏮️ HIER / RÉCENT</span>'
+    else:
+        status_badge = ""
 
     belt_badge = f'<div class="poster-belt">👑 {enjeu}</div>' if enjeu else ""
     if poster_url.startswith("http") or poster_url.startswith("data:image/"):
@@ -998,7 +1095,7 @@ def render_event_card_html(ev):
     <article class="event-card">
         {poster_block}
         <div class="card-header-row">
-            <h3 class="event-title">{today_badge}{nom_gala}</h3>
+            <h3 class="event-title">{status_badge}{nom_gala}</h3>
             {source_btn}
         </div>
         <div class="meta-grid">
@@ -1051,19 +1148,10 @@ for idx, cfg in enumerate(AGENTS_CONFIG):
     """
     sections_html.append(section_block)
 
-    # Pause uniquement s'il reste des modèles Gemini non bloqués en lice
     remaining_models = [m for m in AVAILABLE_MODELS if m not in DEAD_MODELS_TOTAL]
     if idx < len(AGENTS_CONFIG) - 1 and remaining_models:
         print("  Pause de 15s pour préserver le quota de jetons par minute (RPM/TPM)...")
         time.sleep(15)
-
-if len(DEAD_MODELS_TOTAL) == len(AVAILABLE_MODELS):
-    print(
-        "\n[DIAGNOSTIC CLÉ API] Tous les modèles Gemini ont renvoyé 429 RESOURCE_EXHAUSTED dès le 1er appel.\n"
-        "-> Conseil : Votre projet Google AI Studio a atteint son plafond ou nécessite une nouvelle clé API "
-        "créée dans un nouveau projet sur https://aistudio.google.com/app/apikey .\n"
-        "-> Le mode autonome ESPN/Cache a pris le relais pour mettre à jour le site."
-    )
 
 save_cache(cached_calendar)
 nav_links_html = "\n                ".join(nav_links)
@@ -1095,7 +1183,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
             --border-warm: #DFD4C1;
             --shadow-soft: 0 8px 24px rgba(58, 35, 18, 0.06);
         }}
-        * {{
+        *, *::before, *::after {{
             box-sizing: border-box;
             scroll-behavior: smooth;
         }}
@@ -1354,6 +1442,15 @@ FINAL_HTML = f"""<!DOCTYPE html>
             padding: 0.18rem 0.55rem;
             border-radius: 6px;
             letter-spacing: 0.5px;
+        }}
+        .yesterday-pill {{
+            background-color: #6C584C;
+            color: #FFFDF9;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.18rem 0.55rem;
+            border-radius: 6px;
+            letter-spacing: 0.4px;
         }}
         .source-btn {{
             text-decoration: none;
