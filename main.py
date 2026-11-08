@@ -69,25 +69,26 @@ def save_cache(cache_data):
         print(f"  [Info Cache] Impossible d'écrire le cache : {e}")
 
 # ==============================================================================
-# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES COMPLETS (ZÉRO MODÈLE "LITE")
+# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES (PRIORITÉ 3.8 / 3.7 / 3.6, EXCLUSION 2.5 & OMNI)
 # ==============================================================================
 def get_available_models():
     """
-    Interroge l'API pour lister uniquement les modèles complets réellement actifs sur la clé,
-    en excluant strictement les versions 'lite' (qui résument les sous-cartes) et non-textuelles.
+    Liste les modèles actifs en plaçant impérativement gemini-3.8-flash, 3.7-flash et 3.6-flash
+    en tête, et en excluant les modèles obsolètes (2.5) ou sans quota (omni).
     """
     preferred_order = [
-        "gemini-2.5-flash",
+        "gemini-3.8-flash",
+        "gemini-3.7-flash",
+        "gemini-3.6-flash",
         "gemini-3-flash-preview",
         "gemini-flash-latest",
-        "gemini-2.5-pro",
         "gemini-pro-latest",
-        "gemini-2.0-flash",
+        "gemini-3.5-flash",
     ]
     excluded_tokens = [
-        "lite", "embedding", "imagen", "veo", "tts", "audio",
-        "vision", "aqa", "image", "banana", "transcribe",
-        "argon", "customtools", "thinking", "exp"
+        "2.5", "2.0", "omni", "lite", "embedding", "imagen", "veo",
+        "tts", "audio", "vision", "aqa", "image", "banana",
+        "transcribe", "argon", "customtools", "thinking", "exp"
     ]
     discovered = []
     try:
@@ -108,9 +109,10 @@ def get_available_models():
         if d not in final_models:
             final_models.append(d)
 
-    return final_models or ["gemini-2.5-flash", "gemini-flash-latest"]
+    return final_models or ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash"]
 
 AVAILABLE_MODELS = get_available_models()
+DEAD_MODELS = set()
 print(f"Ordre de priorité des modèles retenus : {AVAILABLE_MODELS}")
 
 # ==============================================================================
@@ -169,7 +171,7 @@ AGENTS_CONFIG = [
         "fallback_url": "https://www.ufc.com/events",
         "empty_msg": "Aucun événement UFC programmé cette semaine.",
         "search_hint": (
-            "Recherche l'événement UFC prévu cette semaine (UFC numéroté ou UFC Fight Night, par exemple à l'UFC Apex ou en arène) et sa carte complète sur : "
+            "Recherche l'événement UFC prévu cette semaine (UFC numéroté ou UFC Fight Night) et sa carte complète sur : "
             "ufc.com/events, espn.com/mma/schedule, tapology.com/fightcenter, sherdog.com/events."
         ),
         "specific_rules": (
@@ -246,7 +248,6 @@ TRUSTED_PROMOTER_DOMAINS = [
 ]
 
 def make_svg_banner(bg_start, bg_end, accent_color, main_title, subtitle, letter_spacing="8"):
-    """Bannière vectorielle officielle haute définition si le site bloque le scraping."""
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="100%" height="100%">'
         f'<defs><radialGradient id="g" cx="50%" cy="45%" r="75%">'
@@ -456,14 +457,9 @@ def extract_grounding_urls(response):
     return urls
 
 def parse_agent_json(raw_text):
-    """
-    Nettoie les balises Markdown, supprime d'éventuels commentaires JS hors chaînes,
-    corrige les virgules traînantes et répare les listes JSON coupées.
-    """
     if not raw_text:
         return None
     cleaned = raw_text.replace("```json", "").replace("```", "").strip()
-    # Suppression des lignes de commentaires // éventuelles
     cleaned = re.sub(r"^\s*//.*$", "", cleaned, flags=re.MULTILINE)
 
     first_brace = cleaned.find("{")
@@ -492,7 +488,6 @@ def parse_agent_json(raw_text):
         except Exception:
             pass
 
-    # Réparation automatique si le JSON a été coupé sur une très longue sous-carte
     if first_brace != -1 and '"evenements"' in cleaned and '"combats"' in cleaned:
         last_complete_bout = cleaned.rfind("}")
         while last_complete_bout > first_brace:
@@ -510,7 +505,7 @@ def parse_agent_json(raw_text):
     return None
 
 # ==============================================================================
-# 5. EXÉCUTION D'UN MICRO-AGENT (AVEC DISTINCTION 404/429 & CACHE DE SECOURS)
+# 5. EXÉCUTION D'UN MICRO-AGENT (AVEC QUARANTAINE DYNAMIQUE DES MODÈLES HS)
 # ==============================================================================
 def run_micro_agent(agent_cfg, cached_data):
     discipline_id = agent_cfg["id"]
@@ -527,7 +522,7 @@ MISSION :
 
 CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
-- EXHAUSTIVITÉ ABSOLUE SUR LES SOUS-CARTES : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims répertoriés sur Box.live, Tapology, Boxing Mobile ou le site officiel). Si une carte comporte 8, 10 ou 14 combats, la liste "combats" doit contenir les 8, 10 ou 14 combats. Pour économiser de l'espace et ne jamais tronquer la liste, rédige 1 à 2 phrases d'analyse pour le Main Event et le Co-Main Event, et 1 phrase courte et percutante pour chaque combat de l'Undercard.
+- EXHAUSTIVITÉ ABSOLUE SUR LES SOUS-CARTES : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims répertoriés sur Box.live, Tapology, Boxing Mobile ou le site officiel). Si une carte comporte 8, 10 ou 14 combats, la liste "combats" doit contenir les 8, 10 ou 14 combats. Rédige 1 à 2 phrases d'analyse pour le Main Event et le Co-Main Event, et 1 phrase courte pour chaque combat de l'Undercard.
 - DOUBLE INDICATION HORAIRE (HEURE DE PARIS) :
   1. 'heure_debut_paris' : Heure du lancement du gala / début des combats préliminaires (ex: "19h00", "01h00").
   2. 'heure_ringwalk_paris' : Heure annoncée ou estimée de la marche vers le ring (ringwalk) du Main Event à l'heure de Paris (ex: "vers 23h30", "vers 05h00 (estimation)").
@@ -563,30 +558,6 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement cette structure, s
           "categorie_kg": "Super-légers (-63,5 kg)",
           "rounds": "12 rounds",
           "enjeu_et_analyse": "Titre en jeu et description stylistique du duel."
-        }},
-        {{
-          "statut": "Co-Main Event",
-          "combattant_a": "Prénom Nom",
-          "palmares_a": "14-1-0, 8 KOs",
-          "taille_a": "1m80",
-          "combattant_b": "Prénom Nom",
-          "palmares_b": "16-2-0, 9 KOs",
-          "taille_b": "1m79",
-          "categorie_kg": "Mi-moyens (-66,7 kg)",
-          "rounds": "10 rounds",
-          "enjeu_et_analyse": "Enjeu et opposition de styles."
-        }},
-        {{
-          "statut": "Undercard",
-          "combattant_a": "Prénom Nom",
-          "palmares_a": "10-0-0, 5 KOs",
-          "taille_a": "1m75",
-          "combattant_b": "Prénom Nom",
-          "palmares_b": "11-3-1, 4 KOs",
-          "taille_b": "1m74",
-          "categorie_kg": "Légers (-61,2 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Combat de classement en 8 reprises."
         }}
       ]
     }}
@@ -595,72 +566,76 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement cette structure, s
 Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : {{"evenements": []}}
 """
 
-    for model_name in AVAILABLE_MODELS[:4]:
-        # Jusqu'à 2 tentatives sur le même modèle en cas de quota 429
-        for attempt in range(2):
+    active_candidates = [m for m in AVAILABLE_MODELS if m not in DEAD_MODELS]
+    if not active_candidates:
+        active_candidates = list(AVAILABLE_MODELS)
+
+    for model_name in active_candidates:
+        try:
+            print(f"  Appel {model_name} avec Google Search Grounding...")
             try:
-                print(f"  Appel {model_name} (Essai {attempt + 1}/2)...")
-                try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        tools=[types.Tool(google_search=types.GoogleSearch())],
+                        temperature=0.1,
+                        max_output_tokens=target_tokens,
+                    ),
+                )
+            except Exception as tok_err:
+                err_tok_str = str(tok_err)
+                # Repli à 8192 tokens UNIQUEMENT sur une erreur 400 (et jamais sur une erreur 429)
+                if target_tokens > 8192 and "400" in err_tok_str and "429" not in err_tok_str:
+                    print(f"  [Adaptation] Repli à 8192 tokens pour {model_name}...")
                     response = client.models.generate_content(
                         model=model_name,
                         contents=prompt,
                         config=types.GenerateContentConfig(
                             tools=[types.Tool(google_search=types.GoogleSearch())],
                             temperature=0.1,
-                            max_output_tokens=target_tokens,
+                            max_output_tokens=8192,
                         ),
                     )
-                except Exception as tok_err:
-                    if target_tokens > 8192 and ("400" in str(tok_err) or "token" in str(tok_err).lower()):
-                        print(f"  [Adaptation] Repli à 8192 tokens pour {model_name}...")
-                        response = client.models.generate_content(
-                            model=model_name,
-                            contents=prompt,
-                            config=types.GenerateContentConfig(
-                                tools=[types.Tool(google_search=types.GoogleSearch())],
-                                temperature=0.1,
-                                max_output_tokens=8192,
-                            ),
-                        )
-                    else:
-                        raise tok_err
-
-                if response and getattr(response, "text", None):
-                    events = parse_agent_json(response.text)
-                    if events is None:
-                        print(f"  [Info] JSON mal formé sur {model_name}, nouvel essai...")
-                        time.sleep(3)
-                        continue
-
-                    grounding_urls = extract_grounding_urls(response)
-                    total_ev = len(events)
-
-                    for ev in events:
-                        raw_ev_url = (ev.get("url_officielle") or "").strip()
-                        ev_url = verify_and_fix_official_url(raw_ev_url, ev, fallback_url, grounding_urls)
-                        ev["url_officielle"] = ev_url
-                        ev["poster_url"] = resolve_event_poster(
-                            ev, ev_url, grounding_urls, discipline_id, total_ev
-                        )
-
-                    print(f"  -> Succès : {len(events)} événement(s) extrait(s) pour [{discipline_id}].")
-                    cached_data[discipline_id] = events
-                    return events, True
-
-            except Exception as e:
-                err_str = str(e)
-                print(f"  [Avertissement] {model_name} sur [{discipline_id}] : {err_str[:140]}")
-                # Si le modèle n'existe pas (404) ou ne supporte pas Search (400), on change de modèle immédiatement
-                if "404" in err_str or "NOT_FOUND" in err_str or "400" in err_str:
-                    break
-                # Si quota 429, on attend 35s et on réessaie ce modèle
-                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                    print("  [Quota 429] Pause de 35s pour recharger le quota par minute...")
-                    time.sleep(35)
                 else:
-                    time.sleep(5)
+                    raise tok_err
 
-    # Si tous les modèles ont échoué à cause du réseau/quota, on restaure le cache récent de la section
+            if response and getattr(response, "text", None):
+                events = parse_agent_json(response.text)
+                if events is None:
+                    print(f"  [Info] JSON mal formé sur {model_name}, passage au modèle suivant...")
+                    time.sleep(2)
+                    continue
+
+                grounding_urls = extract_grounding_urls(response)
+                total_ev = len(events)
+
+                for ev in events:
+                    raw_ev_url = (ev.get("url_officielle") or "").strip()
+                    ev_url = verify_and_fix_official_url(raw_ev_url, ev, fallback_url, grounding_urls)
+                    ev["url_officielle"] = ev_url
+                    ev["poster_url"] = resolve_event_poster(
+                        ev, ev_url, grounding_urls, discipline_id, total_ev
+                    )
+
+                print(f"  -> Succès ({model_name}) : {len(events)} événement(s) extrait(s) pour [{discipline_id}].")
+                cached_data[discipline_id] = events
+                return events, True
+
+        except Exception as e:
+            err_str = str(e)
+            print(f"  [Avertissement] {model_name} sur [{discipline_id}] : {err_str[:140]}")
+            if "404" in err_str or "NOT_FOUND" in err_str or "400" in err_str:
+                print(f"  [Exclusion] {model_name} est obsolète ou incompatible, retrait pour les prochains agents.")
+                DEAD_MODELS.add(model_name)
+                continue
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                print(f"  [Quota 429] {model_name} saturé, mise en quarantaine et bascule sur le modèle suivant après 12s...")
+                DEAD_MODELS.add(model_name)
+                time.sleep(12)
+                continue
+            time.sleep(3)
+
     if discipline_id in cached_data and cached_data[discipline_id]:
         print(f"  [Secours Cache] Restauration des événements en cache pour [{discipline_id}].")
         return cached_data[discipline_id], False
@@ -685,7 +660,6 @@ def render_event_card_html(ev):
     presentation = html.escape(ev.get("presentation") or "")
     combats = ev.get("combats") or []
 
-    # Badge spécial si l'événement a lieu aujourd'hui
     is_today = date_str in date_paris
     today_badge = '<span class="today-pill">🔴 AUJOURD\'HUI</span>' if is_today else ""
 
@@ -820,11 +794,10 @@ for idx, cfg in enumerate(AGENTS_CONFIG):
     """
     sections_html.append(section_block)
 
-    if idx < len(AGENTS_CONFIG) - 1:
-        print("  Pause de 35s pour préserver le quota de jetons par minute (RPM/TPM)...")
-        time.sleep(35)
+    if idx < len(AGENTS_CONFIG) - 1 and successful_api_calls > 0:
+        print("  Pause de 20s pour préserver le quota de jetons par minute (RPM/TPM)...")
+        time.sleep(20)
 
-# Si aucun appel API n'a réussi et que total_events_found == 0, on alerte GitHub Actions (exit 1)
 if successful_api_calls == 0 and total_events_found == 0:
     print("\n[ERREUR CRITIQUE API] Aucun agent n'a pu extraire de données. Conservation de l'index.html existant.")
     sys.exit(1)
