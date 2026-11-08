@@ -67,9 +67,15 @@
             background-color: rgba(255, 253, 249, 0.14);
             border: 1px solid rgba(255, 253, 249, 0.25);
             color: #FFFDF9;
-            padding: 0.35rem 0.9rem;
+            padding: 0.35rem 0.95rem;
             border-radius: 99px;
             font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .stats-banner {
+            margin-top: 0.65rem;
+            font-size: 0.84rem;
+            color: #F7D388;
             font-weight: 600;
         }
         .sticky-bar {
@@ -100,9 +106,22 @@
             font-size: 0.84rem;
             font-weight: 700;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
         }
         .quick-nav a:hover {
             background-color: var(--accent-main);
+            color: #FFFFFF;
+        }
+        .nav-count {
+            background-color: rgba(74, 40, 18, 0.14);
+            padding: 0.05rem 0.42rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+        }
+        .quick-nav a:hover .nav-count {
+            background-color: rgba(255, 255, 255, 0.25);
             color: #FFFFFF;
         }
         .toolbar {
@@ -165,7 +184,6 @@
             box-shadow: var(--shadow-soft);
             overflow: hidden;
         }
-        /* Bannière Poster Officiel avec object-fit: contain (Zéro rognage des portraits ou affiches) */
         .poster-container {
             position: relative;
             width: 100%;
@@ -249,6 +267,19 @@
             font-weight: 700;
             color: var(--accent-dark);
             margin: 0;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .today-pill {
+            background-color: #C92A2A;
+            color: #FFFFFF;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 0.18rem 0.55rem;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
         }
         .source-btn {
             text-decoration: none;
@@ -279,6 +310,13 @@
         }
         .highlight-date {
             color: var(--accent-main);
+            font-weight: 700;
+        }
+        .highlight-ringwalk {
+            color: var(--accent-dark);
+            background-color: #F3E4C8;
+            padding: 0.1rem 0.5rem;
+            border-radius: 5px;
             font-weight: 700;
         }
         .badge-tv {
@@ -377,6 +415,14 @@
             padding: 0.18rem 0.6rem;
             border-radius: 6px;
         }
+        .pill-main {
+            background-color: #C4882B;
+            color: #FFFDF9;
+        }
+        .pill-comain {
+            background-color: #9A4E24;
+            color: #FFFDF9;
+        }
         .empty-state {
             background-color: var(--bg-card);
             border: 1px dashed var(--border-warm);
@@ -406,20 +452,21 @@
         <header class="hero">
             <h1>🥊 Calendrier des Sports de Combat</h1>
             <p>Programmation officielle vérifiée : Boxe Mondiale & Japonaise, The Ring, Zuffa, UFC, Rizin, BKFC & Glory</p>
-            <span class="update-pill">🔄 Mis à jour le 24/10/2026 à 16:27 (Heure de Paris) • Période : 24/10/2026 au 31/10/2026</span>
+            <span class="update-pill">🔄 Mis à jour le 08/11/2026 à 19:07 (Heure de Paris) • Période : 07/11/2026 au 15/11/2026</span>
+            <div class="stats-banner">📊 7 gala(s) et 45 combat(s) répertoriés sur la période</div>
         </header>
 
         <div class="sticky-bar">
             <nav class="quick-nav">
-                <a href="#boxe-monde">🥊 Boxe Monde</a>
-                <a href="#boxe-japon">🇯🇵 Boxe Japon</a>
-                <a href="#ufc">🔥 UFC</a>
-                <a href="#rizin">🌸 Rizin</a>
-                <a href="#bkfc">👊 BKFC</a>
-                <a href="#glory">🏆 Glory</a>
+                <a href="#boxe-monde">🥊 Boxe Monde <span class="nav-count">2</span></a>
+                <a href="#boxe-japon">🇯🇵 Boxe Japon <span class="nav-count">2</span></a>
+                <a href="#ufc">🔥 UFC <span class="nav-count">2</span></a>
+                <a href="#rizin">🌸 Rizin <span class="nav-count">1</span></a>
+                <a href="#bkfc">👊 BKFC <span class="nav-count">0</span></a>
+                <a href="#glory">🏆 Glory <span class="nav-count">0</span></a>
             </nav>
             <div class="toolbar">
-                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom, Queensberry, The Ring...), ville ou chaîne...">
+                <input type="search" id="searchInput" class="search-input" placeholder="🔍 Filtrer par combattant, promoteur (Matchroom, Queensberry, UFC...), ville ou chaîne...">
                 <button type="button" id="toggleAllBtn" class="toggle-all-btn">📂 Tout déplier</button>
             </div>
         </div>
@@ -431,59 +478,57 @@
         
     <article class="event-card">
         
-        <div class="poster-container">
-            <img src="https://www.matchroomboxing.com/app/uploads/2020/07/Fight-Camp_260620_-053011001708-17-_185-1-1.jpg" alt="Matchroom Boxing: Dalton Smith vs. Alberto Puello" class="event-poster-img"
-                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
+        <div class="poster-container poster-fallback-mode">
             <div class="poster-overlay">
-                <div class="poster-belt">👑 Titre mondial WBC Super-Légers (-63,5 kg)</div>
-                <div class="poster-dynamic-title">Matchroom Boxing: Dalton Smith vs. Alberto Puello</div>
+                <div class="poster-belt">👑 Titre intérimaire WBO &amp; Titre WBA International des poids mi-lourds (-79,4 kg)</div>
+                <div class="poster-dynamic-title">Joshua Buatsi vs. Willy Hutchinson 2</div>
             </div>
         </div>
         
         <div class="card-header-row">
-            <h3 class="event-title">Matchroom Boxing: Dalton Smith vs. Alberto Puello</h3>
-            <a href="https://www.matchroomboxing.com/events/" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+            <h3 class="event-title">Joshua Buatsi vs. Willy Hutchinson 2</h3>
+            <a href="https://www.dazn.com" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
         </div>
         <div class="meta-grid">
-            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Utilita Arena, Sheffield, Royaume-Uni</div>
-            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>20h00</strong> &nbsp;|&nbsp; Main Event vers <strong>23h15</strong></div>
-            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : DAZN</span> <span class="badge-tv badge-fr">France : DAZN France</span></div>
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 07/11/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Manchester Arena, Manchester, Royaume-Uni</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>19h00</strong> &nbsp;|&nbsp; 🥊 <strong>Ringwalk Main Event :</strong> <span class="highlight-ringwalk">vers 23h15</span></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : DAZN Global</span> <span class="badge-tv badge-fr">France : DAZN France</span></div>
         </div>
-        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Dalton Smith défend pour la première fois son titre mondial WBC des super-légers devant son public à Sheffield. Face à lui, le redoutable gaucher dominicain Alberto Puello, ancien champion de la catégorie, compte bien gâcher la fête.</p>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Revanche très attendue dans la division des mi-lourds entre deux rivaux britanniques d&#x27;élite. Joshua Buatsi et Willy Hutchinson s&#x27;affrontent à nouveau avec en ligne de mire une chance directe pour une ceinture mondiale unifiée.</p>
         <details class="card-details">
             <summary>📊 Développer la carte complète, palmarès et analyse des combats (4 combats répertoriés)</summary>
             <div class="fight-list">
                 
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Dalton Smith (19-0-0, 14 KOs | 1m76)</strong> vs. <strong>Alberto Puello (25-1-0, 11 KOs | 1m75)</strong></div>
-                <span class="weight-pill">Main Event — Super-légers (-63,5 kg) — 12 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Joshua Buatsi (19-0-0, 13 KOs | 1m88)</strong> vs. <strong>Willy Hutchinson (18-2-0, 13 KOs | 1m88)</strong></div>
+                <span class="weight-pill pill-main">Main Event — Mi-lourds (-79,4 kg) — 12 rounds</span>
             </div>
-            <div class="bout-desc">Titre mondial WBC des super-légers. Un duel tactique où le puncher local Smith devra décoder la garde de gaucher et le jeu de jambes de Puello.</div>
+            <div class="bout-desc">Titre intérimaire WBO mi-lourds en jeu. Un affrontement tactique et explosif où la précision et la puissance de Buatsi feront face au volume et à l&#x27;agressivité de Hutchinson.</div>
         </div>
         
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Giorgio Visioli (11-0-0, 6 KOs | 1m73)</strong> vs. <strong>Maxi Hughes (29-9-2, 6 KOs | 1m70)</strong></div>
-                <span class="weight-pill">Co-Main Event — Légers (-61,2 kg) — 10 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Ezra Taylor (10-0-0, 7 KOs | 1m88)</strong> vs. <strong>Brad Rea (18-1-0, 8 KOs | 1m85)</strong></div>
+                <span class="weight-pill pill-comain">Co-Main Event — Mi-lourds (-79,4 kg) — 10 rounds</span>
             </div>
-            <div class="bout-desc">Un choc de générations chez les légers entre le jeune espoir Visioli et le vétéran expérimenté Hughes.</div>
+            <div class="bout-desc">Choc décisif pour le classement britannique des mi-lourds entre le puncheur invaincu Ezra Taylor et le résistant Brad Rea.</div>
         </div>
         
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Shannon Ryan (11-1-0, 2 KOs | 1m58)</strong> vs. <strong>Emma Dolan (9-1-0, 1 KO | 1m65)</strong></div>
-                <span class="weight-pill">Undercard — Super-mouches (-52,2 kg) — 10 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Jack Rafferty (24-0-0, 15 KOs | 1m78)</strong> vs. <strong>N/C</strong></div>
+                <span class="weight-pill">Undercard — Welters (-66,7 kg) — 10 rounds</span>
             </div>
-            <div class="bout-desc">Titres britannique et du Commonwealth féminins des super-mouches en jeu dans ce derby anglais.</div>
+            <div class="bout-desc">Combat de confirmation pour Jack Rafferty afin de consolider sa place sur la scène continentale.</div>
         </div>
         
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Leo Atang (8-0-0, 7 KOs | 1m98)</strong> vs. <strong>Jonathan Exequiel Vergara (9-4-0, N/C)</strong></div>
-                <span class="weight-pill">Undercard — Poids lourds (+90,7 kg) — 6 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Miller</strong> vs. <strong>Powar</strong></div>
+                <span class="weight-pill">Undercard — Poids légers (-61,2 kg) — 10 rounds</span>
             </div>
-            <div class="bout-desc">Combat de poids lourds pour le jeune espoir Atang face à l&#x27;Argentin Vergara.</div>
+            <div class="bout-desc">Titre britannique en jeu dans une confrontation domestique à haute intensité.</div>
         </div>
         
             </div>
@@ -493,129 +538,33 @@
 
     <article class="event-card">
         
-        <div class="poster-container">
-            <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%231B120C%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23090604%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23C89D54%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2284%22%20font-weight%3D%22800%22%20letter-spacing%3D%228%22%3ETOP%20RANK%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23C89D54%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2228%22%20font-weight%3D%22700%22%20letter-spacing%3D%2212%22%3EB%20O%20X%20I%20N%20G%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23C89D54%22%20opacity%3D%220.85%22/%3E%3C/svg%3E" alt="Top Rank: Emanuel Navarrete vs. O&#x27;Shaquie Foster" class="event-poster-img"
-                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
+        <div class="poster-container poster-fallback-mode">
             <div class="poster-overlay">
-                <div class="poster-belt">👑 Titres mondiaux unifiés WBC, WBO, IBF et The Ring Super-Plumes (-59,0 kg)</div>
-                <div class="poster-dynamic-title">Top Rank: Emanuel Navarrete vs. O&#x27;Shaquie Foster</div>
+                <div class="poster-belt">👑 Championnat du monde incontesté des super-plumes (-59,0 kg)</div>
+                <div class="poster-dynamic-title">Alycia Baumgardner vs. Elif Nur Turhan</div>
             </div>
         </div>
         
         <div class="card-header-row">
-            <h3 class="event-title">Top Rank: Emanuel Navarrete vs. O&#x27;Shaquie Foster</h3>
-            <a href="https://www.toprank.com/" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+            <h3 class="event-title">Alycia Baumgardner vs. Elif Nur Turhan</h3>
+            <a href="https://www.dazn.com" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
         </div>
         <div class="meta-grid">
-            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Frost Bank Center, San Antonio, Texas, États-Unis</div>
-            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>02h00</strong> &nbsp;|&nbsp; Main Event vers <strong>04h00</strong></div>
-            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : DAZN</span> <span class="badge-tv badge-fr">France : DAZN France</span></div>
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 07/11/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> États-Unis</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>01h00</strong> &nbsp;|&nbsp; 🥊 <strong>Ringwalk Main Event :</strong> <span class="highlight-ringwalk">vers 04h30</span></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : DAZN Global</span> <span class="badge-tv badge-fr">France : DAZN France</span></div>
         </div>
-        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Un choc d&#x27;unification majeur chez les super-plumes. Le champion unifié WBO et IBF Emanuel Navarrete affronte le champion WBC O&#x27;Shaquie Foster pour couronner le roi incontesté de la division.</p>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> La reine incontestée des super-plumes Alycia Baumgardner remet l&#x27;ensemble de ses ceintures mondiales en jeu. Elle affronte la challengeuse montante Elif Nur Turhan dans un duel de puncheuses.</p>
         <details class="card-details">
-            <summary>📊 Développer la carte complète, palmarès et analyse des combats (4 combats répertoriés)</summary>
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (1 combat répertorié)</summary>
             <div class="fight-list">
                 
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Emanuel Navarrete (40-2-1, 33 KOs | 1m70)</strong> vs. <strong>O&#x27;Shaquie Foster (25-3-0, 12 KOs | 1m74)</strong></div>
-                <span class="weight-pill">Main Event — Super-plumes (-59,0 kg) — 12 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Alycia Baumgardner (15-1-0, 7 KOs | 1m68)</strong> vs. <strong>Elif Nur Turhan (9-0-0, 4 KOs | 1m66)</strong></div>
+                <span class="weight-pill pill-main">Main Event — Super-plumes (-59,0 kg) — 10 rounds</span>
             </div>
-            <div class="bout-desc">Titres mondiaux WBC, WBO, IBF et The Ring des super-plumes. Le style offensif et imprévisible de Navarrete se heurte à la défense hermétique et à la fluidité de Foster.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Albert Gonzalez (18-0-0, 11 KOs | 1m73)</strong> vs. <strong>Edward Vazquez (20-3-0, 6 KOs | 1m70)</strong></div>
-                <span class="weight-pill">Co-Main Event — Plumes (-57,2 kg) — 10 rounds</span>
-            </div>
-            <div class="bout-desc">Titre NABF des plumes. L&#x27;invaincu Gonzalez fait face à son plus grand test contre le double challenger mondial Vazquez.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Frank Martin (19-1-1, 13 KOs | 1m73)</strong> vs. <strong>Tarik Zaina (18-3-1, 12 KOs | 1m78)</strong></div>
-                <span class="weight-pill">Undercard — Super-légers (-63,5 kg) — 10 rounds</span>
-            </div>
-            <div class="bout-desc">Titre vacant WBO NABO des super-légers. Martin cherche à se relancer après sa défaite contre Tank Davis en montant de catégorie face au Marocain Zaina.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Deric Davis (12-0-0, 10 KOs)</strong> vs. <strong>Joaquin Silva Faccio (18-7-1, 1 KO)</strong></div>
-                <span class="weight-pill">Undercard — Légers (-61,2 kg) — 8 rounds</span>
-            </div>
-            <div class="bout-desc">L&#x27;invaincu Davis affronte l&#x27;expérimenté Uruguayen Faccio pour continuer sa progression.</div>
-        </div>
-        
-            </div>
-        </details>
-    </article>
-    
-
-    <article class="event-card">
-        
-        <div class="poster-container">
-            <img src="https://www.ringmagazine.com/opengraph-image.png" alt="Riyadh Season: Canelo Alvarez vs. Christian Mbilli" class="event-poster-img"
-                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
-            <div class="poster-overlay">
-                <div class="poster-belt">👑 Titre mondial WBC Super-Moyens (-76,2 kg)</div>
-                <div class="poster-dynamic-title">Riyadh Season: Canelo Alvarez vs. Christian Mbilli</div>
-            </div>
-        </div>
-        
-        <div class="card-header-row">
-            <h3 class="event-title">Riyadh Season: Canelo Alvarez vs. Christian Mbilli</h3>
-            <a href="https://www.dazn.com/" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
-        </div>
-        <div class="meta-grid">
-            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 31/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> The Venue, Riyadh, Arabie Saoudite</div>
-            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>18h00</strong> &nbsp;|&nbsp; Main Event vers <strong>22h00</strong></div>
-            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : DAZN PPV</span> <span class="badge-tv badge-fr">France : DAZN France PPV</span></div>
-        </div>
-        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le légendaire Canelo Alvarez fait son grand retour sur le ring pour défier le champion du monde WBC invaincu Christian Mbilli dans un choc explosif à Riyad.</p>
-        <details class="card-details">
-            <summary>📊 Développer la carte complète, palmarès et analyse des combats (5 combats répertoriés)</summary>
-            <div class="fight-list">
-                
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Christian Mbilli (29-0-1, 24 KOs | 1m74)</strong> vs. <strong>Canelo Alvarez (63-3-2, 39 KOs | 1m73)</strong></div>
-                <span class="weight-pill">Main Event — Super-moyens (-76,2 kg) — 12 rounds</span>
-            </div>
-            <div class="bout-desc">Titre mondial WBC des super-moyens. Mbilli défend sa ceinture face à l&#x27;icône mexicaine Canelo Alvarez qui cherche à reconquérir un titre mondial.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Jaime Munguia (46-2-0, 35 KOs | 1m83)</strong> vs. <strong>Nikita Zon (12-0-1, 10 KOs | 1m85)</strong></div>
-                <span class="weight-pill">Co-Main Event — Super-moyens (-76,2 kg) — 12 rounds</span>
-            </div>
-            <div class="bout-desc">Titre mondial WBA des super-moyens. Munguia effectue sa première défense de titre face à l&#x27;invaincu puncheur russe Nikita Zon.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Rafael Espinoza (28-0-0, 24 KOs | 1m85)</strong> vs. <strong>Lorenzo Parra (24-1-1, 18 KOs | 1m70)</strong></div>
-                <span class="weight-pill">Undercard — Plumes (-57,2 kg) — 12 rounds</span>
-            </div>
-            <div class="bout-desc">Titre mondial WBO des plumes. Le géant mexicain Espinoza défend sa couronne face au challenger vénézuélien Parra.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Lindolfo Delgado (24-0-0, 16 KOs | 1m75)</strong> vs. <strong>Arthur Biyarslanov (21-0-0, 17 KOs | 1m74)</strong></div>
-                <span class="weight-pill">Undercard — Super-légers (-63,5 kg) — 12 rounds</span>
-            </div>
-            <div class="bout-desc">Titre mondial vacant IBF des super-légers. Un choc d&#x27;invaincus très attendu pour s&#x27;emparer de la ceinture mondiale.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>David Picasso (33-1-1, 18 KOs | 1m73)</strong> vs. <strong>Carl Jammes Martin (28-0-0, 21 KOs | 1m68)</strong></div>
-                <span class="weight-pill">Undercard — Super-coqs (-55,3 kg) — 10 rounds</span>
-            </div>
-            <div class="bout-desc">Titre WBC Silver des super-coqs. Un duel de haut niveau entre le Mexicain Picasso et l&#x27;invaincu Philippin Martin.</div>
+            <div class="bout-desc">Titres WBA, WBC, IBF, WBO et The Ring des super-plumes en jeu; Baumgardner cherche à asseoir sa suprématie face à l&#x27;invaincue Turhan.</div>
         </div>
         
             </div>
@@ -632,79 +581,47 @@
         
         <div class="poster-container poster-fallback-mode">
             <div class="poster-overlay">
-                <div class="poster-belt">👑 Combat de classement national en poids légers (-61,2 kg)</div>
-                <div class="poster-dynamic-title">HOPEFUL FIGHT VOL.46 : Ruito Saeki vs. Shun Sekine</div>
+                <div class="poster-belt">👑 Titre OPBF des super-plumes (-58,9 kg)</div>
+                <div class="poster-dynamic-title">Dynamic Glove on U-NEXT Vol.49 : Yamato Hada vs. Yuna Hara</div>
             </div>
         </div>
         
         <div class="card-header-row">
-            <h3 class="event-title">HOPEFUL FIGHT VOL.46 : Ruito Saeki vs. Shun Sekine</h3>
-            <a href="https://boxingraise.com" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+            <h3 class="event-title">Dynamic Glove on U-NEXT Vol.49 : Yamato Hada vs. Yuna Hara</h3>
+            <a href="https://boxmob.jp" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
         </div>
         <div class="meta-grid">
-            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</div>
-            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>05h00</strong> &nbsp;|&nbsp; Main Event vers <strong>08h00</strong></div>
-            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : BOXING RAISE</span> <span class="badge-tv badge-fr">France : BOXING RAISE</span></div>
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 07/11/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>10h00</strong> &nbsp;|&nbsp; 🥊 <strong>Ringwalk Main Event :</strong> <span class="highlight-ringwalk">vers 13h15</span></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : U-NEXT (Japon)</span> <span class="badge-tv badge-fr">France : Inédit France / U-NEXT JP</span></div>
         </div>
-        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le Korakuen Hall accueille une nouvelle édition de la série Hopeful Fight organisée par le Kawasaki Nitta Gym. En tête d&#x27;affiche, le classé national Ruito Saeki affronte le redoutable Shun Sekine dans un duel crucial pour la division des poids légers.</p>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le Korakuen Hall accueille un choc d&#x27;envergure pour la ceinture d&#x27;Asie-Pacifique OPBF entre Yamato Hada et l&#x27;ancien champion Yuna Hara. L&#x27;ancien champion du monde IBF Kenichi Ogawa et le prodige amateur Issei Aramoto complètent cette carte phare.</p>
         <details class="card-details">
-            <summary>📊 Développer la carte complète, palmarès et analyse des combats (7 combats répertoriés)</summary>
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (3 combats répertoriés)</summary>
             <div class="fight-list">
                 
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Ruito Saeki (11-6-4, 3 KOs)</strong> vs. <strong>Shun Sekine (13-3-1, 11 KOs)</strong></div>
-                <span class="weight-pill">Main Event — Légers (-61,2 kg) — 8 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Yamato Hada (1m74)</strong> vs. <strong>Yuna Hara (1m72)</strong></div>
+                <span class="weight-pill pill-main">Main Event — Super-plumes (-58,9 kg) — 12 rounds</span>
             </div>
-            <div class="bout-desc">Combat de classement national. Saeki cherche à défendre son rang face au puncheur Sekine.</div>
+            <div class="bout-desc">Championnat OPBF des super-plumes. Un choc explosif opposant la puissance offensive de Yamato Hada au sens du contre et à l&#x27;expérience au sommet de Yuna Hara.</div>
         </div>
         
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Daiki Naito (3-2-0, 2 KOs)</strong> vs. <strong>Fura Kobashi (2-3-0, 2 KOs)</strong></div>
-                <span class="weight-pill">Co-Main Event — Plumes (-57,2 kg) — 4 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Kenichi Ogawa (29-2-1, 19 KOs | 1m73)</strong> vs. <strong>N/C</strong></div>
+                <span class="weight-pill pill-comain">Co-Main Event — Super-plumes (-58,9 kg) — 10 rounds</span>
             </div>
-            <div class="bout-desc">Duel de jeunes espoirs chez les poids plumes.</div>
+            <div class="bout-desc">Combat de fixation mondiale pour l&#x27;ancien champion IBF Kenichi Ogawa, en quête d&#x27;une nouvelle chance planétaire devant ses supporters.</div>
         </div>
         
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Ryota Nakano (6-1-2, 3 KOs)</strong> vs. <strong>Rio Nishinoiri (6-2-0, 2 KOs)</strong></div>
-                <span class="weight-pill">Undercard — Légers (-61,2 kg) — 4 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Issei Aramoto (1m78)</strong> vs. <strong>N/C</strong></div>
+                <span class="weight-pill">Undercard — Moyens (-72,5 kg) — 8 rounds</span>
             </div>
-            <div class="bout-desc">Choc de poids légers pour l&#x27;ascension vers les combats en 6 rounds.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Yusei Shirai (4-4-1, 2 KOs)</strong> vs. <strong>Daiki Hashiba (5-5-3, 1 KO)</strong></div>
-                <span class="weight-pill">Undercard — Super-coqs (-55,3 kg) — 4 rounds</span>
-            </div>
-            <div class="bout-desc">Combat équilibré à la limite des 56 kg.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Koki Kusano (0-2-0)</strong> vs. <strong>Ta Duy Tam (1-4-2, 1 KO)</strong></div>
-                <span class="weight-pill">Undercard — Mouches (-50,8 kg) — 4 rounds</span>
-            </div>
-            <div class="bout-desc">Duel de poids mouches en quête de victoire.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Yamato Soshihainin (2-1-1, 1 KO)</strong> vs. <strong>Sota Nihei (2-0-1)</strong></div>
-                <span class="weight-pill">Undercard — Légers (-61,2 kg) — 4 rounds</span>
-            </div>
-            <div class="bout-desc">Confrontation de jeunes poids légers prometteurs.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Ruka Miyazawa (1-2-1)</strong> vs. <strong>Rikita Negishi (1-9-0, 1 KO)</strong></div>
-                <span class="weight-pill">Undercard — Paille (-47,6 kg) — 4 rounds</span>
-            </div>
-            <div class="bout-desc">Combat d&#x27;ouverture en poids paille.</div>
+            <div class="bout-desc">Finale éliminatoire pour désigner le challenger obligatoire au titre national japonais des poids moyens.</div>
         </div>
         
             </div>
@@ -715,74 +632,58 @@
     <article class="event-card">
         
         <div class="poster-container">
-            <img src="https://lemino.docomo.ne.jp/assets/icons/image.png" alt="Lemino BOXING PHOENIX BATTLE 162 : ArAr Andales vs. Raito Kataoka" class="event-poster-img"
+            <img src="https://lemino.docomo.ne.jp/assets/icons/image.png" alt="Lemino BOXING Phoenix Battle 163 : Tsubasa Narai vs. Kai Watanabe" class="event-poster-img"
                  onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
             <div class="poster-overlay">
-                <div class="poster-belt">👑 Titre vacant OPBF des poids mi-mouches (-49,0 kg)</div>
-                <div class="poster-dynamic-title">Lemino BOXING PHOENIX BATTLE 162 : ArAr Andales vs. Raito Kataoka</div>
+                <div class="poster-belt">👑 Championnat du Japon des super-plumes (-58,9 kg)</div>
+                <div class="poster-dynamic-title">Lemino BOXING Phoenix Battle 163 : Tsubasa Narai vs. Kai Watanabe</div>
             </div>
         </div>
         
         <div class="card-header-row">
-            <h3 class="event-title">Lemino BOXING PHOENIX BATTLE 162 : ArAr Andales vs. Raito Kataoka</h3>
+            <h3 class="event-title">Lemino BOXING Phoenix Battle 163 : Tsubasa Narai vs. Kai Watanabe</h3>
             <a href="https://lemino.docomo.ne.jp" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
         </div>
         <div class="meta-grid">
-            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Jeudi 29/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</div>
-            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>09h45</strong> &nbsp;|&nbsp; Main Event vers <strong>12h30</strong></div>
-            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : Lemino</span> <span class="badge-tv badge-fr">France : Lemino</span></div>
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Mardi 10/11/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Korakuen Hall, Tokyo, Japon</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>09h45</strong> &nbsp;|&nbsp; 🥊 <strong>Ringwalk Main Event :</strong> <span class="highlight-ringwalk">vers 13h00</span></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : Lemino (Japon)</span> <span class="badge-tv badge-fr">France : Inédit France / Lemino JP</span></div>
         </div>
-        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> Le prestigieux Phoenix Battle revient au Korakuen Hall avec une carte exceptionnelle comportant quatre combats de championnat. En vedette, le jeune prodige Raito Kataoka dispute le titre OPBF face au Philippin ArAr Andales.</p>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> La prestigieuse série Phoenix Battle promue par Ohashi Boxing Gym propose un double championnat national du Japon de très haut niveau au Korakuen Hall. Tsubasa Narai défend sa ceinture des super-plumes face à l&#x27;étoile montante Kai Watanabe dans un duel de techniciens offensifs.</p>
         <details class="card-details">
-            <summary>📊 Développer la carte complète, palmarès et analyse des combats (6 combats répertoriés)</summary>
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (4 combats répertoriés)</summary>
             <div class="fight-list">
                 
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>ArAr Andales (18-2-3, 8 KOs | 1m57)</strong> vs. <strong>Raito Kataoka (2-0-0, 1 KO)</strong></div>
-                <span class="weight-pill">Main Event — Mi-mouches (-49,0 kg) — 10 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Tsubasa Narai (14-2-0, 10 KOs | 1m74)</strong> vs. <strong>Kai Watanabe (13-1-1, 7 KOs | 1m75)</strong></div>
+                <span class="weight-pill pill-main">Main Event — Super-plumes (-58,9 kg) — 10 rounds</span>
             </div>
-            <div class="bout-desc">Titre vacant OPBF des poids mi-mouches. Le jeune espoir Kataoka tente un pari fou pour son 3ème combat pro face à l&#x27;expérimenté Andales.</div>
+            <div class="bout-desc">Titre national JBC des super-plumes en jeu entre deux des boxeurs les plus incisifs du circuit japonais, le vainqueur se positionnant aux portes du classement mondial.</div>
         </div>
         
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Sho Nogami (5-0-0, 4 KOs)</strong> vs. <strong>Shogo Tanaka (5-1-1, 2 KOs)</strong></div>
-                <span class="weight-pill">Co-Main Event — Mouches (-50,8 kg) — 10 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Hazuki Ohashi (1m63)</strong> vs. <strong>Shuzo Yoshida (1m65)</strong></div>
+                <span class="weight-pill pill-comain">Co-Main Event — Mi-mouches (-48,9 kg) — 10 rounds</span>
             </div>
-            <div class="bout-desc">Titres OPBF et JBC (Japon) des poids mouches en jeu. Un choc national de haut niveau entre deux techniciens.</div>
+            <div class="bout-desc">Championnat du Japon des mi-mouches mettant aux prises le puncher Hazuki Ohashi face à la précision tactique de Shuzo Yoshida.</div>
         </div>
         
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Toshiya Ishii (8-1-2, 5 KOs | 1m68)</strong> vs. <strong>Tatsuya Nihei (6-3-2, 2 KOs)</strong></div>
-                <span class="weight-pill">Undercard — Super-coqs (-55,3 kg) — 10 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Shingo Okada (1m60)</strong> vs. <strong>Ryusei Yanagibori (1m62)</strong></div>
+                <span class="weight-pill">Undercard — Pailles (-47,6 kg) — 8 rounds</span>
             </div>
-            <div class="bout-desc">Titre OPBF des poids super-coqs en jeu.</div>
+            <div class="bout-desc">Finale éliminatoire officielle pour le poste de challenger numéro un au titre national japonais des poids pailles.</div>
         </div>
         
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Petchbarngborn Sorkritsada (55-11-0, 33 KOs | 1m63)</strong> vs. <strong>Yuta Sakai (2-0-0, 2 KOs)</strong></div>
-                <span class="weight-pill">Undercard — Super-mouches (-52,2 kg) — 8 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Riku Adachi (1m78)</strong> vs. <strong>Masaya Tamayama (1m76)</strong></div>
+                <span class="weight-pill">Undercard — Super-welters (-69,8 kg) — 8 rounds</span>
             </div>
-            <div class="bout-desc">Combat de transition pour le jeune Sakai face à un vétéran thaïlandais ultra-expérimenté.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Kosuke Tomioka (8-3-1, 6 KOs)</strong> vs. <strong>Atsuki Sano (6-1-0, 3 KOs)</strong></div>
-                <span class="weight-pill">Undercard — Mouches (-50,8 kg) — 10 rounds</span>
-            </div>
-            <div class="bout-desc">Titre WBO Asia-Pacific des poids mouches en jeu.</div>
-        </div>
-        
-        <div class="bout-item">
-            <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Jakpan Sangtong (15-8-0, 13 KOs)</strong> vs. <strong>Kanumu Kataoka (1-0-0, 1 KO)</strong></div>
-                <span class="weight-pill">Undercard — Coqs (-53,5 kg) — 6 rounds</span>
-            </div>
-            <div class="bout-desc">Combat d&#x27;ouverture de la carte principale.</div>
+            <div class="bout-desc">Finale éliminatoire JBC des super-welters visant à déterminer le challenger obligatoire au trône national.</div>
         </div>
         
             </div>
@@ -798,42 +699,272 @@
     <article class="event-card">
         
         <div class="poster-container">
-            <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23260B0B%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23090303%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2284%22%20font-weight%3D%22800%22%20letter-spacing%3D%2214%22%3EU%20F%20C%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23D20A0A%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2228%22%20font-weight%3D%22700%22%20letter-spacing%3D%2212%22%3EULTIMATE%20FIGHTING%20CHAMPIONSHIP%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3C/svg%3E" alt="UFC 333: Volkanovski vs. Evloev" class="event-poster-img"
+            <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23260B0B%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23090303%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2284%22%20font-weight%3D%22800%22%20letter-spacing%3D%2214%22%3EU%20F%20C%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23D20A0A%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2228%22%20font-weight%3D%22700%22%20letter-spacing%3D%2212%22%3EULTIMATE%20FIGHTING%20CHAMPIONSHIP%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3C/svg%3E" alt="UFC Fight Night: Cortes Acosta vs. Walker" class="event-poster-img"
                  onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
             <div class="poster-overlay">
-                <div class="poster-belt">👑 Titre mondial UFC des poids plumes (-65,8 kg)</div>
-                <div class="poster-dynamic-title">UFC 333: Volkanovski vs. Evloev</div>
+                <div class="poster-belt">👑 Choc chez les poids lourds (-120,2 kg)</div>
+                <div class="poster-dynamic-title">UFC Fight Night: Cortes Acosta vs. Walker</div>
             </div>
         </div>
         
         <div class="card-header-row">
-            <h3 class="event-title">UFC 333: Volkanovski vs. Evloev</h3>
-            <a href="https://www.ufc.com/event/ufc-333" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+            <h3 class="event-title">UFC Fight Night: Cortes Acosta vs. Walker</h3>
+            <a href="https://www.ufc.com/events" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
         </div>
         <div class="meta-grid">
-            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 24/10/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Etihad Arena, Abu Dhabi, Émirats Arabes Unis</div>
-            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>16h00</strong> &nbsp;|&nbsp; Main Event vers <strong>22h00</strong></div>
-            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : Paramount+</span> <span class="badge-tv badge-fr">France : RMC Sport / UFC Fight Pass</span></div>
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 07/11/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Meta APEX, Las Vegas, USA</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>23h00</strong> &nbsp;|&nbsp; 🥊 <strong>Ringwalk Main Event :</strong> <span class="highlight-ringwalk">vers 02h00 (estimation)</span></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : ESPN+ / UFC Fight Pass</span> <span class="badge-tv badge-fr">France : RMC Sport / UFC Fight Pass</span></div>
         </div>
-        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> L&#x27;UFC 333 se déroule à l&#x27;Etihad Arena d&#x27;Abu Dhabi avec deux combats pour le titre mondial. En tête d&#x27;affiche, le champion des poids plumes Alexander Volkanovski défend sa ceinture face à l&#x27;invaincu Movsar Evloev, tandis que Petr Yan et Merab Dvalishvili s&#x27;affrontent pour la troisième fois chez les poids coqs.</p>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> L&#x27;UFC pose sa cage à l&#x27;APEX de Las Vegas pour une soirée dominée par un affrontement de colosses chez les poids lourds entre Johnny Walker et Waldo Cortes-Acosta. Le co-main event met à l&#x27;honneur l&#x27;élite des poids pailles féminins avec une opposition de styles captivante entre Tatiana Suarez et Virna Jandiroba.</p>
         <details class="card-details">
-            <summary>📊 Développer la carte complète, palmarès et analyse des combats (2 combats répertoriés)</summary>
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (14 combats répertoriés)</summary>
             <div class="fight-list">
                 
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Alexander Volkanovski (28-4-0 | 1m68)</strong> vs. <strong>Movsar Evloev (20-0-0 | 1m70)</strong></div>
-                <span class="weight-pill">Main Event — Poids plumes (-65,8 kg) — 5 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Johnny Walker (24-10-0 | 1m98)</strong> vs. <strong>Waldo Cortes Acosta (17-5-0 | 1m93)</strong></div>
+                <span class="weight-pill pill-main">Main Event — Poids lourds (-120,2 kg) — 5 rounds</span>
             </div>
-            <div class="bout-desc">Titre mondial UFC des poids plumes en jeu. Un duel stylistique fascinant entre l&#x27;expérience du champion Volkanovski et la lutte implacable de l&#x27;invaincu Evloev.</div>
+            <div class="bout-desc">Un duel de puncheurs explosifs où l&#x27;imprévisibilité de Johnny Walker se confronte à la lourde frappe en boxe de Waldo Cortes-Acosta pour se relancer dans le classement des lourds.</div>
         </div>
         
         <div class="bout-item">
             <div class="bout-header">
-                <div class="bout-fighters">🥊 <strong>Petr Yan (20-5-0 | 1m71)</strong> vs. <strong>Merab Dvalishvili (21-5-0 | 1m68)</strong></div>
-                <span class="weight-pill">Co-Main Event — Poids coqs (-61,2 kg) — 5 rounds</span>
+                <div class="bout-fighters">🥊 <strong>Tatiana Suarez (14-1-0 | 1m65)</strong> vs. <strong>Virna Jandiroba (23-5-0 | 1m60)</strong></div>
+                <span class="weight-pill pill-comain">Co-Main Event — Poids pailles (-52,2 kg) — 3 rounds</span>
             </div>
-            <div class="bout-desc">Titre mondial UFC des poids coqs en jeu. Troisième chapitre d&#x27;une rivalité intense pour déterminer le roi incontesté de la division.</div>
+            <div class="bout-desc">Choc au sommet de la division féminine opposant la lutte d&#x27;élite et le contrôle au sol de Suarez face au jiu-jitsu brésilien redoutable de Jandiroba pour une place de prétendante au titre.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Davey Grant (18-9-0 | 1m73)</strong> vs. <strong>Elijah Smith (11-1-0)</strong></div>
+                <span class="weight-pill pill-comain">Main Card — Poids coqs (-61,2 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Le vétéran britannique Davey Grant teste les ambitions du jeune espoir Elijah Smith.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Billy Elekana (10-3-0)</strong> vs. <strong>Lucas Fernando (15-3-0)</strong></div>
+                <span class="weight-pill pill-comain">Main Card — Poids mi-lourds (-93,0 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Affrontement musclé entre deux finisseurs cherchant à marquer les esprits sur la carte principale.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Priscila Cachoeira (13-10-0 | 1m70)</strong> vs. <strong>Nina Milošević (10-1-0)</strong></div>
+                <span class="weight-pill pill-comain">Main Card — Poids mouches (-56,7 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Bagarre annoncée entre la puissance brute de Cachoeira et la technicité de Milošević.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Mitch Raposo (12-3-0 | 1m65)</strong> vs. <strong>Marcos Degli (15-4-0)</strong></div>
+                <span class="weight-pill pill-comain">Main Card — Poids mouches (-56,7 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Opposition de rythme ultra-rapide entre deux compétiteurs vifs de la catégorie mouche.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Keiichiro Nakamura (8-2-0)</strong> vs. <strong>Ollie Schmid (5-3-0)</strong></div>
+                <span class="weight-pill">Prelims — Poids plumes (-65,8 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Duel d&#x27;espoirs internationaux visant à franchir un palier dans l&#x27;octogone.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Thomas Petersen (12-5-0 | 1m85)</strong> vs. <strong>Gabriel Lorenço (8-2-0)</strong></div>
+                <span class="weight-pill">Prelims — Poids lourds (-120,2 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Choc de poids lourds axé sur la lutte de Petersen contre le punch de Lorenço.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Karine Silva (20-7-0 | 1m65)</strong> vs. <strong>Gabriella Fernandes (11-5-0 | 1m68)</strong></div>
+                <span class="weight-pill">Prelims — Poids mouches (-56,7 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Duel 100% brésilien entre spécialistes des soumissions chez les poids mouches.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Jose Delano (17-4-0)</strong> vs. <strong>Murtazali Magomedov (12-0-0)</strong></div>
+                <span class="weight-pill">Prelims — Poids plumes (-65,8 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Magomedov défend son invincibilité face à l&#x27;expérience du Brésilien Delano.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Austin Bashi (15-2-0)</strong> vs. <strong>Carlos Calderon (11-5-0)</strong></div>
+                <span class="weight-pill">Prelims — Poids plumes (-65,8 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Bataille d&#x27;endurance et de grappling pour consolider sa place à l&#x27;UFC.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Andre Petroski (14-6-0 | 1m83)</strong> vs. <strong>Mantas Kondratavičius (9-2-0)</strong></div>
+                <span class="weight-pill">Prelims — Poids moyens (-83,9 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Petroski tentera d&#x27;imposer sa lutte agressive face au striking de Kondratavičius.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Wellington Turman (18-9-0 | 1m83)</strong> vs. <strong>Seokhyeon Ko (14-3-0)</strong></div>
+                <span class="weight-pill">Prelims — Poids mi-moyens (-77,1 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Turman apporte son jiu-jitsu face à la rigueur stratégique du Sud-Coréen Ko.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Jonny Parsons (9-4-0 | 1m75)</strong> vs. <strong>José Souza (10-1-0)</strong></div>
+                <span class="weight-pill">Prelims — Poids mi-moyens (-77,1 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Confrontation dynamique pour ouvrir les préliminaires de la soirée.</div>
+        </div>
+        
+            </div>
+        </details>
+    </article>
+    
+
+    <article class="event-card">
+        
+        <div class="poster-container">
+            <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23260B0B%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23090303%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2284%22%20font-weight%3D%22800%22%20letter-spacing%3D%2214%22%3EU%20F%20C%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23D20A0A%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2228%22%20font-weight%3D%22700%22%20letter-spacing%3D%2212%22%3EULTIMATE%20FIGHTING%20CHAMPIONSHIP%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3C/svg%3E" alt="UFC 334: Gane vs. Hokit" class="event-poster-img"
+                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
+            <div class="poster-overlay">
+                <div class="poster-belt">👑 Choc majeur chez les poids lourds (-120,2 kg)</div>
+                <div class="poster-dynamic-title">UFC 334: Gane vs. Hokit</div>
+            </div>
+        </div>
+        
+        <div class="card-header-row">
+            <h3 class="event-title">UFC 334: Gane vs. Hokit</h3>
+            <a href="https://www.ufc.com/events" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Samedi 14/11/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> Madison Square Garden, New York, USA</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>23h00</strong> &nbsp;|&nbsp; 🥊 <strong>Ringwalk Main Event :</strong> <span class="highlight-ringwalk">vers 06h00 (estimation)</span></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : ESPN+ / UFC Fight Pass</span> <span class="badge-tv badge-fr">France : RMC Sport / UFC Fight Pass</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> L&#x27;UFC investit la mythique arène du Madison Square Garden avec en tête d&#x27;affiche le retour du Français Ciryl Gane opposé au phénomène de lutte invaincu Josh Hokit. Le co-main event propose un choc d&#x27;anthologie entre Amanda Nunes et Kayla Harrison.</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (13 combats répertoriés)</summary>
+            <div class="fight-list">
+                
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Josh Hokit (10-0-0 | 1m85)</strong> vs. <strong>Ciryl Gane (14-2-0 | 1m96)</strong></div>
+                <span class="weight-pill pill-main">Main Event — Poids lourds (-120,2 kg) — 5 rounds</span>
+            </div>
+            <div class="bout-desc">Le kickboxing tout en fluidité et en déplacements de Ciryl Gane fait face à la puissance athlétique et à la lutte étouffante de l&#x27;invaincu Josh Hokit pour une potentielle chance au titre mondial.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Amanda Nunes (23-5-0 | 1m73)</strong> vs. <strong>Kayla Harrison (19-1-0 | 1m73)</strong></div>
+                <span class="weight-pill pill-comain">Co-Main Event — Poids coqs (-61,2 kg) — 5 rounds</span>
+            </div>
+            <div class="bout-desc">Une confrontation légendaire entre la plus grande combattante de l&#x27;histoire du MMA et la double championne olympique de judo, dans une guerre totale pour la suprématie féminine.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Caio Borralho (18-2-0 | 1m85)</strong> vs. <strong>Yousri Belgaroui (11-3-0 | 1m96)</strong></div>
+                <span class="weight-pill pill-comain">Main Card — Poids moyens (-83,9 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Le grappling tactique de Borralho face au kickboxing de classe mondiale de Belgaroui.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Kevin Holland (29-15-0 | 1m91)</strong> vs. <strong>Uroš Medić (14-3-0 | 1m85)</strong></div>
+                <span class="weight-pill pill-comain">Main Card — Poids mi-moyens (-77,1 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Un duel de frappeurs spectaculaires et agressifs promettant un festival de coups debouts.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Luis Gurule (11-4-0)</strong> vs. <strong>Bilal Hasan (10-0-0)</strong></div>
+                <span class="weight-pill pill-comain">Main Card — Poids mouches (-56,7 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Test capital pour Hasan, invaincu, face à la résistance éprouvée de Gurule.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Stephen Thompson (17-9-1 | 1m83)</strong> vs. <strong>Charles Radtke (12-5-0 | 1m78)</strong></div>
+                <span class="weight-pill pill-comain">Main Card — Poids mi-moyens (-77,1 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">La précision légendaire en karaté de Thompson contre la combativité rugueuse de Radtke.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Drew Dober (29-15-0 | 1m73)</strong> vs. <strong>Chris Duncan (15-3-0 | 1m78)</strong></div>
+                <span class="weight-pill">Prelims — Poids légers (-70,3 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Choc à haute intensité entre deux cogneurs sans concession chez les légers.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Jim Miller (39-19-0 | 1m73)</strong> vs. <strong>Terrance McKinney (18-9-0 | 1m78)</strong></div>
+                <span class="weight-pill">Prelims — Poids légers (-70,3 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Le recordman de combats à l&#x27;UFC Jim Miller face à la tornade offensive du premier round Terrance McKinney.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Cesar Almeida (7-3-0 | 1m85)</strong> vs. <strong>Donte Johnson (9-0-0)</strong></div>
+                <span class="weight-pill">Prelims — Poids moyens (-83,9 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Le kickboxeur brésilien Almeida face au prospect invaincu Johnson.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Jared Gordon (21-9-0 | 1m75)</strong> vs. <strong>Melquizael Costa (26-8-0 | 1m78)</strong></div>
+                <span class="weight-pill">Prelims — Poids plumes (-65,8 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Bataille de vétérans acharnés cherchant la victoire par usure et pression.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Macy Chiasson (11-6-0 | 1m80)</strong> vs. <strong>Bia Mesquita (8-0-0 | 1m68)</strong></div>
+                <span class="weight-pill">Prelims — Poids coqs (-61,2 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Chiasson utilise son envergure face au grappling de niveau mondial de l&#x27;invaincue Mesquita.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Adrian Yañez (18-6-1 | 1m70)</strong> vs. <strong>Juan Diaz (16-1-1)</strong></div>
+                <span class="weight-pill">Prelims — Poids coqs (-61,2 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Duel technique de boxe anglaise entre deux spécialistes du combat debout.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Evan Elder (10-2-0 | 1m78)</strong> vs. <strong>Samuel Sanches (11-1-0)</strong></div>
+                <span class="weight-pill">Prelims — Poids légers (-70,3 kg) — 3 rounds</span>
+            </div>
+            <div class="bout-desc">Opposition engagée pour ouvrir le programme préliminaire au Madison Square Garden.</div>
         </div>
         
             </div>
@@ -845,7 +976,84 @@
 
     <section id="rizin" class="sport-section">
         <h2>🌸 4. Rizin Fighting Federation</h2>
-        <div class="empty-state">🗓️ Aucun événement Rizin programmé cette semaine.</div>
+        
+    <article class="event-card">
+        
+        <div class="poster-container">
+            <img src="https://d1uzk9o9cg136f.cloudfront.net/f/portal/16777301/rc/2016/05/02/ab79cfddf00faac028db6d2506959051700bbac6_xlarge.jpg" alt="RIZIN.55 : Makoto Shinryu vs. Tony Laramie" class="event-poster-img"
+                 onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
+            <div class="poster-overlay">
+                <div class="poster-belt">👑 Titre RIZIN des Poids Mouches (-57,0 kg)</div>
+                <div class="poster-dynamic-title">RIZIN.55 : Makoto Shinryu vs. Tony Laramie</div>
+            </div>
+        </div>
+        
+        <div class="card-header-row">
+            <h3 class="event-title"><span class="today-pill">🔴 AUJOURD'HUI</span>RIZIN.55 : Makoto Shinryu vs. Tony Laramie</h3>
+            <a href="https://jp.rizinff.com/schedules" target="_blank" rel="noopener" class="source-btn">🔗 Source officielle</a>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">📅 <strong>Date :</strong> <span class="highlight-date">Dimanche 08/11/2026</span> &nbsp;|&nbsp; 📍 <strong>Lieu :</strong> LaLa arena TOKYO-BAY, Chiba, Japon</div>
+            <div class="meta-item">⏰ <strong>Horaires (Paris) :</strong> Début du gala à <strong>06h00</strong> &nbsp;|&nbsp; 🥊 <strong>Ringwalk Main Event :</strong> <span class="highlight-ringwalk">vers 12h30 (estimation)</span></div>
+            <div class="meta-item">📺 <strong>Diffusion :</strong> <span class="badge-tv">Origine : ABEMA / U-NEXT / RIZIN 100 CLUB</span> <span class="badge-tv badge-fr">France : TrillerTV / RIZIN 100 CLUB</span></div>
+        </div>
+        <p class="event-desc"><strong>🎯 Présentation & Enjeux :</strong> RIZIN pose ses valises dans la banlieue de Tokyo pour un événement majeur mettant en jeu le titre mondial des poids mouches. Le champion japonais Makoto Shinryu effectue sa première défense de ceinture face au Canadien Tony Laramie, accompagné d&#x27;une affiche décisive chez les coqs entre l&#x27;infatigable Soo Chul Kim et Ryuya Fukuda.</p>
+        <details class="card-details">
+            <summary>📊 Développer la carte complète, palmarès et analyse des combats (6 combats répertoriés)</summary>
+            <div class="fight-list">
+                
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Makoto Shinryu (17-2-1 (1 NC) | 1m70)</strong> vs. <strong>Tony Laramie (10-2-0 | 1m68)</strong></div>
+                <span class="weight-pill pill-main">Main Event — Poids mouches (-57,0 kg) — 3 rounds de 5 min</span>
+            </div>
+            <div class="bout-desc">Titre mondial des poids mouches RIZIN en jeu. Makoto Shinryu met sa ceinture en jeu avec son style ultra-dynamique combinant lutte offensive et soumissions face au puncher explosif Tony Laramie.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Soo Chul Kim (22-8-1 | 1m70)</strong> vs. <strong>Ryuya Fukuda (23-8-1 | 1m66)</strong></div>
+                <span class="weight-pill pill-comain">Co-Main Event — Poids coqs (-61,0 kg) — 3 rounds de 5 min</span>
+            </div>
+            <div class="bout-desc">Combat éliminatoire pour une opportunité au titre des poids coqs. L&#x27;ancien champion du Road FC Soo Chul Kim amène son intensité physique implacable face au striking chirurgical du champion du DEEP Ryuya Fukuda.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Shinobu Ota (6-3-0 | 1m65)</strong> vs. <strong>Jinnosuke Kashimura (5-2-0 | 1m73)</strong></div>
+                <span class="weight-pill">Undercard — Poids coqs (-61,0 kg) — 3 rounds de 5 min</span>
+            </div>
+            <div class="bout-desc">Duel stylistique opposant la lutte gréco-romaine de niveau olympique de Shinobu Ota au jiu-jitsu brésilien et au sens de la soumission de Jinnosuke Kashimura.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Kim Kyung-pyo (14-5-0 | 1m80)</strong> vs. <strong>Nurkhan Zhumagazy (8-1-0 | 1m78)</strong></div>
+                <span class="weight-pill">Undercard — Poids légers (-71,0 kg) — 3 rounds de 5 min</span>
+            </div>
+            <div class="bout-desc">Choc international chez les légers entre la puissance du Coréen Kim Kyung-pyo et l&#x27;athlétisme du prospect kazakh Nurkhan Zhumagazy.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Hiroya (9-13-0 | 1m63)</strong> vs. <strong>Joe Hiramoto (1-1-0 | 1m70)</strong></div>
+                <span class="weight-pill">Undercard — Poids mouches (-57,0 kg) — 3 rounds de 5 min</span>
+            </div>
+            <div class="bout-desc">Opposition de rivalité et de styles entre l&#x27;expérimenté grappler Hiroya et le jeune striker Joe Hiramoto en quête d&#x27;affirmation.</div>
+        </div>
+        
+        <div class="bout-item">
+            <div class="bout-header">
+                <div class="bout-fighters">🥊 <strong>Mac Papalii (4-1-0 | 1m83)</strong> vs. <strong>Yukinori Akazawa (4-6-0 | 1m80)</strong></div>
+                <span class="weight-pill">Undercard — Poids lourds (-120,0 kg) — 3 rounds de 5 min</span>
+            </div>
+            <div class="bout-desc">Rattrapage d&#x27;un duel initialement annulé opposant la force de frappe brute de Mac Papalii au combattant lourd japonais Yukinori Akazawa.</div>
+        </div>
+        
+            </div>
+        </details>
+    </article>
+    
     </section>
     
 
@@ -883,7 +1091,14 @@
             const query = e.target.value.toLowerCase().trim();
             document.querySelectorAll('.event-card').forEach(card => {
                 const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(query) ? '' : 'none';
+                const isMatch = text.includes(query);
+                card.style.display = isMatch ? '' : 'none';
+                const details = card.querySelector('details.card-details');
+                if (details && query.length >= 2 && isMatch) {
+                    details.open = true;
+                } else if (details && query.length === 0 && !allOpen) {
+                    details.open = false;
+                }
             });
         });
     </script>
