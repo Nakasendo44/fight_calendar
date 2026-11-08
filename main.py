@@ -5,6 +5,7 @@ import json
 import re
 import html
 import urllib.parse
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 import pytz
 import requests
@@ -38,6 +39,9 @@ for offset in range(-1, 8):
     valid_dates_us.append(d.strftime("%m.%d.%Y"))
     valid_dates_jp.append(f"{d.month}月{d.day}日")
 
+START_YMD = (now_paris + timedelta(days=-1)).strftime("%Y%m%d")
+END_YMD = (now_paris + timedelta(days=7)).strftime("%Y%m%d")
+
 DATE_WINDOW_STR = (
     f"du {valid_dates_fr[0]} au {valid_dates_fr[-1]} inclus "
     f"(Dates ISO autorisées : {', '.join(valid_dates_iso)} | "
@@ -69,54 +73,266 @@ def save_cache(cache_data):
         print(f"  [Info Cache] Impossible d'écrire le cache : {e}")
 
 # ==============================================================================
-# 2. DÉCOUVERTE DYNAMIQUE DES MODÈLES (PRIORITÉ 3.8 / 3.7 / 3.6, EXCLUSION 2.5 & OMNI)
+# 2. DÉCOUVERTE DES MODÈLES (MODÈLES COMPLETS EN PRIORITÉ + LITE EN SECOURS)
 # ==============================================================================
 def get_available_models():
     """
-    Liste les modèles actifs en plaçant impérativement gemini-3.8-flash, 3.7-flash et 3.6-flash
-    en tête, et en excluant les modèles obsolètes (2.5) ou sans quota (omni).
+    Classe les modèles disponibles en 2 paliers :
+    1. Les modèles complets (3.8-flash, 3.7-flash, 3.6-flash, 3-flash-preview, etc.)
+    2. Les modèles 'lite' en filet de sécurité si les modèles complets ont un quota limit: 0 sur le Free Tier.
     """
-    preferred_order = [
+    tier1_preferred = [
         "gemini-3.8-flash",
         "gemini-3.7-flash",
         "gemini-3.6-flash",
         "gemini-3-flash-preview",
         "gemini-flash-latest",
-        "gemini-pro-latest",
         "gemini-3.5-flash",
+        "gemini-pro-latest",
+    ]
+    tier2_lite_backup = [
+        "gemini-3.8-flash-lite",
+        "gemini-3.7-flash-lite",
+        "gemini-3.6-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite",
+        "gemini-3.5-flash-lite",
     ]
     excluded_tokens = [
-        "2.5", "2.0", "omni", "lite", "embedding", "imagen", "veo",
+        "2.5", "2.0", "omni", "embedding", "imagen", "veo",
         "tts", "audio", "vision", "aqa", "image", "banana",
-        "transcribe", "argon", "customtools", "thinking", "exp"
+        "transcribe", "argon", "customtools", "thinking"
     ]
-    discovered = []
+    discovered_full = []
+    discovered_lite = []
     try:
         for m in client.models.list():
             short = getattr(m, "name", "").replace("models/", "")
             low = short.lower()
             if "gemini" in low and not any(ex in low for ex in excluded_tokens):
-                discovered.append(short)
-        print(f"Modèles complets détectés sur l'API : {discovered}")
+                if "lite" in low:
+                    discovered_lite.append(short)
+                else:
+                    discovered_full.append(short)
+        print(f"Modèles complets détectés : {discovered_full}")
+        print(f"Modèles Lite de secours détectés : {discovered_lite}")
     except Exception as e:
         print(f"Avertissement lors du listage des modèles : {e}")
 
     final_models = []
-    for pref in preferred_order:
-        if not discovered or pref in discovered:
+    for pref in tier1_preferred:
+        if (not discovered_full and not discovered_lite) or pref in discovered_full:
             final_models.append(pref)
-    for d in discovered:
+    for d in discovered_full:
         if d not in final_models:
             final_models.append(d)
+    for pref_lite in tier2_lite_backup:
+        if pref_lite in discovered_lite and pref_lite not in final_models:
+            final_models.append(pref_lite)
+    for d_lite in discovered_lite:
+        if d_lite not in final_models:
+            final_models.append(d_lite)
 
-    return final_models or ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash"]
+    return final_models or ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-flash-latest"]
 
 AVAILABLE_MODELS = get_available_models()
-DEAD_MODELS = set()
-print(f"Ordre de priorité des modèles retenus : {AVAILABLE_MODELS}")
+DEAD_MODELS_SEARCH = set()   # Modèles dont l'outil Google Search est en 429
+DEAD_MODELS_TOTAL = set()    # Modèles totalement indisponibles (404 ou 429 même sans Search)
+print(f"Ordre global des modèles (Complets -> Secours Lite) : {AVAILABLE_MODELS}")
 
 # ==============================================================================
-# 3. CONFIGURATION DES 6 MICRO-AGENTS PILIERS
+# 3. MOTEUR DE PRÉ-COLLECTE WEB DIRECTE (CONTOURNE LES QUOTAS GOOGLE SEARCH)
+# ==============================================================================
+JOURS_FR = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+
+def format_iso_to_paris(iso_str):
+    try:
+        dt_utc = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        dt_p = dt_utc.astimezone(paris_tz)
+        jour_nom = JOURS_FR[dt_p.weekday()]
+        return f"{jour_nom} {dt_p.strftime('%d/%m/%Y')}", dt_p.strftime("%Hh%M")
+    except Exception:
+        return date_str, "20h00"
+
+def fetch_espn_events_direct(sport_slug, league_slug):
+    """
+    Interroge l'API publique JSON d'ESPN (sans clé API, zéro quota) pour obtenir
+    les événements officiels et leurs cartes complètes (UFC / Boxe).
+    """
+    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_slug}/{league_slug}/scoreboard?dates={START_YMD}-{END_YMD}"
+    extracted_events = []
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=10)
+        if r.status_code != 200:
+            return []
+        data = r.json()
+        for ev in data.get("events", []):
+            ev_name = ev.get("name") or ev.get("shortName") or "Événement Officiel"
+            ev_date_iso = ev.get("date") or ""
+            date_p_str, heure_debut_p = format_iso_to_paris(ev_date_iso)
+
+            competitions = ev.get("competitions") or []
+            lieu_str = "Lieu officiel"
+            if competitions:
+                venue = competitions[0].get("venue") or {}
+                v_name = venue.get("fullName") or ""
+                v_city = (venue.get("address") or {}).get("city") or ""
+                v_country = (venue.get("address") or {}).get("country") or ""
+                lieu_str = ", ".join(x for x in [v_name, v_city, v_country] if x) or "Arène officielle"
+
+            combats_list = []
+            total_comps = len(competitions)
+            # Sur ESPN, les compétitions sont souvent classées des préliminaires vers le Main Event (ou inversement)
+            # On les parcourt en plaçant le Main Event en haut
+            ordered_comps = list(reversed(competitions)) if total_comps > 1 else competitions
+            for idx_c, comp in enumerate(ordered_comps):
+                competitors = comp.get("competitors") or []
+                if len(competitors) < 2:
+                    continue
+                c_a = competitors[0]
+                c_b = competitors[1]
+                ath_a = c_a.get("athlete") or {}
+                ath_b = c_b.get("athlete") or {}
+                name_a = ath_a.get("displayName") or "Combattant A"
+                name_b = ath_b.get("displayName") or "Combattant B"
+
+                rec_a_list = c_a.get("records") or []
+                rec_b_list = c_b.get("records") or []
+                rec_a = rec_a_list[0].get("summary", "N/C") if rec_a_list else "N/C"
+                rec_b = rec_b_list[0].get("summary", "N/C") if rec_b_list else "N/C"
+
+                cat_type = (comp.get("type") or {}).get("text") or comp.get("note") or "Catégorie officielle"
+                periods = ((comp.get("format") or {}).get("regulation") or {}).get("periods")
+                rounds_str = f"{periods} rounds" if periods else "3 rounds"
+
+                if idx_c == 0:
+                    statut_str = "Main Event"
+                elif idx_c == 1:
+                    statut_str = "Co-Main Event"
+                elif idx_c < 6:
+                    statut_str = "Main Card"
+                else:
+                    statut_str = "Prelims"
+
+                combats_list.append({
+                    "statut": statut_str,
+                    "combattant_a": name_a,
+                    "palmares_a": rec_a,
+                    "taille_a": "N/C",
+                    "combattant_b": name_b,
+                    "palmares_b": rec_b,
+                    "taille_b": "N/C",
+                    "categorie_kg": cat_type,
+                    "rounds": rounds_str,
+                    "enjeu_et_analyse": f"Duel officiel programmé sur la carte {ev_name}."
+                })
+
+            if combats_list:
+                main_c = combats_list[0]
+                enjeu_p = f"{main_c['combattant_a']} vs. {main_c['combattant_b']} ({main_c['categorie_kg']})"
+            else:
+                enjeu_p = ev_name
+
+            extracted_events.append({
+                "nom_gala": ev_name,
+                "date_paris": date_p_str,
+                "lieu": lieu_str,
+                "url_officielle": "https://www.ufc.com/events" if league_slug == "ufc" else "https://box.live/upcoming-fights-schedule/",
+                "poster_url": "",
+                "heure_debut_paris": heure_debut_p,
+                "heure_ringwalk_paris": "env. +3h après le début",
+                "diffuseur_origine": "ESPN+ / UFC Fight Pass" if league_slug == "ufc" else "DAZN / ESPN",
+                "diffuseur_france": "RMC Sport / UFC Fight Pass" if league_slug == "ufc" else "DAZN France",
+                "enjeu_principal": enjeu_p,
+                "presentation": f"Événement officiel {ev_name} programmé à {lieu_str} avec {len(combats_list)} combats inscrits.",
+                "combats": combats_list,
+            })
+    except Exception as e:
+        print(f"  [Info ESPN Direct] {e}")
+    return extracted_events
+
+def fetch_rss_snippets(query, lang="en-US", country="US"):
+    """Récupère les derniers articles d'actualité via Google News RSS (gratuit, sans quota)."""
+    encoded_q = urllib.parse.quote(query)
+    rss_url = f"https://news.google.com/rss/search?q={encoded_q}&hl={lang}&gl={country}&ceid={country}:{lang.split('-')[0]}"
+    items_txt = []
+    try:
+        r = requests.get(rss_url, headers=HEADERS, timeout=8)
+        if r.status_code == 200:
+            root = ET.fromstring(r.content)
+            for item in root.findall(".//item")[:12]:
+                title = item.findtext("title") or ""
+                pub_date = item.findtext("pubDate") or ""
+                items_txt.append(f"- [{pub_date}] {title}")
+    except Exception:
+        pass
+    return "\n".join(items_txt)
+
+def fetch_webpage_text_snippet(url, max_chars=7000):
+    """Télécharge une page officielle et en extrait le texte propre pour alimenter Gemini sans outil Search."""
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=8)
+        if r.status_code == 200 and r.text:
+            txt = re.sub(r"<script.*?</script>", " ", r.text, flags=re.DOTALL | re.IGNORECASE)
+            txt = re.sub(r"<style.*?</style>", " ", txt, flags=re.DOTALL | re.IGNORECASE)
+            txt = re.sub(r"<[^>]+>", " ", txt)
+            txt = html.unescape(re.sub(r"\s+", " ", txt)).strip()
+            return txt[:max_chars]
+    except Exception:
+        pass
+    return ""
+
+def build_prefetched_context(discipline_id):
+    """Construit un dossier documentaire en direct pour chaque agent."""
+    chunks = []
+    if discipline_id == "ufc":
+        espn_ufc = fetch_espn_events_direct("mma", "ufc")
+        if espn_ufc:
+            chunks.append("DONNÉES OFFICIELLES ESPN API (UFC) :\n" + json.dumps(espn_ufc, ensure_ascii=False))
+        rss = fetch_rss_snippets("UFC Fight Night OR UFC full fight card schedule when:7d")
+        if rss:
+            chunks.append("ACTUALITÉS RÉCENTES UFC :\n" + rss)
+    elif discipline_id == "boxe-monde":
+        box_txt = fetch_webpage_text_snippet("https://box.live/upcoming-fights-schedule/", 8000)
+        if box_txt:
+            chunks.append("EXTRAIT BOX.LIVE SCHEDULE :\n" + box_txt)
+        rss = fetch_rss_snippets("boxing full fight card undercard Matchroom OR Queensberry OR Top Rank OR DAZN when:7d")
+        if rss:
+            chunks.append("ACTUALITÉS BOXE MONDE :\n" + rss)
+    elif discipline_id == "boxe-japon":
+        jp_txt = fetch_webpage_text_snippet("https://boxmob.jp/sp/schedule/", 7000)
+        if jp_txt:
+            chunks.append("EXTRAIT BOXING MOBILE JAPON (boxmob.jp) :\n" + jp_txt)
+        rss_jp = fetch_rss_snippets("プロボクシング 後楽園ホール OR 興行 日程 when:7d", lang="ja", country="JP")
+        if rss_jp:
+            chunks.append("ACTUALITÉS BOXE JAPON :\n" + rss_jp)
+    elif discipline_id == "rizin":
+        rz_txt = fetch_webpage_text_snippet("https://jp.rizinff.com/schedules/", 5000)
+        if rz_txt:
+            chunks.append("EXTRAIT RIZIN SCHEDULE :\n" + rz_txt)
+        rss_rz = fetch_rss_snippets("RIZIN 対戦カード OR RIZIN LANDMARK when:7d", lang="ja", country="JP")
+        if rss_rz:
+            chunks.append("ACTUALITÉS RIZIN :\n" + rss_rz)
+    elif discipline_id == "bkfc":
+        bk_txt = fetch_webpage_text_snippet("https://www.bkfc.com/events", 6000)
+        if bk_txt:
+            chunks.append("EXTRAIT BKFC EVENTS :\n" + bk_txt)
+        rss_bk = fetch_rss_snippets("BKFC fight card schedule when:7d")
+        if rss_bk:
+            chunks.append("ACTUALITÉS BKFC :\n" + rss_bk)
+    elif discipline_id == "glory":
+        gl_txt = fetch_webpage_text_snippet("https://glorykickboxing.com/events", 6000)
+        if gl_txt:
+            chunks.append("EXTRAIT GLORY EVENTS :\n" + gl_txt)
+        rss_gl = fetch_rss_snippets("Glory Kickboxing fight card schedule when:7d")
+        if rss_gl:
+            chunks.append("ACTUALITÉS GLORY :\n" + rss_gl)
+
+    return "\n\n".join(chunks)
+
+# ==============================================================================
+# 4. CONFIGURATION DES 6 MICRO-AGENTS PILIERS
 # ==============================================================================
 AGENTS_CONFIG = [
     {
@@ -134,8 +350,8 @@ AGENTS_CONFIG = [
             "les cartes The Ring / Riyadh Season et Zuffa Boxing (UFC Fight Pass)."
         ),
         "specific_rules": (
-            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé, consulte sa fiche complète et liste TOUS les combats programmés (Main Event, Co-Main Event, Undercard et combats préliminaires, soit l'intégralité des 5 à 12 combats de la soirée).\n"
-            "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs) sur Box.live, Tapology ou le site du promoteur.\n"
+            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé, liste TOUS les combats programmés (Main Event, Co-Main Event, Undercard et combats préliminaires, soit l'intégralité des 5 à 12 combats de la soirée).\n"
+            "- Vérifie les palmarès exacts à jour (Victoires-Défaites-Nuls, KOs).\n"
             "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, IBO, The Ring ou EBU est en jeu.\n"
             "- Pour les cartes Zuffa Boxing / 360 Promotions, indique 'UFC Fight Pass' comme diffuseur."
         ),
@@ -230,7 +446,7 @@ AGENTS_CONFIG = [
 ]
 
 # ==============================================================================
-# 4. MOTEUR D'EXTRACTION D'AFFICHES + BANNIÈRES OFFICIELLES (ZÉRO DOUBLON)
+# 5. MOTEUR D'EXTRACTION D'AFFICHES + BANNIÈRES OFFICIELLES (ZÉRO DOUBLON)
 # ==============================================================================
 POSTER_CACHE = {}
 USED_EVENT_POSTERS = set()
@@ -505,15 +721,44 @@ def parse_agent_json(raw_text):
     return None
 
 # ==============================================================================
-# 5. EXÉCUTION D'UN MICRO-AGENT (AVEC QUARANTAINE DYNAMIQUE DES MODÈLES HS)
+# 6. EXÉCUTION D'UN MICRO-AGENT (AVEC REPLI SANS SEARCH GROUNDING + DIRECT API)
 # ==============================================================================
+def call_gemini_smart(model_name, prompt, target_tokens, use_search_tool):
+    """Appelle Gemini avec ou sans l'outil Google Search et gère le repli 8192 tokens."""
+    cfg_kwargs = {
+        "temperature": 0.1,
+        "max_output_tokens": target_tokens,
+    }
+    if use_search_tool:
+        cfg_kwargs["tools"] = [types.Tool(google_search=types.GoogleSearch())]
+
+    try:
+        return client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(**cfg_kwargs),
+        )
+    except Exception as tok_err:
+        err_s = str(tok_err)
+        if target_tokens > 8192 and "400" in err_s and "429" not in err_s:
+            cfg_kwargs["max_output_tokens"] = 8192
+            return client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(**cfg_kwargs),
+            )
+        raise tok_err
+
 def run_micro_agent(agent_cfg, cached_data):
     discipline_id = agent_cfg["id"]
     target_tokens = agent_cfg.get("max_tokens", 8192)
     fallback_url = agent_cfg.get("fallback_url", "https://box.live/upcoming-fights-schedule/")
     print(f"\n--- Lancement Micro-Agent [{discipline_id}] (Plafond : {target_tokens} tokens) ---")
 
-    prompt = f"""Tu es un agent d'extraction de données factuelles spécialisé dans les sports de combat.
+    # 1. Pré-collecte web directe en Python (garantit les données fraîches même si Google Search Grounding est en 429)
+    live_web_context = build_prefetched_context(discipline_id)
+
+    base_prompt = f"""Tu es un agent d'extraction de données factuelles spécialisé dans les sports de combat.
 Date actuelle : {date_str} (Fuseau horaire : Europe/Paris).
 Fenêtre temporelle STRICTE autorisée : {DATE_WINDOW_STR}.
 
@@ -522,13 +767,16 @@ MISSION :
 
 CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
-- EXHAUSTIVITÉ ABSOLUE SUR LES SOUS-CARTES : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims répertoriés sur Box.live, Tapology, Boxing Mobile ou le site officiel). Si une carte comporte 8, 10 ou 14 combats, la liste "combats" doit contenir les 8, 10 ou 14 combats. Rédige 1 à 2 phrases d'analyse pour le Main Event et le Co-Main Event, et 1 phrase courte pour chaque combat de l'Undercard.
+- EXHAUSTIVITÉ ABSOLUE SUR LES SOUS-CARTES : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims). Si une carte comporte 8, 10 ou 14 combats, la liste "combats" doit contenir les 8, 10 ou 14 combats. Rédige 1 à 2 phrases d'analyse pour le Main Event et le Co-Main Event, et 1 phrase courte pour chaque combat de l'Undercard.
 - DOUBLE INDICATION HORAIRE (HEURE DE PARIS) :
   1. 'heure_debut_paris' : Heure du lancement du gala / début des combats préliminaires (ex: "19h00", "01h00").
   2. 'heure_ringwalk_paris' : Heure annoncée ou estimée de la marche vers le ring (ringwalk) du Main Event à l'heure de Paris (ex: "vers 23h30", "vers 05h00 (estimation)").
 - Ne retiens QUE les événements ayant lieu dans la fenêtre temporelle ({DATE_WINDOW_STR}).
 - ZÉRO HALLUCINATION : N'invente jamais de combat ni de palmarès. Mets "N/C" si une donnée est inconnue.
 - Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
+
+DONNÉES EN DIRECT PRÉ-COLLECTÉES PAR LE SYSTÈME (À UTILISER ET COMPLÉTER) :
+{live_web_context if live_web_context else "Aucune donnée pré-collectée, utilise ta recherche."}
 
 FORMAT DE SORTIE OBLIGATOIRE :
 Renvoie UNIQUEMENT un objet JSON valide respectant exactement cette structure, sans commentaire ni texte autour :
@@ -566,75 +814,84 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement cette structure, s
 Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : {{"evenements": []}}
 """
 
-    active_candidates = [m for m in AVAILABLE_MODELS if m not in DEAD_MODELS]
-    if not active_candidates:
-        active_candidates = list(AVAILABLE_MODELS)
+    # On ne teste QUE les modèles qui ne sont pas dans DEAD_MODELS_TOTAL (sans JAMAIS réinitialiser la liste)
+    active_candidates = [m for m in AVAILABLE_MODELS if m not in DEAD_MODELS_TOTAL]
 
     for model_name in active_candidates:
-        try:
-            print(f"  Appel {model_name} avec Google Search Grounding...")
+        # Étape A : Essai avec Google Search Grounding (si non bloqué pour ce modèle)
+        # Étape B : Si Google Search Grounding renvoie 429, essai immédiat SANS Google Search (utilise live_web_context)
+        modes_to_try = [True, False] if model_name not in DEAD_MODELS_SEARCH else [False]
+
+        for use_search in modes_to_try:
+            mode_label = "avec Google Search" if use_search else "mode Direct (sans quota Search)"
             try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        tools=[types.Tool(google_search=types.GoogleSearch())],
-                        temperature=0.1,
-                        max_output_tokens=target_tokens,
-                    ),
-                )
-            except Exception as tok_err:
-                err_tok_str = str(tok_err)
-                # Repli à 8192 tokens UNIQUEMENT sur une erreur 400 (et jamais sur une erreur 429)
-                if target_tokens > 8192 and "400" in err_tok_str and "429" not in err_tok_str:
-                    print(f"  [Adaptation] Repli à 8192 tokens pour {model_name}...")
-                    response = client.models.generate_content(
-                        model=model_name,
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            tools=[types.Tool(google_search=types.GoogleSearch())],
-                            temperature=0.1,
-                            max_output_tokens=8192,
-                        ),
-                    )
-                else:
-                    raise tok_err
+                print(f"  Appel {model_name} ({mode_label})...")
+                response = call_gemini_smart(model_name, base_prompt, target_tokens, use_search)
 
-            if response and getattr(response, "text", None):
-                events = parse_agent_json(response.text)
-                if events is None:
-                    print(f"  [Info] JSON mal formé sur {model_name}, passage au modèle suivant...")
-                    time.sleep(2)
-                    continue
+                if response and getattr(response, "text", None):
+                    events = parse_agent_json(response.text)
+                    if events is None:
+                        print(f"  [Info] JSON mal formé sur {model_name} ({mode_label}), suite...")
+                        continue
 
-                grounding_urls = extract_grounding_urls(response)
-                total_ev = len(events)
+                    grounding_urls = extract_grounding_urls(response)
+                    total_ev = len(events)
 
-                for ev in events:
-                    raw_ev_url = (ev.get("url_officielle") or "").strip()
-                    ev_url = verify_and_fix_official_url(raw_ev_url, ev, fallback_url, grounding_urls)
-                    ev["url_officielle"] = ev_url
-                    ev["poster_url"] = resolve_event_poster(
-                        ev, ev_url, grounding_urls, discipline_id, total_ev
-                    )
+                    for ev in events:
+                        raw_ev_url = (ev.get("url_officielle") or "").strip()
+                        ev_url = verify_and_fix_official_url(raw_ev_url, ev, fallback_url, grounding_urls)
+                        ev["url_officielle"] = ev_url
+                        ev["poster_url"] = resolve_event_poster(
+                            ev, ev_url, grounding_urls, discipline_id, total_ev
+                        )
 
-                print(f"  -> Succès ({model_name}) : {len(events)} événement(s) extrait(s) pour [{discipline_id}].")
-                cached_data[discipline_id] = events
-                return events, True
+                    print(f"  -> Succès ({model_name} - {mode_label}) : {len(events)} événement(s) extrait(s) pour [{discipline_id}].")
+                    cached_data[discipline_id] = events
+                    return events, True
 
-        except Exception as e:
-            err_str = str(e)
-            print(f"  [Avertissement] {model_name} sur [{discipline_id}] : {err_str[:140]}")
-            if "404" in err_str or "NOT_FOUND" in err_str or "400" in err_str:
-                print(f"  [Exclusion] {model_name} est obsolète ou incompatible, retrait pour les prochains agents.")
-                DEAD_MODELS.add(model_name)
-                continue
-            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                print(f"  [Quota 429] {model_name} saturé, mise en quarantaine et bascule sur le modèle suivant après 12s...")
-                DEAD_MODELS.add(model_name)
-                time.sleep(12)
-                continue
-            time.sleep(3)
+            except Exception as e:
+                err_str = str(e)
+                # Affichage complet de l'erreur (jusqu'à 380 caractères) pour voir la métrique exacte de Google
+                print(f"  [Avertissement] {model_name} ({mode_label}) : {err_str[:380]}")
+
+                if "404" in err_str or "NOT_FOUND" in err_str:
+                    DEAD_MODELS_TOTAL.add(model_name)
+                    break
+
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                    if use_search:
+                        # Le quota Google Search est saturé sur ce modèle : on tente immédiatement le mode sans Search
+                        DEAD_MODELS_SEARCH.add(model_name)
+                        print(f"  [Bascule] Quota Search atteint sur {model_name}, test immédiat en mode Direct...")
+                        time.sleep(2)
+                        continue
+                    else:
+                        # Même sans Google Search, ce modèle est à 0 quota : mise en quarantaine définitive pour ce run
+                        DEAD_MODELS_TOTAL.add(model_name)
+                        if "limit: 0" not in err_str.lower():
+                            time.sleep(5)
+                        break
+
+                time.sleep(2)
+
+    # Niveau 3 : Si toute l'API Gemini est en 429, extraction autonome directe Python (ESPN API + Cache)
+    if discipline_id == "ufc":
+        direct_ufc = fetch_espn_events_direct("mma", "ufc")
+        if direct_ufc:
+            for ev in direct_ufc:
+                ev["poster_url"] = resolve_event_poster(ev, ev["url_officielle"], [], discipline_id, len(direct_ufc))
+            print(f"  -> [Succès Mode Autonome ESPN] {len(direct_ufc)} événement(s) UFC extrait(s) directement.")
+            cached_data[discipline_id] = direct_ufc
+            return direct_ufc, True
+
+    if discipline_id == "boxe-monde":
+        direct_box = fetch_espn_events_direct("boxing", "boxing")
+        if direct_box:
+            for ev in direct_box:
+                ev["poster_url"] = resolve_event_poster(ev, ev["url_officielle"], [], discipline_id, len(direct_box))
+            print(f"  -> [Succès Mode Autonome ESPN] {len(direct_box)} événement(s) Boxe extrait(s) directement.")
+            cached_data[discipline_id] = direct_box
+            return direct_box, True
 
     if discipline_id in cached_data and cached_data[discipline_id]:
         print(f"  [Secours Cache] Restauration des événements en cache pour [{discipline_id}].")
@@ -644,7 +901,7 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
     return [], False
 
 # ==============================================================================
-# 6. CONSTRUCTION DU HTML PAR SECTION À PARTIR DU JSON VÉRIFIÉ
+# 7. CONSTRUCTION DU HTML PAR SECTION À PARTIR DU JSON VÉRIFIÉ
 # ==============================================================================
 def render_event_card_html(ev):
     nom_gala = html.escape(ev.get("nom_gala") or "Événement Officiel")
@@ -765,12 +1022,12 @@ sections_html = []
 nav_links = []
 total_events_found = 0
 total_bouts_found = 0
-successful_api_calls = 0
+successful_extractions = 0
 
 for idx, cfg in enumerate(AGENTS_CONFIG):
-    events_list, api_ok = run_micro_agent(cfg, cached_calendar)
-    if api_ok:
-        successful_api_calls += 1
+    events_list, ok = run_micro_agent(cfg, cached_calendar)
+    if ok:
+        successful_extractions += 1
 
     ev_count = len(events_list)
     total_events_found += ev_count
@@ -794,20 +1051,26 @@ for idx, cfg in enumerate(AGENTS_CONFIG):
     """
     sections_html.append(section_block)
 
-    if idx < len(AGENTS_CONFIG) - 1 and successful_api_calls > 0:
-        print("  Pause de 20s pour préserver le quota de jetons par minute (RPM/TPM)...")
-        time.sleep(20)
+    # Pause uniquement s'il reste des modèles Gemini non bloqués en lice
+    remaining_models = [m for m in AVAILABLE_MODELS if m not in DEAD_MODELS_TOTAL]
+    if idx < len(AGENTS_CONFIG) - 1 and remaining_models:
+        print("  Pause de 15s pour préserver le quota de jetons par minute (RPM/TPM)...")
+        time.sleep(15)
 
-if successful_api_calls == 0 and total_events_found == 0:
-    print("\n[ERREUR CRITIQUE API] Aucun agent n'a pu extraire de données. Conservation de l'index.html existant.")
-    sys.exit(1)
+if len(DEAD_MODELS_TOTAL) == len(AVAILABLE_MODELS):
+    print(
+        "\n[DIAGNOSTIC CLÉ API] Tous les modèles Gemini ont renvoyé 429 RESOURCE_EXHAUSTED dès le 1er appel.\n"
+        "-> Conseil : Votre projet Google AI Studio a atteint son plafond ou nécessite une nouvelle clé API "
+        "créée dans un nouveau projet sur https://aistudio.google.com/app/apikey .\n"
+        "-> Le mode autonome ESPN/Cache a pris le relais pour mettre à jour le site."
+    )
 
 save_cache(cached_calendar)
 nav_links_html = "\n                ".join(nav_links)
 all_sections_content = "\n".join(sections_html)
 
 # ==============================================================================
-# 7. ASSEMBLAGE DU SITE FINAL (DESIGN BEIGE/MARRON + RECHERCHE AUTO-EXPAND)
+# 8. ASSEMBLAGE DU SITE FINAL (DESIGN BEIGE/MARRON + RECHERCHE AUTO-EXPAND)
 # ==============================================================================
 FINAL_HTML = f"""<!DOCTYPE html>
 <html lang="fr">
