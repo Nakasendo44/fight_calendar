@@ -1,66 +1,175 @@
 {
-  "boxe-monde": [],
+  "boxe-monde": [
+    {
+      "nom_gala": "Matchroom Boxing : Diego Pacheco vs. Darius Fulghum",
+      "date_paris": "Samedi 14/11/2026",
+      "lieu": "YouTube Theater, Inglewood, Californie, États-Unis",
+      "url_officielle": "https://www.matchroomboxing.com/events",
+      "poster_url": "https://images.daznservices.com/content/pacheco-fulghum-poster.jpg",
+      "heure_debut_paris": "02h00",
+      "heure_ringwalk_paris": "vers 05h00 (estimation)",
+      "diffuseur_origine": "DAZN Global",
+      "diffuseur_france": "DAZN France",
+      "enjeu_principal": "Titres WBC USA et WBO International des super-moyens (-76,2 kg)",
+      "presentation": "Choc d'invaincus chez les super-moyens entre le puncheur californien Diego Pacheco et le styliste Darius Fulghum. Le vainqueur se positionnera comme prétendant obligatoire à une chance mondiale dans la division des 168 livres.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Diego Pacheco",
+          "palmares_a": "22-0-0, 18 KOs",
+          "taille_a": "1m93",
+          "combattant_b": "Darius Fulghum",
+          "palmares_b": "13-0-0, 11 KOs",
+          "taille_b": "1m85",
+          "categorie_kg": "Super-moyens (-76,2 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Titres WBC USA & WBO International des super-moyens. Un affrontement déterminant à longue distance où la puissance d'allonge de Pacheco testera la défense et le contre précis de Fulghum."
+        }
+      ]
+    },
+    {
+      "nom_gala": "BOXXER : Viddal Riley vs. Seydi Coupe",
+      "date_paris": "Vendredi 13/11/2026",
+      "lieu": "York Hall, Bethnal Green, Londres, Royaume-Uni",
+      "url_officielle": "https://www.boxxer.com",
+      "poster_url": "https://images.daznservices.com/content/riley-coupe-poster.jpg",
+      "heure_debut_paris": "20h00",
+      "heure_ringwalk_paris": "vers 23h00 (estimation)",
+      "diffuseur_origine": "Sky Sports Boxing",
+      "diffuseur_france": "DAZN France",
+      "enjeu_principal": "Titre EBU Silver et championnat britannique des lourds-légers (-90,7 kg)",
+      "presentation": "Le champion britannique en titre Viddal Riley défend son statut face au dangereux boxeur français Seydi Coupe. Un test continental crucial pour Riley en vue d'intégrer le top mondial de la division.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Viddal Riley",
+          "palmares_a": "12-0-0, 6 KOs",
+          "taille_a": "1m85",
+          "combattant_b": "Seydi Coupe",
+          "palmares_b": "8-1-0, 5 KOs",
+          "taille_b": "1m88",
+          "categorie_kg": "Lourds-légers (-90,7 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Ceinture continentale et titre de la division lourds-légers. Riley met en jeu son invincibilité face à l'explosivité et à l'impact physique de Coupe."
+        }
+      ]
+    }
+  ],
   "boxe-japon": [
     {
-      "nom_gala": "Lemino BOXING PHOENIX BATTLE 163 : Tsubasa Narai vs. Kai Watanabe",
+      "nom_gala": "Lemino BOXING PHOENIX BATTLE 163 : Tsubasa Narai vs. Kenji Fujita",
       "date_paris": "Mardi 10/11/2026",
       "lieu": "Korakuen Hall, Tokyo, Japon",
       "url_officielle": "https://boxmob.jp/sp/schedule/",
       "poster_url": "https://boxmob.jp/sp/schedule/",
       "heure_debut_paris": "09h45",
-      "heure_ringwalk_paris": "vers 12h30",
+      "heure_ringwalk_paris": "vers 13h00",
       "diffuseur_origine": "Lemino",
-      "diffuseur_france": "Non diffusé (Lemino Japon)",
+      "diffuseur_france": "Non diffusé (Lemino JP via VPN)",
       "enjeu_principal": "Championnat du Japon des poids super-plumes (-58,9 kg)",
-      "presentation": "La 163e édition des Phoenix Battle propose une soirée de haut niveau au Korakuen Hall avec deux championnats nationaux JBC et deux finales éliminatoires pour désigner les prochains challengers officiels. Le champion des super-plumes Tsubasa Narai tente une 5e défense décisive face au redoutable prétendant Kai Watanabe.",
+      "presentation": "Gala majeur de la série Phoenix Battle présenté par Ohashi Promotion au Korakuen Hall. La soirée propose un double championnat national du Japon ainsi que deux finales de sélection des challengers officiels.",
       "combats": [
         {
           "statut": "Main Event",
           "combattant_a": "Tsubasa Narai",
           "palmares_a": "14-2-0, 10 KOs",
-          "taille_a": "1m74",
-          "combattant_b": "Kai Watanabe",
-          "palmares_b": "13-1-1, 7 KOs",
-          "taille_b": "1m72",
+          "taille_a": "1m72",
+          "combattant_b": "Kenji Fujita",
+          "palmares_b": "7-0-0, 4 KOs",
+          "taille_b": "1m73",
           "categorie_kg": "Super-plumes (-58,9 kg)",
           "rounds": "10 rounds",
-          "enjeu_et_analyse": "Titre japonais JBC des super-plumes en jeu. Tsubasa Narai vise une cinquième défense consécutive pour consolider sa légitimité mondiale face à Kai Watanabe, puncher agressif et technique."
+          "enjeu_et_analyse": "Titre du Japon des poids super-plumes en jeu. Narai remet sa ceinture en jeu face à l'invaincu Fujita dans un choc au sommet de la division nationale."
         },
         {
           "statut": "Co-Main Event",
-          "combattant_a": "Hasuki Ohashi",
-          "palmares_a": "7-0-0, 4 KOs",
+          "combattant_a": "Shogetsu Osako",
+          "palmares_a": "8-1-1, 5 KOs",
           "taille_a": "1m64",
-          "combattant_b": "Hyoga Taniguchi",
-          "palmares_b": "8-2-1, 3 KOs",
-          "taille_b": "1m66",
-          "categorie_kg": "Mi-mouches (-48,9 kg)",
+          "combattant_b": "Hyohei Taniguchi",
+          "palmares_b": "6-2-1, 2 KOs",
+          "taille_b": "1m62",
+          "categorie_kg": "Mi-mouche (-49,0 kg)",
           "rounds": "10 rounds",
-          "enjeu_et_analyse": "Titre japonais JBC des mi-mouches. Hasuki Ohashi dispute sa première défense de titre face à Hyoga Taniguchi qui compte s'emparer de la ceinture dans un duel d'usure rapide."
+          "enjeu_et_analyse": "Titre du Japon des poids mi-mouche en jeu entre deux des meilleurs stylistes légers du pays."
         },
         {
           "statut": "Undercard",
-          "combattant_a": "Shingo Okada",
-          "palmares_a": "6-1-1, 2 KOs",
-          "taille_a": "1m61",
-          "combattant_b": "Issa Saeki",
-          "palmares_b": "5-0-0, 1 KO",
-          "taille_b": "1m63",
-          "categorie_kg": "Poids pailles (-47,6 kg)",
+          "combattant_a": "Seigo Okada",
+          "palmares_a": "6-1-0, 3 KOs",
+          "taille_a": "1m60",
+          "combattant_b": "Kazuki Takada",
+          "palmares_b": "5-1-1, 2 KOs",
+          "taille_b": "1m59",
+          "categorie_kg": "Minimum (-47,6 kg)",
           "rounds": "8 rounds",
-          "enjeu_et_analyse": "Finale éliminatoire (最強挑戦者決定戦) pour désigner le challenger officiel au titre de champion du Japon des poids pailles détenu par Takahiro Shibanuma."
+          "enjeu_et_analyse": "Finale du tournoi de sélection du challenger N°1 pour le titre du Japon des poids minimums."
         },
         {
           "statut": "Undercard",
-          "combattant_a": "Rikuto Adachi",
-          "palmares_a": "18-4-1, 14 KOs",
-          "taille_a": "1m79",
-          "combattant_b": "Masaya Tamayama",
-          "palmares_b": "15-4-0, 9 KOs",
-          "taille_b": "1m77",
-          "categorie_kg": "Super-welters (-69,8 kg)",
+          "combattant_a": "Riku Adachi",
+          "palmares_a": "5-0-0, 4 KOs",
+          "taille_a": "1m78",
+          "combattant_b": "Tetshei Nishiyama",
+          "palmares_b": "6-2-0, 3 KOs",
+          "taille_b": "1m76",
+          "categorie_kg": "Super-welters (-69,9 kg)",
           "rounds": "8 rounds",
-          "enjeu_et_analyse": "Finale éliminatoire nationale (最強挑戦者決定戦) pour le statut de prétendant obligatoire à la ceinture japonaise des super-welters."
+          "enjeu_et_analyse": "Finale du tournoi de sélection du challenger N°1 pour le titre du Japon des poids super-welters."
+        }
+      ]
+    },
+    {
+      "nom_gala": "Sanko presents KNOCK OUT BOXING vol.16",
+      "date_paris": "Dimanche 15/11/2026",
+      "lieu": "Korakuen Hall, Tokyo, Japon",
+      "url_officielle": "https://boxmob.jp/sp/schedule/",
+      "poster_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23141A24%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2307090E%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D4AF37%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2280%22%20font-weight%3D%22800%22%20letter-spacing%3D%226%22%3EU-NEXT%20BOXING%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23D4AF37%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22700%22%20letter-spacing%3D%2211%22%3EDYNAMIC%20GLOVE%20KORAKUEN%20HALL%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D4AF37%22%20opacity%3D%220.85%22/%3E%3C/svg%3E",
+      "heure_debut_paris": "09h30",
+      "heure_ringwalk_paris": "vers 12h30",
+      "diffuseur_origine": "Boxing Mobile / U-NEXT",
+      "diffuseur_france": "Non diffusé",
+      "enjeu_principal": "Réunion professionnelle Knock Out Boxing",
+      "presentation": "Le gala Knock Out Boxing vol.16 sponsorisé par Sanko rassemble plusieurs espoirs de la boxe professionnelle japonaise au temple du Korakuen Hall.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Anthony Olascuaga",
+          "palmares_a": "7-1-0, 5 KOs",
+          "taille_a": "1m63",
+          "combattant_b": "Jonathan Martinez",
+          "palmares_b": "18-4-1, 9 KOs",
+          "taille_b": "1m65",
+          "categorie_kg": "Mouche (-50,8 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Championnat du monde WBO des poids mouches entre le tenant du titre Anthony Olascuaga et son challenger Jonathan Martinez."
+        }
+      ]
+    },
+    {
+      "nom_gala": "Golden Child Boxing vol.146",
+      "date_paris": "Mardi 17/11/2026",
+      "lieu": "Korakuen Hall, Tokyo, Japon",
+      "url_officielle": "https://boxmob.jp/sp/schedule/",
+      "poster_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23260E12%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230D0406%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23E8C574%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2280%22%20font-weight%3D%22800%22%20letter-spacing%3D%228%22%3EBOXING%20JAPAN%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23E8C574%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22700%22%20letter-spacing%3D%2211%22%3EKORAKUEN%20HALL%20%26%20ARENAS%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23E8C574%22%20opacity%3D%220.85%22/%3E%3C/svg%3E",
+      "heure_debut_paris": "09h45",
+      "heure_ringwalk_paris": "vers 12h45",
+      "diffuseur_origine": "Boxing Mobile",
+      "diffuseur_france": "Non diffusé",
+      "enjeu_principal": "Réunion professionnelle Golden Child Boxing",
+      "presentation": "146e édition de la franchise historique Golden Child Boxing organisée au Korakuen Hall de Tokyo, mettant aux prises de jeunes prospects régionaux du circuit JBC.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Reiya Abe",
+          "palmares_a": "25-4-1, 10 KOs",
+          "taille_a": "1m73",
+          "combattant_b": "Mikito Nakano",
+          "palmares_b": "11-1-0, 9 KOs",
+          "taille_b": "1m71",
+          "categorie_kg": "Plumes (-57,2 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Duel au sommet de la catégorie des poids plumes entre le mondialiste Reiya Abe et le puncheur Mikito Nakano."
         }
       ]
     }
@@ -73,23 +182,23 @@
       "url_officielle": "https://www.ufc.com/events",
       "poster_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23260B0B%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23090303%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2280%22%20font-weight%3D%22800%22%20letter-spacing%3D%2214%22%3EU%20F%20C%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23D20A0A%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22700%22%20letter-spacing%3D%2211%22%3EULTIMATE%20FIGHTING%20CHAMPIONSHIP%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3C/svg%3E",
       "heure_debut_paris": "23h00",
-      "heure_ringwalk_paris": "vers 05h30 (estimation)",
-      "diffuseur_origine": "ESPN+ PPV / UFC Fight Pass",
+      "heure_ringwalk_paris": "vers 02h00",
+      "diffuseur_origine": "ESPN+ / UFC Fight Pass",
       "diffuseur_france": "RMC Sport / UFC Fight Pass",
-      "enjeu_principal": "Choc des poids lourds (-120,2 kg)",
-      "presentation": "L'UFC fait son retour annuel au Madison Square Garden pour une soirée d'envergure marquée par le duel chez les poids lourds entre le Français Ciryl Gane et l'invaincu Josh Hokit. En co-main event, Amanda Nunes affronte la double championne olympique Kayla Harrison dans un affrontement d'élite féminin.",
+      "enjeu_principal": "Choc Poids Lourds : Josh Hokit vs. Ciryl Gane",
+      "presentation": "L'UFC 334 investit la mythique enceinte du Madison Square Garden de New York pour un événement d'envergure. En vedette, le français Ciryl Gane affronte l'américain invaincu Josh Hokit chez les poids lourds.",
       "combats": [
         {
           "statut": "Main Event",
-          "combattant_a": "Ciryl Gane",
-          "palmares_a": "14-2-0",
-          "taille_a": "1m96",
-          "combattant_b": "Josh Hokit",
-          "palmares_b": "10-0-0",
-          "taille_b": "1m85",
+          "combattant_a": "Josh Hokit",
+          "palmares_a": "10-0-0",
+          "taille_a": "N/C",
+          "combattant_b": "Ciryl Gane",
+          "palmares_b": "14-2-0",
+          "taille_b": "1m96",
           "categorie_kg": "Poids lourds (-120,2 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Choc au sommet de la division reine entre la mobilité technique du Français et la puissance de frappe de l'invaincu américain."
+          "enjeu_et_analyse": "Combat principal en 5 rounds dans la catégorie des poids lourds."
         },
         {
           "statut": "Co-Main Event",
@@ -99,21 +208,21 @@
           "combattant_b": "Kayla Harrison",
           "palmares_b": "19-1-0",
           "taille_b": "1m73",
-          "categorie_kg": "Poids coqs féminins (-61,2 kg)",
+          "categorie_kg": "Poids coqs (-61,2 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Duel d'envergure historique opposant la plus grande combattante de l'histoire du MMA à l'ancienne double championne olympique de judo."
+          "enjeu_et_analyse": "Choc au sommet du MMA féminin programmé en 5 rounds."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Caio Borralho",
           "palmares_a": "18-2-0",
-          "taille_a": "1m78",
+          "taille_a": "1m85",
           "combattant_b": "Yousri Belgaroui",
           "palmares_b": "11-3-0",
           "taille_b": "1m96",
           "categorie_kg": "Poids moyens (-83,9 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Opposition de styles entre le grappling étouffant du Brésilien et le kickboxing d'élite de Belgaroui."
+          "enjeu_et_analyse": "Duel déterminant pour le classement des poids moyens."
         },
         {
           "statut": "Main Card",
@@ -125,7 +234,19 @@
           "taille_b": "1m85",
           "categorie_kg": "Poids mi-moyens (-77,1 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Bataille explosive entre deux puncheurs spectaculaires et imprévisibles."
+          "enjeu_et_analyse": "Affrontement explosif sur la carte principale."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Luis Gurule",
+          "palmares_a": "11-4-0",
+          "taille_a": "N/C",
+          "combattant_b": "Bilal Hasan",
+          "palmares_b": "10-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids mouches (-56,7 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Duel dans la catégorie des poids mouches."
         },
         {
           "statut": "Main Card",
@@ -134,22 +255,10 @@
           "taille_a": "1m83",
           "combattant_b": "Charles Radtke",
           "palmares_b": "12-5-0",
-          "taille_b": "1m78",
+          "taille_b": "1m75",
           "categorie_kg": "Poids mi-moyens (-77,1 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Test de précision karaté pour le vétéran face à l'agressivité de Radtke."
-        },
-        {
-          "statut": "Main Card",
-          "combattant_a": "Luis Gurule",
-          "palmares_a": "11-4-0",
-          "taille_a": "1m68",
-          "combattant_b": "Bilal Hasan",
-          "palmares_b": "10-0-0",
-          "taille_b": "1m70",
-          "categorie_kg": "Poids mouches (-56,7 kg)",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel à haute intensité chez les poids mouches pour intégrer le top 15 de la catégorie."
+          "enjeu_et_analyse": "Opposition de styles chez les mi-moyens."
         },
         {
           "statut": "Prelims",
@@ -161,7 +270,7 @@
           "taille_b": "1m78",
           "categorie_kg": "Poids légers (-70,3 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Guerre annoncée en striking entre deux boxeurs adeptes des échanges puissants au centre de l'octogone."
+          "enjeu_et_analyse": "Choc chez les poids légers en carte préliminaire."
         },
         {
           "statut": "Prelims",
@@ -173,7 +282,7 @@
           "taille_b": "1m78",
           "categorie_kg": "Poids légers (-70,3 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Le détenteur du record de victoires à l'UFC face à l'explosivité redoutable de McKinney dès les premières minutes."
+          "enjeu_et_analyse": "Duel de finisseurs chez les poids légers."
         },
         {
           "statut": "Prelims",
@@ -182,10 +291,10 @@
           "taille_a": "1m85",
           "combattant_b": "Donte Johnson",
           "palmares_b": "9-0-0",
-          "taille_b": "1m88",
+          "taille_b": "N/C",
           "categorie_kg": "Poids moyens (-83,9 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Confrontation entre un striker d'élite du kickboxing et un prospect invaincu américain."
+          "enjeu_et_analyse": "Combat de poids moyens de la carte préliminaire."
         },
         {
           "statut": "Prelims",
@@ -197,7 +306,7 @@
           "taille_b": "1m78",
           "categorie_kg": "Poids légers (-70,3 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Combat de rythme et de volume entre deux compétiteurs très complets."
+          "enjeu_et_analyse": "Confrontation dans la division des poids légers."
         },
         {
           "statut": "Prelims",
@@ -206,10 +315,10 @@
           "taille_a": "1m80",
           "combattant_b": "Bia Mesquita",
           "palmares_b": "8-0-0",
-          "taille_b": "1m68",
+          "taille_b": "N/C",
           "categorie_kg": "Poids coqs féminins (-61,2 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "L'avantage d'allonge de Chiasson face aux transitions au sol de la légende du jiu-jitsu brésilien Mesquita."
+          "enjeu_et_analyse": "Duel féminin chez les poids coqs."
         },
         {
           "statut": "Prelims",
@@ -218,10 +327,10 @@
           "taille_a": "1m70",
           "combattant_b": "Juan Diaz",
           "palmares_b": "16-1-1",
-          "taille_b": "1m73",
+          "taille_b": "N/C",
           "categorie_kg": "Poids coqs (-61,2 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Choc de boxe pure chez les poids coqs avec un KO hautement probable."
+          "enjeu_et_analyse": "Affrontement chez les poids coqs."
         },
         {
           "statut": "Prelims",
@@ -230,127 +339,15 @@
           "taille_a": "1m78",
           "combattant_b": "Samuel Sanches",
           "palmares_b": "11-1-0",
-          "taille_b": "1m80",
+          "taille_b": "N/C",
           "categorie_kg": "Poids légers (-70,3 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel d'ouverture de carte opposant deux espoirs prometteurs de la division des poids légers."
+          "enjeu_et_analyse": "Combat d'ouverture chez les poids légers."
         }
       ]
     }
   ],
-  "rizin": [
-    {
-      "nom_gala": "RIZIN.55 : Makoto Shinryu vs. Tony Laramie",
-      "date_paris": "Dimanche 08/11/2026",
-      "lieu": "Chiba, Japon",
-      "url_officielle": "https://jp.rizinff.com",
-      "poster_url": "https://jp.rizinff.com",
-      "heure_debut_paris": "06h00",
-      "heure_ringwalk_paris": "vers 11h30",
-      "diffuseur_origine": "U-NEXT / RIZIN 100 CLUB",
-      "diffuseur_france": "Triller TV / RIZIN LIVE",
-      "enjeu_principal": "Championnat du monde RIZIN des poids mouches (-57 kg)",
-      "presentation": "RIZIN pose ses valises dans la préfecture de Chiba pour RIZIN.55 avec en tête d'affiche la première défense de titre du jeune champion des poids mouches Makoto Shinryu face au redoutable prétendant canadien Tony Laramie. La carte met également en vedette des duels cruciaux dans la division bantamweight avec notamment le champion Naoki Inoue ainsi que le choc entre Jinnosuke Kashimura et l'olympien Shinobu Ota.",
-      "combats": [
-        {
-          "statut": "Main Event",
-          "combattant_a": "Makoto Shinryu",
-          "palmares_a": "18-2-1, 4 KOs",
-          "taille_a": "1m63",
-          "combattant_b": "Tony Laramie",
-          "palmares_b": "10-2-0, 3 KOs",
-          "taille_b": "1m65",
-          "categorie_kg": "Poids mouches (-57 kg)",
-          "rounds": "3 rounds de 5 min",
-          "enjeu_et_analyse": "Titre RIZIN Poids Mouches en jeu. Makoto Shinryu défend sa ceinture face au Canadien Tony Laramie dans un duel d'élite entre grappling de classe mondiale et striking agressif."
-        },
-        {
-          "statut": "Co-Main Event",
-          "combattant_a": "Naoki Inoue",
-          "palmares_a": "18-4-0, 3 KOs",
-          "taille_a": "1m73",
-          "combattant_b": "Irysbek Tilenov",
-          "palmares_b": "9-1-0, 5 KOs",
-          "taille_b": "1m75",
-          "categorie_kg": "Poids coqs (-61 kg)",
-          "rounds": "3 rounds de 5 min",
-          "enjeu_et_analyse": "Combat phare chez les poids coqs. Naoki Inoue fait face à l'épreuve kyrghyze Irysbek Tilenov pour asseoir sa domination sur la division."
-        },
-        {
-          "statut": "Main Card",
-          "combattant_a": "Jinnosuke Kashimura",
-          "palmares_a": "6-2-0, 1 KO",
-          "taille_a": "1m72",
-          "combattant_b": "Shinobu Ota",
-          "palmares_b": "6-4-0, 3 KOs",
-          "taille_b": "1m65",
-          "categorie_kg": "Poids coqs (-61 kg)",
-          "rounds": "3 rounds de 5 min",
-          "enjeu_et_analyse": "Duel d'opposition de styles majeurs chez les bantamweights entre le spécialiste du jiu-jitsu Kashimura et le médaillé olympique de lutte gréco-romaine Ota."
-        },
-        {
-          "statut": "Main Card",
-          "combattant_a": "Abaija Kaleo Meheula",
-          "palmares_a": "5-1-0, 3 KOs",
-          "taille_a": "1m75",
-          "combattant_b": "Muneteru Aimoto",
-          "palmares_b": "6-0-0, 4 KOs",
-          "taille_b": "1m74",
-          "categorie_kg": "Poids plumes (-66 kg)",
-          "rounds": "3 rounds de 5 min",
-          "enjeu_et_analyse": "Choc international explosif chez les poids plumes entre le striking d'impact de Meheula et l'invaincu espoir japonais Aimoto."
-        },
-        {
-          "statut": "Main Card",
-          "combattant_a": "Tatsuya Fukuda",
-          "palmares_a": "23-7-1, 11 KOs",
-          "taille_a": "1m66",
-          "combattant_b": "Soo Chul Kim",
-          "palmares_b": "22-8-1, 6 KOs",
-          "taille_b": "1m70",
-          "categorie_kg": "Poids coqs (-61 kg)",
-          "rounds": "3 rounds de 5 min",
-          "enjeu_et_analyse": "Affrontement très engagé entre deux vétérans emblématiques réputés pour leur rythme étouffant et leur boxe agressive."
-        },
-        {
-          "statut": "Main Card",
-          "combattant_a": "Kyung Pyo Kim",
-          "palmares_a": "13-5-0, 7 KOs",
-          "taille_a": "1m78",
-          "combattant_b": "Nurkhan Zhumagazy",
-          "palmares_b": "8-1-0, 4 KOs",
-          "taille_b": "1m77",
-          "categorie_kg": "Poids légers (-71 kg)",
-          "rounds": "3 rounds de 5 min",
-          "enjeu_et_analyse": "Duel international chez les poids légers mettant aux prises l'expérimenté Sud-Coréen Kim face au puissant Kazakh Zhumagazy."
-        },
-        {
-          "statut": "Preliminary Card",
-          "combattant_a": "Jo Hiramoto",
-          "palmares_a": "1-1-0, 0 KO",
-          "taille_a": "1m70",
-          "combattant_b": "Hiroya Kondo",
-          "palmares_b": "10-13-0, 4 KOs",
-          "taille_b": "1m63",
-          "categorie_kg": "Poids mouches (-57 kg)",
-          "rounds": "3 rounds de 5 min",
-          "enjeu_et_analyse": "Combat de rivalité très médiatisé entre le jeune Jo Hiramoto en quête d'affirmation et Hiroya cherchant à stopper sa dynamique."
-        },
-        {
-          "statut": "Preliminary Card",
-          "combattant_a": "Mack Papalii",
-          "palmares_a": "4-1-0, 4 KOs",
-          "taille_a": "1m85",
-          "combattant_b": "Yukinori Akazawa",
-          "palmares_b": "4-6-0, 3 KOs",
-          "taille_b": "1m80",
-          "categorie_kg": "Poids lourds (-120 kg)",
-          "rounds": "3 rounds de 5 min",
-          "enjeu_et_analyse": "Combat reprogrammé chez les poids lourds promettant un affrontement direct et percutant dès l'entame."
-        }
-      ]
-    }
-  ],
+  "rizin": [],
   "bkfc": [],
   "glory": []
 }
