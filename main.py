@@ -28,26 +28,32 @@ date_str = now_paris.strftime("%d/%m/%Y")
 yesterday_str = (now_paris + timedelta(days=-1)).strftime("%d/%m/%Y")
 heure_str = now_paris.strftime("%H:%M")
 
-# Fenêtre de J-1 (pour garder les galas US de la nuit précédente) à J+7
+JOURS_FR = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+
+# Fenêtre stricte de J-1 (pour garder les galas US de la nuit précédente) à J+7
 valid_dates_fr = []
 valid_dates_iso = []
 valid_dates_us = []
 valid_dates_jp = []
+ISO_TO_DT = {}
+
 for offset in range(-1, 8):
     d = now_paris + timedelta(days=offset)
+    iso_s = d.strftime("%Y-%m-%d")
     valid_dates_fr.append(d.strftime("%d/%m/%Y"))
-    valid_dates_iso.append(d.strftime("%Y-%m-%d"))
+    valid_dates_iso.append(iso_s)
     valid_dates_us.append(d.strftime("%m.%d.%Y"))
     valid_dates_jp.append(f"{d.month}月{d.day}日")
+    ISO_TO_DT[iso_s] = d
+
+VALID_DATES_ISO_SET = set(valid_dates_iso)
 
 START_YMD = (now_paris + timedelta(days=-1)).strftime("%Y%m%d")
 END_YMD = (now_paris + timedelta(days=7)).strftime("%Y%m%d")
 
 DATE_WINDOW_STR = (
     f"du {valid_dates_fr[0]} au {valid_dates_fr[-1]} inclus "
-    f"(Dates ISO autorisées : {', '.join(valid_dates_iso)} | "
-    f"Format US : {', '.join(valid_dates_us)} | "
-    f"Format JP : {', '.join(valid_dates_jp)})"
+    f"(Dates ISO autorisées UNIQUEMENT : {', '.join(valid_dates_iso)})"
 )
 
 HEADERS = {
@@ -74,31 +80,27 @@ def save_cache(cache_data):
         print(f"  [Info Cache] Impossible d'écrire le cache : {e}")
 
 # ==============================================================================
-# 2. DÉCOUVERTE DES MODÈLES (COMPLETS EN PRIORITÉ + LITE EN SECOURS)
+# 2. DÉCOUVERTE DES MODÈLES (OPTIMISÉE FREE TIER)
 # ==============================================================================
 def get_available_models():
+    # Modèles supportant Google Search sur le Free Tier
     tier1_preferred = [
         "gemini-3.8-flash",
-        "gemini-3.7-flash",
         "gemini-3.6-flash",
         "gemini-3-flash-preview",
         "gemini-flash-latest",
-        "gemini-3.5-flash",
-        "gemini-pro-latest",
     ]
+    # Modèles Lite (Free Tier en mode Direct uniquement, sans Google Search)
     tier2_lite_backup = [
-        "gemini-3.8-flash-lite",
-        "gemini-3.7-flash-lite",
-        "gemini-3.6-flash-lite",
-        "gemini-flash-lite-latest",
-        "gemini-3.1-flash-lite-preview",
-        "gemini-3.1-flash-lite",
         "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite",
+        "gemini-3.8-flash-lite",
+        "gemini-flash-lite-latest",
     ]
     excluded_tokens = [
-        "2.5", "2.0", "omni", "embedding", "imagen", "veo",
+        "2.5", "2.0", "pro", "omni", "embedding", "imagen", "veo",
         "tts", "audio", "vision", "aqa", "image", "banana",
-        "transcribe", "argon", "customtools", "thinking"
+        "transcribe", "argon", "customtools", "thinking", "live"
     ]
     discovered_full = []
     discovered_lite = []
@@ -130,7 +132,7 @@ def get_available_models():
         if d_lite not in final_models:
             final_models.append(d_lite)
 
-    return final_models or ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-flash-latest"]
+    return final_models or ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"]
 
 AVAILABLE_MODELS = get_available_models()
 DEAD_MODELS_SEARCH = set()
@@ -138,21 +140,144 @@ DEAD_MODELS_TOTAL = set()
 print(f"Ordre global des modèles retenus : {AVAILABLE_MODELS}")
 
 # ==============================================================================
-# 3. MOTEUR DE PRÉ-COLLECTE WEB PROFONDE (MULTI-PAGES + RSS + ESPN API)
+# 3. MOTEUR DE PRÉ-COLLECTE WEB PROFONDE (FILTRAGE TEMPOREL HTML + SOUS-CARTES)
 # ==============================================================================
-JOURS_FR = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+MONTHS_EN = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+]
+MONTHS_SHORT_EN = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+]
+
+# Fenêtres de dates en anglais (Box.live / BKFC / Glory) pour découper le HTML
+IN_WINDOW_DATE_MARKERS_EN = []
+OUT_OF_WINDOW_DATE_MARKERS_EN = []
+
+for offset in range(-1, 8):
+    d = now_paris + timedelta(days=offset)
+    IN_WINDOW_DATE_MARKERS_EN.append(f"{d.day} {MONTHS_EN[d.month - 1]} {d.year}")
+    IN_WINDOW_DATE_MARKERS_EN.append(f"{MONTHS_EN[d.month - 1]} {d.day}, {d.year}")
+    IN_WINDOW_DATE_MARKERS_EN.append(f"{MONTHS_SHORT_EN[d.month - 1]} {d.day} {d.year}")
+
+for offset in range(8, 75):
+    d = now_paris + timedelta(days=offset)
+    OUT_OF_WINDOW_DATE_MARKERS_EN.append(f"{d.day} {MONTHS_EN[d.month - 1]} {d.year}")
+    OUT_OF_WINDOW_DATE_MARKERS_EN.append(f"{MONTHS_EN[d.month - 1]} {d.day}, {d.year}")
+    OUT_OF_WINDOW_DATE_MARKERS_EN.append(f"{MONTHS_SHORT_EN[d.month - 1]} {d.day} {d.year}")
+
+# Dates japonaises hors fenêtre (J+8 à J+35) pour arrêter la lecture sur Boxmob / Rizin
+OUT_OF_WINDOW_DATE_MARKERS_JP = []
+for offset in range(8, 35):
+    d = now_paris + timedelta(days=offset)
+    OUT_OF_WINDOW_DATE_MARKERS_JP.append(f"{d.month}月{d.day}日")
+
+WEIGHT_MAP_BOXING_KG = {
+    "heavyweight": "Poids lourds (+90,7 kg)",
+    "bridgerweight": "Poids bridger (-101,6 kg)",
+    "cruiserweight": "Poids lourds-légers (-90,7 kg)",
+    "light heavyweight": "Poids mi-lourds (-79,4 kg)",
+    "super middleweight": "Poids super-moyens (-76,2 kg)",
+    "middleweight": "Poids moyens (-72,6 kg)",
+    "super welterweight": "Poids super-welters (-69,9 kg)",
+    "junior middleweight": "Poids super-welters (-69,9 kg)",
+    "welterweight": "Poids welters (-66,7 kg)",
+    "super lightweight": "Poids super-légers (-63,5 kg)",
+    "junior welterweight": "Poids super-légers (-63,5 kg)",
+    "lightweight": "Poids légers (-61,2 kg)",
+    "super featherweight": "Poids super-plumes (-59,0 kg)",
+    "junior lightweight": "Poids super-plumes (-59,0 kg)",
+    "featherweight": "Poids plumes (-57,2 kg)",
+    "super bantamweight": "Poids super-coqs (-55,3 kg)",
+    "junior featherweight": "Poids super-coqs (-55,3 kg)",
+    "bantamweight": "Poids coqs (-53,5 kg)",
+    "super flyweight": "Poids super-mouches (-52,2 kg)",
+    "junior bantamweight": "Poids super-mouches (-52,2 kg)",
+    "flyweight": "Poids mouches (-50,8 kg)",
+    "light flyweight": "Poids mi-mouches (-49,0 kg)",
+    "junior flyweight": "Poids mi-mouches (-49,0 kg)",
+    "minimumweight": "Poids pailles (-47,6 kg)",
+    "strawweight": "Poids pailles (-47,6 kg)",
+}
+
+WEIGHT_MAP_MMA_KG = {
+    "heavyweight": "Poids lourds (-120,2 kg)",
+    "light heavyweight": "Poids mi-lourds (-93,0 kg)",
+    "middleweight": "Poids moyens (-83,9 kg)",
+    "welterweight": "Poids mi-moyens (-77,1 kg)",
+    "lightweight": "Poids légers (-70,3 kg)",
+    "featherweight": "Poids plumes (-65,8 kg)",
+    "bantamweight": "Poids coqs (-61,2 kg)",
+    "flyweight": "Poids mouches (-56,7 kg)",
+    "strawweight": "Poids pailles (-52,2 kg)",
+}
+
+def translate_weight_to_fr_kg(raw_cat, sport_slug="boxing"):
+    if not raw_cat:
+        return "Catégorie officielle"
+    low = raw_cat.lower().strip()
+    is_women = "women" in low or "féminin" in low
+    mapping = WEIGHT_MAP_MMA_KG if sport_slug == "mma" else WEIGHT_MAP_BOXING_KG
+    for eng_key, fr_val in mapping.items():
+        if eng_key in low:
+            return f"{fr_val} (Féminin)" if is_women else fr_val
+    return raw_cat
+
+def is_night_hour_paris(time_str):
+    """Détecte si un horaire (ex: '02h00', 'vers 04h30') se situe entre 00h00 et 06h59 à Paris."""
+    if not time_str:
+        return False
+    m = re.search(r"(?:^|\D)([012]?\d)\s*[hH:]", str(time_str))
+    if m:
+        hour = int(m.group(1))
+        return 0 <= hour <= 6
+    return False
+
+def format_paris_date_label(date_iso, heure_debut_str="", heure_ringwalk_str=""):
+    """
+    Construit le libellé exact de la date en français à partir de la date de soirée (date_iso).
+    Si l'événement a lieu ou se termine la nuit (entre 00h00 et 06h59 heure de Paris),
+    renvoie 'Nuit du Samedi 14/11 au Dimanche 15/11/2026'.
+    """
+    try:
+        dt = datetime.strptime(date_iso, "%Y-%m-%d")
+    except Exception:
+        return date_str
+
+    night_event = is_night_hour_paris(heure_debut_str) or is_night_hour_paris(heure_ringwalk_str)
+
+    if night_event:
+        dt_prev = dt
+        dt_next = dt + timedelta(days=1)
+        j_prev = JOURS_FR[dt_prev.weekday()]
+        j_next = JOURS_FR[dt_next.weekday()]
+        return f"Nuit du {j_prev} {dt_prev.strftime('%d/%m')} au {j_next} {dt_next.strftime('%d/%m/%Y')}"
+    else:
+        jour_nom = JOURS_FR[dt.weekday()]
+        return f"{jour_nom} {dt.strftime('%d/%m/%Y')}"
 
 def format_iso_to_paris(iso_str):
     try:
         dt_utc = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
         dt_p = dt_utc.astimezone(paris_tz)
-        jour_nom = JOURS_FR[dt_p.weekday()]
-        return f"{jour_nom} {dt_p.strftime('%d/%m/%Y')}", dt_p.strftime("%Hh%M")
+        h_str = dt_p.strftime("%Hh%M")
+        # Si le gala commence entre 00h00 et 06h59 à Paris, la soirée de référence est la veille (ex: Samedi soir)
+        if 0 <= dt_p.hour <= 6:
+            evening_dt = dt_p - timedelta(days=1)
+        else:
+            evening_dt = dt_p
+        date_iso = evening_dt.strftime("%Y-%m-%d")
+        label = format_paris_date_label(date_iso, heure_debut_str=h_str)
+        return date_iso, label, h_str
     except Exception:
-        return date_str, "20h00"
+        return now_paris.strftime("%Y-%m-%d"), date_str, "20h00"
 
-def clean_html_to_text(raw_html, max_chars=22000):
-    """Supprime les scripts, styles, menus et pieds de page pour conserver un maximum de données utiles."""
+def clean_html_to_text(raw_html, max_chars=24000):
+    """
+    Supprime les scripts/menus et convertit les balises de blocs HTML en sauts de ligne (\n)
+    pour préserver la séparation stricte entre chaque gala et chaque combat de sous-carte.
+    """
     if not raw_html:
         return ""
     txt = re.sub(r"<script.*?</script>", " ", raw_html, flags=re.DOTALL | re.IGNORECASE)
@@ -160,41 +285,116 @@ def clean_html_to_text(raw_html, max_chars=22000):
     txt = re.sub(r"<svg.*?</svg>", " ", txt, flags=re.DOTALL | re.IGNORECASE)
     txt = re.sub(r"<nav.*?</nav>", " ", txt, flags=re.DOTALL | re.IGNORECASE)
     txt = re.sub(r"<footer.*?</footer>", " ", txt, flags=re.DOTALL | re.IGNORECASE)
+    txt = re.sub(r"<header.*?</header>", " ", txt, flags=re.DOTALL | re.IGNORECASE)
+    # Remplacement des balises de structure par des retours à la ligne
+    txt = re.sub(r"</?(?:div|p|li|tr|section|article|h[1-6]|br|hr|table|ul|ol)[^>]*>", "\n", txt, flags=re.IGNORECASE)
     txt = re.sub(r"<[^>]+>", " ", txt)
-    txt = html.unescape(re.sub(r"\s+", " ", txt)).strip()
-    return txt[:max_chars]
+    txt = html.unescape(txt)
+    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in txt.splitlines()]
+    clean_lines = [line for line in lines if line]
+    return "\n".join(clean_lines)[:max_chars]
 
-def fetch_webpage_and_sublinks(url, link_pattern=None, max_subpages=5, max_chars=22000):
+def slice_html_to_date_window(raw_html, start_markers, stop_markers):
     """
-    Récupère le texte complet d'une page calendrier ET suit automatiquement les liens
-    des événements de la semaine pour extraire l'intégralité des sous-cartes.
+    Coupe le HTML :
+    - Commence à la première date valide de la fenêtre (si trouvée) pour ignorer les bannières autopromo.
+    - S'arrête immédiatement dès qu'une date future hors fenêtre (J+8 et plus) apparaît.
+    """
+    if not raw_html:
+        return ""
+
+    start_pos = 0
+    found_starts = [raw_html.find(m) for m in start_markers if raw_html.find(m) != -1]
+    if found_starts:
+        # On recule légèrement avant le marqueur de date pour garder le titre du bloc HTML
+        start_pos = max(0, min(found_starts) - 300)
+
+    sliced = raw_html[start_pos:]
+
+    stop_positions = [sliced.find(m) for m in stop_markers if sliced.find(m) != -1]
+    # On ne coupe que si le marqueur d'arrêt se trouve après le début effectif de la liste
+    valid_stops = [p for p in stop_positions if p > 150]
+    if valid_stops:
+        sliced = sliced[:min(valid_stops)]
+
+    return sliced
+
+def fetch_webpage_and_sublinks(url, link_pattern=None, max_subpages=8, max_chars=24000, subpage_chars=12000, filter_window_en=False):
+    """
+    Récupère le texte structuré d'une page calendrier (filtré sur la fenêtre J-1..J+7)
+    ET suit uniquement les sous-pages des événements de la semaine pour extraire toute la sous-carte.
     """
     combined_texts = []
     try:
-        r = requests.get(url, headers=HEADERS, timeout=10)
+        r = requests.get(url, headers=HEADERS, timeout=12)
         if r.status_code == 200 and r.text:
-            main_txt = clean_html_to_text(r.text, max_chars=max_chars)
-            combined_texts.append(f"[PAGE PRINCIPALE {url}] :\n{main_txt}")
+            working_html = r.text
+            if filter_window_en:
+                working_html = slice_html_to_date_window(
+                    working_html, IN_WINDOW_DATE_MARKERS_EN, OUT_OF_WINDOW_DATE_MARKERS_EN
+                )
+
+            main_txt = clean_html_to_text(working_html, max_chars=max_chars)
+            combined_texts.append(f"[CALENDRIER FILTRÉ (J-1 à J+7) {url}] :\n{main_txt}")
 
             if link_pattern:
                 found_links = []
-                for m in re.finditer(link_pattern, r.text, flags=re.IGNORECASE):
+                for m in re.finditer(link_pattern, working_html, flags=re.IGNORECASE):
                     sub_url = html.unescape(m.group(1))
                     if sub_url.startswith("/"):
                         parsed = urllib.parse.urlparse(url)
                         sub_url = f"{parsed.scheme}://{parsed.netloc}{sub_url}"
                     if sub_url not in found_links:
                         found_links.append(sub_url)
+
                 for sub_u in found_links[:max_subpages]:
                     try:
-                        sr = requests.get(sub_u, headers=HEADERS, timeout=6)
+                        sr = requests.get(sub_u, headers=HEADERS, timeout=8)
                         if sr.status_code == 200 and sr.text:
-                            sub_txt = clean_html_to_text(sr.text, max_chars=4500)
-                            combined_texts.append(f"[SOUS-CARTE DÉTAILLÉE {sub_u}] :\n{sub_txt}")
+                            sub_txt = clean_html_to_text(sr.text, max_chars=subpage_chars)
+                            combined_texts.append(f"[CARTE COMPLÈTE & SOUS-CARTE {sub_u}] :\n{sub_txt}")
                     except Exception:
                         pass
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [Info Web {url}] {e}")
+    return "\n\n".join(combined_texts)
+
+def fetch_boxmob_window_data(max_subpages=10, subpage_chars=12000):
+    """
+    Extrait sur Boxmob.jp uniquement les galas correspondant aux dates de la fenêtre J-1 à J+7
+    (en ignorant les galas du début du mois déjà passés et ceux au-delà de J+7).
+    """
+    url = "https://boxmob.jp/sp/schedule/"
+    combined_texts = []
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=12)
+        if r.status_code != 200 or not r.text:
+            return ""
+
+        working_html = slice_html_to_date_window(
+            r.text, valid_dates_jp, OUT_OF_WINDOW_DATE_MARKERS_JP
+        )
+        main_txt = clean_html_to_text(working_html, max_chars=20000)
+        combined_texts.append(f"[CALENDRIER OFFICIEL BOXMOB JAPON (FILTRÉ J-1 à J+7) {url}] :\n{main_txt}")
+
+        found_links = []
+        pattern = r'href=["\'](/sp/schedule/index\.html\?sid=[0-9]+[^"\']*)["\']'
+        for m in re.finditer(pattern, working_html, flags=re.IGNORECASE):
+            sub_path = html.unescape(m.group(1))
+            sub_url = f"https://boxmob.jp{sub_path}"
+            if sub_url not in found_links:
+                found_links.append(sub_url)
+
+        for sub_u in found_links[:max_subpages]:
+            try:
+                sr = requests.get(sub_u, headers=HEADERS, timeout=8)
+                if sr.status_code == 200 and sr.text:
+                    sub_txt = clean_html_to_text(sr.text, max_chars=subpage_chars)
+                    combined_texts.append(f"[PROGRAMME COMPLET DU GALA JAPONAIS {sub_u}] :\n{sub_txt}")
+            except Exception:
+                pass
+    except Exception as e:
+        print(f"  [Info Boxmob] {e}")
     return "\n\n".join(combined_texts)
 
 def fetch_espn_events_direct(sport_slug, league_slug):
@@ -208,7 +408,11 @@ def fetch_espn_events_direct(sport_slug, league_slug):
         for ev in data.get("events", []):
             ev_name = ev.get("name") or ev.get("shortName") or "Événement Officiel"
             ev_date_iso = ev.get("date") or ""
-            date_p_str, heure_debut_p = format_iso_to_paris(ev_date_iso)
+            date_iso_p, date_p_str, heure_debut_p = format_iso_to_paris(ev_date_iso)
+
+            # Sécurité stricte : on ignore tout événement hors fenêtre
+            if date_iso_p not in VALID_DATES_ISO_SET:
+                continue
 
             competitions = ev.get("competitions") or []
             lieu_str = "Lieu officiel"
@@ -240,9 +444,10 @@ def fetch_espn_events_direct(sport_slug, league_slug):
                 rec_a = rec_a_list[0].get("summary", "N/C") if rec_a_list else "N/C"
                 rec_b = rec_b_list[0].get("summary", "N/C") if rec_b_list else "N/C"
 
-                cat_type = (comp.get("type") or {}).get("text") or comp.get("note") or "Catégorie officielle"
+                raw_cat = (comp.get("type") or {}).get("text") or comp.get("note") or "Catégorie officielle"
+                cat_type = translate_weight_to_fr_kg(raw_cat, sport_slug=sport_slug)
                 periods = ((comp.get("format") or {}).get("regulation") or {}).get("periods")
-                rounds_str = f"{periods} rounds" if periods else "3 rounds"
+                rounds_str = f"{periods} rounds" if periods else ("3 rounds" if sport_slug == "mma" else "10 rounds")
 
                 if idx_c == 0:
                     statut_str = "Main Event"
@@ -274,6 +479,7 @@ def fetch_espn_events_direct(sport_slug, league_slug):
 
             extracted_events.append({
                 "nom_gala": ev_name,
+                "date_iso": date_iso_p,
                 "date_paris": date_p_str,
                 "lieu": lieu_str,
                 "url_officielle": "https://www.ufc.com/events" if league_slug == "ufc" else "https://box.live/upcoming-fights-schedule/",
@@ -290,105 +496,98 @@ def fetch_espn_events_direct(sport_slug, league_slug):
         print(f"  [Info ESPN Direct] {e}")
     return extracted_events
 
-def fetch_rss_snippets(query, lang="en-US", country="US", max_items=18):
-    encoded_q = urllib.parse.quote(query)
-    rss_url = f"https://news.google.com/rss/search?q={encoded_q}&hl={lang}&gl={country}&ceid={country}:{lang.split('-')[0]}"
-    items_txt = []
-    try:
-        r = requests.get(rss_url, headers=HEADERS, timeout=8)
-        if r.status_code == 200:
-            root = ET.fromstring(r.content)
-            for item in root.findall(".//item")[:max_items]:
-                title = item.findtext("title") or ""
-                pub_date = item.findtext("pubDate") or ""
-                desc = clean_html_to_text(item.findtext("description") or "", 400)
-                items_txt.append(f"- [{pub_date}] {title} :: {desc}")
-    except Exception:
-        pass
-    return "\n".join(items_txt)
-
 def build_prefetched_context(discipline_id):
-    """Construit un dossier complet (pages principales + sous-pages de cartes + RSS + API) pour chaque discipline."""
+    """
+    Construit un dossier pré-filtré sur la fenêtre J-1..J+7 avec l'intégralité des sous-cartes,
+    sans flux RSS d'annonces futures susceptibles de polluer les dates.
+    """
     chunks = []
     if discipline_id == "ufc":
         espn_ufc = fetch_espn_events_direct("mma", "ufc")
         if espn_ufc:
-            chunks.append("DONNÉES OFFICIELLES ESPN API (UFC) :\n" + json.dumps(espn_ufc, ensure_ascii=False))
-        rss = fetch_rss_snippets("UFC Fight Night OR UFC full fight card schedule when:7d")
-        if rss:
-            chunks.append("ACTUALITÉS RÉCENTES UFC :\n" + rss)
+            chunks.append(
+                "DONNÉES OFFICIELLES ESPN API (UFC - CARTE COMPLÈTE VÉRIFIÉE, CONSERVE TOUS LES COMBATS) :\n"
+                + json.dumps(espn_ufc, ensure_ascii=False, indent=2)
+            )
 
     elif discipline_id == "boxe-monde":
         espn_box = fetch_espn_events_direct("boxing", "boxing")
         if espn_box:
-            chunks.append("DONNÉES ESPN BOXING API :\n" + json.dumps(espn_box, ensure_ascii=False))
+            chunks.append("DONNÉES ESPN BOXING API :\n" + json.dumps(espn_box, ensure_ascii=False, indent=2))
+
+        # 1. Calendrier principal Box.live (coupé strictement après J+7) + sous-pages complètes
         box_deep = fetch_webpage_and_sublinks(
             "https://box.live/upcoming-fights-schedule/",
             link_pattern=r'href=["\'](https://box\.live/fights/[^"\']+)["\']',
-            max_subpages=6,
-            max_chars=22000,
+            max_subpages=10,
+            max_chars=20000,
+            subpage_chars=12000,
+            filter_window_en=True,
         )
         if box_deep:
             chunks.append(box_deep)
-        rss1 = fetch_rss_snippets("boxing full fight card undercard Matchroom OR Queensberry OR Top Rank OR PBC OR DAZN when:7d")
-        rss2 = fetch_rss_snippets("boxing schedule fight card next saturday OR friday when:7d")
-        if rss1 or rss2:
-            chunks.append("ACTUALITÉS ET CARTES BOXE MONDE :\n" + rss1 + "\n" + rss2)
+
+        # 2. Pages TV UK & US de Box.live (contiennent le résumé explicite des sous-cartes et horaires TV)
+        uk_tv = fetch_webpage_and_sublinks(
+            "https://box.live/uk-boxing-tv-schedule/",
+            max_subpages=0,
+            max_chars=12000,
+            filter_window_en=True,
+        )
+        if uk_tv:
+            chunks.append(uk_tv)
+
+        us_tv = fetch_webpage_and_sublinks(
+            "https://box.live/us-boxing-tv-schedule/",
+            max_subpages=0,
+            max_chars=12000,
+            filter_window_en=True,
+        )
+        if us_tv:
+            chunks.append(us_tv)
 
     elif discipline_id == "boxe-japon":
-        jp_deep = fetch_webpage_and_sublinks(
-            "https://boxmob.jp/sp/schedule/",
-            link_pattern=r'href=["\'](/sp/schedule/index\.html\?sid=[0-9]+[^"\']*)["\']',
-            max_subpages=6,
-            max_chars=20000,
-        )
+        jp_deep = fetch_boxmob_window_data(max_subpages=10, subpage_chars=12000)
         if jp_deep:
             chunks.append(jp_deep)
         bn_txt = fetch_webpage_and_sublinks("https://boxingnews.jp/", max_subpages=0, max_chars=8000)
         if bn_txt:
             chunks.append(bn_txt)
-        rss_jp = fetch_rss_snippets("プロボクシング 後楽園ホール OR フェニックスバトル OR ダイナミックグローブ OR 興行 when:7d", lang="ja", country="JP")
-        if rss_jp:
-            chunks.append("ACTUALITÉS BOXE JAPON :\n" + rss_jp)
 
     elif discipline_id == "rizin":
         rz_txt = fetch_webpage_and_sublinks(
             "https://jp.rizinff.com/schedules/",
             link_pattern=r'href=["\'](https://jp\.rizinff\.com/schedules/[^"\']+)["\']',
-            max_subpages=2,
-            max_chars=12000,
+            max_subpages=3,
+            max_chars=15000,
+            subpage_chars=14000,
         )
         if rz_txt:
             chunks.append(rz_txt)
-        rss_rz = fetch_rss_snippets("RIZIN 対戦カード OR RIZIN LANDMARK when:7d", lang="ja", country="JP")
-        if rss_rz:
-            chunks.append("ACTUALITÉS RIZIN :\n" + rss_rz)
 
     elif discipline_id == "bkfc":
         bk_txt = fetch_webpage_and_sublinks(
             "https://www.bkfc.com/events",
             link_pattern=r'href=["\'](/events/[^"\']+)["\']',
             max_subpages=3,
-            max_chars=15000,
+            max_chars=16000,
+            subpage_chars=14000,
+            filter_window_en=True,
         )
         if bk_txt:
             chunks.append(bk_txt)
-        rss_bk = fetch_rss_snippets("BKFC fight card schedule when:7d")
-        if rss_bk:
-            chunks.append("ACTUALITÉS BKFC :\n" + rss_bk)
 
     elif discipline_id == "glory":
         gl_txt = fetch_webpage_and_sublinks(
             "https://glorykickboxing.com/events",
             link_pattern=r'href=["\'](/events/[^"\']+)["\']',
-            max_subpages=2,
-            max_chars=15000,
+            max_subpages=3,
+            max_chars=16000,
+            subpage_chars=14000,
+            filter_window_en=True,
         )
         if gl_txt:
             chunks.append(gl_txt)
-        rss_gl = fetch_rss_snippets("Glory Kickboxing fight card schedule when:7d")
-        if rss_gl:
-            chunks.append("ACTUALITÉS GLORY :\n" + rss_gl)
 
     return "\n\n".join(chunks)
 
@@ -399,22 +598,28 @@ AGENTS_CONFIG = [
     {
         "id": "boxe-monde",
         "nav_label": "🥊 Boxe Monde",
-        "title": "🥊 1. Boxe Anglaise — Galas Internationaux",
+        "title": "🥊 1. Boxe Anglaise — Grands Galas Internationaux",
         "max_tokens": 16384,
         "fallback_url": "https://box.live/upcoming-fights-schedule/",
-        "empty_msg": "Aucun gala international majeur répertorié dans la fenêtre des 7 prochains jours.",
+        "empty_msg": "Aucun grand gala international programmé dans la fenêtre des 7 prochains jours.",
         "search_hint": (
-            "Recherche tous les galas de boxe anglaise prévus cette semaine (du " + valid_dates_fr[0] + " au " + valid_dates_fr[-1] + ") "
+            "Recherche uniquement les GRANDS galas de boxe anglaise prévus dans la fenêtre stricte du "
+            + valid_dates_fr[0] + " au " + valid_dates_fr[-1] + " "
             "et leur carte complète (full fight card / undercard) sur : "
             "box.live, tapology.com/fightcenter, ringtv.com/schedule, matchroomboxing.com/events, queensberry.co.uk, "
-            "dazn.com, espn.com/boxing/schedule, fightnights.com, ufcfightpass.com. "
-            "Inclus à la fois les galas de ce week-end ET impérativement ceux du week-end prochain (Matchroom, Queensberry, Top Rank, PBC, Golden Boy, The Ring, Zuffa)."
+            "dazn.com, espn.com/boxing/schedule, premierboxingchampions.com, toprank.com, goldenboy.com."
         ),
         "specific_rules": (
-            "- COUVERTURE COMPLÈTE DES 7 PROCHAINS JOURS : Ne t'arrête pas aux galas d'hier ou d'aujourd'hui, inclus impérativement tous les galas programmés jusqu'au " + valid_dates_fr[-1] + ".\n"
-            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala trouvé, liste TOUS les combats programmés dont les deux adversaires sont connus.\n"
-            "- INTERDICTION DES 'vs. N/C' : Ne crée jamais un combat avec 'N/C' ou 'TBA' comme nom d'adversaire, et indique toujours le Prénom et le Nom des boxeurs.\n"
-            "- Indique précisément si une ceinture WBA, WBC, IBF, WBO, IBO, The Ring ou EBU est en jeu."
+            "- PÉRIMÈTRE STRICT (GALAS MAJEURS UNIQUEMENT) : Retiens uniquement les galas organisés par les grands promoteurs "
+            "(Matchroom, Queensberry, Top Rank, PBC, Golden Boy, Riyadh Season / The Ring, Zuffa, Boxxer, MVP, ProBox TV) "
+            "OU mettant en jeu un titre mondial (WBA, WBC, IBF, WBO, IBO, The Ring), un titre européen (EBU), "
+            "ou diffusés sur un grand diffuseur (DAZN, ESPN, Sky Sports, TNT Sports, Prime Video, Canal+, RMC Sport). "
+            "Ignore les petits galas locaux ou régionaux sans enjeu majeur.\n"
+            "- VÉRIFICATION STRICTE DES DATES ET LIEUX : Ne confonds JAMAIS la date de publication d'une annonce de combat futur "
+            "(en décembre ou l'année prochaine) avec les galas ayant réellement lieu entre le " + valid_dates_fr[0] + " et le " + valid_dates_fr[-1] + ". "
+            "Ne mélange jamais les combats de deux galas différents.\n"
+            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala retenu, liste TOUS les combats programmés dont les deux adversaires sont connus.\n"
+            "- INTERDICTION DES 'vs. N/C' ou 'TBA' : Indique toujours le Prénom et le Nom des deux boxeurs."
         ),
     },
     {
@@ -747,18 +952,53 @@ def extract_grounding_urls(response):
         pass
     return urls
 
+def extract_iso_date_fallback(date_paris_str):
+    """Extrait une date YYYY-MM-DD depuis une chaîne 'dd/mm/yyyy' si date_iso est manquant."""
+    if not date_paris_str:
+        return None
+    matches = re.findall(r"(\d{2})/(\d{2})/(\d{4})", str(date_paris_str))
+    if matches:
+        d_str, m_str, y_str = matches[0]
+        return f"{y_str}-{m_str}-{d_str}"
+    return None
+
 def clean_and_validate_events(events_list):
     """
-    Supprime tout combat dont l'un des deux adversaires est 'N/C', 'TBA', 'TBD' ou vide
-    afin de garantir des cartes 100 % propres à l'affichage.
+    1. Rejette strictement tout événement dont la date n'est pas dans la fenêtre J-1 à J+7 (VALID_DATES_ISO_SET).
+    2. Formate automatiquement 'Nuit du Samedi X au Dimanche Y' pour les galas nocturnes (00h00 - 06h59 Paris).
+    3. Supprime tout combat dont l'un des deux adversaires est 'N/C', 'TBA', 'TBD' ou vide.
+    4. Trie les événements par ordre chronologique strict.
     """
     if not isinstance(events_list, list):
         return []
+
     invalid_names = {"n/c", "nc", "tba", "tbd", "inconnu", "unknown", "à déterminer", "a determiner", "-"}
     cleaned_events = []
+
     for ev in events_list:
         if not isinstance(ev, dict):
             continue
+
+        # 1. Validation stricte de la date ISO
+        raw_iso = (ev.get("date_iso") or "").strip()
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", raw_iso):
+            raw_iso = extract_iso_date_fallback(ev.get("date_paris", "")) or ""
+
+        if raw_iso not in VALID_DATES_ISO_SET:
+            print(f"  [Filtre Temporel] Événement rejeté (hors fenêtre {valid_dates_iso[0]}..{valid_dates_iso[-1]}) : {ev.get('nom_gala')} (date_iso={raw_iso})")
+            continue
+
+        ev["date_iso"] = raw_iso
+
+        # 2. Formatage normalisé de la date (avec gestion 'Nuit du Samedi au Dimanche')
+        h_deb = (ev.get("heure_debut_paris") or "").strip()
+        h_rw = (ev.get("heure_ringwalk_paris") or "").strip()
+        raw_date_paris = (ev.get("date_paris") or "").strip()
+
+        if not raw_date_paris.startswith("Nuit du "):
+            ev["date_paris"] = format_paris_date_label(raw_iso, heure_debut_str=h_deb, heure_ringwalk_str=h_rw)
+
+        # 3. Nettoyage des combats
         raw_bouts = ev.get("combats") or []
         valid_bouts = []
         for b in raw_bouts:
@@ -771,9 +1011,99 @@ def clean_and_validate_events(events_list):
             if fa.lower() in invalid_names or fb.lower() in invalid_names:
                 continue
             valid_bouts.append(b)
+
         ev["combats"] = valid_bouts
         cleaned_events.append(ev)
+
+    # 4. Tri chronologique
+    cleaned_events.sort(key=lambda x: x.get("date_iso", "9999-99-99"))
     return cleaned_events
+
+# Schéma JSON strict pour les Structured Outputs Gemini
+EVENT_JSON_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "evenements": {
+            "type": "ARRAY",
+            "items": {
+                "type": "OBJECT",
+                "properties": {
+                    "nom_gala": {"type": "STRING"},
+                    "date_iso": {
+                        "type": "STRING",
+                        "description": "Date de la soirée de l'événement au format strict YYYY-MM-DD. Doit obligatoirement faire partie de la fenêtre autorisée."
+                    },
+                    "date_paris": {"type": "STRING"},
+                    "lieu": {"type": "STRING"},
+                    "url_officielle": {"type": "STRING"},
+                    "poster_url": {"type": "STRING"},
+                    "heure_debut_paris": {"type": "STRING"},
+                    "heure_ringwalk_paris": {"type": "STRING"},
+                    "diffuseur_origine": {"type": "STRING"},
+                    "diffuseur_france": {"type": "STRING"},
+                    "enjeu_principal": {"type": "STRING"},
+                    "presentation": {"type": "STRING"},
+                    "combats": {
+                        "type": "ARRAY",
+                        "items": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "statut": {"type": "STRING"},
+                                "combattant_a": {"type": "STRING"},
+                                "palmares_a": {"type": "STRING"},
+                                "taille_a": {"type": "STRING"},
+                                "combattant_b": {"type": "STRING"},
+                                "palmares_b": {"type": "STRING"},
+                                "taille_b": {"type": "STRING"},
+                                "categorie_kg": {"type": "STRING"},
+                                "rounds": {"type": "STRING"},
+                                "enjeu_et_analyse": {"type": "STRING"},
+                            },
+                            "required": ["statut", "combattant_a", "combattant_b", "categorie_kg", "rounds", "enjeu_et_analyse"],
+                        },
+                    },
+                },
+                "required": [
+                    "nom_gala", "date_iso", "date_paris", "lieu", "url_officielle",
+                    "heure_debut_paris", "heure_ringwalk_paris", "diffuseur_origine",
+                    "diffuseur_france", "enjeu_principal", "presentation", "combats"
+                ],
+            },
+        }
+    },
+    "required": ["evenements"],
+}
+
+def call_gemini_smart(model_name, prompt, target_tokens, use_search_tool):
+    cfg_kwargs = {
+        "temperature": 0.1,
+        "max_output_tokens": target_tokens,
+        "response_mime_type": "application/json",
+        "response_schema": EVENT_JSON_SCHEMA,
+    }
+    if use_search_tool:
+        cfg_kwargs["tools"] = [types.Tool(google_search=types.GoogleSearch())]
+
+    try:
+        return client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(**cfg_kwargs),
+        )
+    except Exception as err:
+        err_s = str(err)
+        # Repli de sécurité si un modèle spécifique refuse response_schema + google_search simultanément
+        if "400" in err_s and "429" not in err_s:
+            cfg_kwargs.pop("response_mime_type", None)
+            cfg_kwargs.pop("response_schema", None)
+            if target_tokens > 8192:
+                cfg_kwargs["max_output_tokens"] = 8192
+            return client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(**cfg_kwargs),
+            )
+        raise err
 
 def parse_agent_json(raw_text):
     if not raw_text:
@@ -824,38 +1154,136 @@ def parse_agent_json(raw_text):
     return None
 
 # ==============================================================================
-# 6. EXÉCUTION D'UN MICRO-AGENT (AVEC REPLI SANS SEARCH GROUNDING + DIRECT API)
+# 6. EXÉCUTION D'UN MICRO-AGENT + FUSION GARANTIE DES SOUS-CARTES
 # ==============================================================================
-def call_gemini_smart(model_name, prompt, target_tokens, use_search_tool):
-    cfg_kwargs = {
-        "temperature": 0.1,
-        "max_output_tokens": target_tokens,
-    }
-    if use_search_tool:
-        cfg_kwargs["tools"] = [types.Tool(google_search=types.GoogleSearch())]
+GENERIC_EVENT_WORDS = {
+    "fight", "night", "boxing", "world", "title", "gala", "champion",
+    "championship", "arena", "hall", "center", "centre", "stadium",
+    "matchroom", "queensberry", "toprank", "golden", "premier", "rizin",
+    "glory", "bkfc", "landmark", "dynamic", "glove", "phoenix", "battle"
+}
 
+def extract_fighter_tokens(text):
+    """Extrait les noms propres significatifs (>= 4 lettres) d'un combattant ou d'un titre de gala."""
+    if not text:
+        return set()
+    words = re.findall(r"[a-zA-ZÀ-ÿ]{4,}", text.lower())
+    return {w for w in words if w not in GENERIC_EVENT_WORDS}
+
+def get_main_event_signature(ev):
+    """Renvoie l'ensemble des mots-clés identifiant les combattants principaux d'un gala."""
+    tokens = set()
+    combats = ev.get("combats") or []
+    if combats:
+         tokens.update(extract_fighter_tokens(combats[0].get("combattant_a", "")))
+         tokens.update(extract_fighter_tokens(combats[0].get("combattant_b", "")))
+    if not tokens:
+        tokens.update(extract_fighter_tokens(ev.get("nom_gala", "")))
+    return tokens
+
+def events_are_same_gala(ev_a, ev_b):
+    """
+    Vérifie si deux objets événements désignent le même gala :
+    - Date ISO identique (ou décalée d'1 jour maximum pour les galas passant minuit)
+    - Et au moins un nom de combattant du Main Event en commun.
+    """
+    iso_a = ev_a.get("date_iso") or ""
+    iso_b = ev_b.get("date_iso") or ""
+    if not iso_a or not iso_b:
+        return False
     try:
-        return client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(**cfg_kwargs),
-        )
-    except Exception as tok_err:
-        err_s = str(tok_err)
-        if target_tokens > 8192 and "400" in err_s and "429" not in err_s:
-            cfg_kwargs["max_output_tokens"] = 8192
-            return client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(**cfg_kwargs),
-            )
-        raise tok_err
+        dt_a = datetime.strptime(iso_a, "%Y-%m-%d")
+        dt_b = datetime.strptime(iso_b, "%Y-%m-%d")
+        if abs((dt_a - dt_b).days) > 1:
+            return False
+    except Exception:
+        if iso_a != iso_b:
+            return False
+
+    sig_a = get_main_event_signature(ev_a)
+    sig_b = get_main_event_signature(ev_b)
+    if sig_a and sig_b and (sig_a & sig_b):
+        return True
+    return False
+
+def bouts_are_same_fight(b1, b2):
+    """Vérifie si deux combats opposent les mêmes combattants (quel que soit l'ordre A vs B)."""
+    t1_a = extract_fighter_tokens(b1.get("combattant_a", ""))
+    t1_b = extract_fighter_tokens(b1.get("combattant_b", ""))
+    t2_a = extract_fighter_tokens(b2.get("combattant_a", ""))
+    t2_b = extract_fighter_tokens(b2.get("combattant_b", ""))
+
+    direct_match = bool(t1_a & t2_a) and bool(t1_b & t2_b)
+    reverse_match = bool(t1_a & t2_b) and bool(t1_b & t2_a)
+    return direct_match or reverse_match
+
+def merge_undercard_bouts(primary_events, reference_events, add_missing_events=False):
+    """
+    Complète chaque gala de 'primary_events' avec les combats de sous-carte présents dans
+    'reference_events' (ex: API ESPN ou cache validé) que l'IA aurait oubliés.
+    Complète aussi les palmarès manquants ('N/C').
+    """
+    if not reference_events:
+        return primary_events
+
+    merged_list = list(primary_events)
+
+    for ref_ev in reference_events:
+        matched_primary = None
+        for prim_ev in merged_list:
+            if events_are_same_gala(prim_ev, ref_ev):
+                matched_primary = prim_ev
+                break
+
+        if matched_primary is not None:
+            prim_bouts = matched_primary.get("combats") or []
+            ref_bouts = ref_ev.get("combats") or []
+            added_count = 0
+
+            for rb in ref_bouts:
+                existing_bout = None
+                for pb in prim_bouts:
+                    if bouts_are_same_fight(pb, rb):
+                        existing_bout = pb
+                        break
+
+                if existing_bout is not None:
+                    # Complète les palmarès ou tailles si l'IA a laissé "N/C"
+                    for field in ["palmares_a", "palmares_b", "taille_a", "taille_b"]:
+                        if (not existing_bout.get(field) or existing_bout.get(field) == "N/C") and rb.get(field) and rb.get(field) != "N/C":
+                            existing_bout[field] = rb[field]
+                else:
+                    # Ajoute le combat de sous-carte manquant
+                    prim_bouts.append(rb)
+                    added_count += 1
+
+            if added_count > 0:
+                print(f"  [Fusion Sous-Carte] +{added_count} combat(s) préliminaire(s) ajouté(s) sur '{matched_primary.get('nom_gala')}'.")
+            matched_primary["combats"] = prim_bouts
+
+        elif add_missing_events and len(ref_ev.get("combats") or []) >= 2:
+            print(f"  [Ajout Gala Officiel] Gala ajouté depuis la source officielle : '{ref_ev.get('nom_gala')}'.")
+            merged_list.append(ref_ev)
+
+    merged_list.sort(key=lambda x: x.get("date_iso", "9999-99-99"))
+    return merged_list
 
 def run_micro_agent(agent_cfg, cached_data):
     discipline_id = agent_cfg["id"]
     target_tokens = agent_cfg.get("max_tokens", 8192)
     fallback_url = agent_cfg.get("fallback_url", "https://box.live/upcoming-fights-schedule/")
     print(f"\n--- Lancement Micro-Agent [{discipline_id}] (Plafond : {target_tokens} tokens) ---")
+
+    # 1. Nettoyage immédiat du cache existant pour supprimer les événements hors fenêtre (passés ou trop lointains)
+    valid_cached_events = clean_and_validate_events(cached_data.get(discipline_id, []))
+    cached_data[discipline_id] = valid_cached_events
+
+    # 2. Récupération des événements structurés ESPN (sert à la fois au contexte, à la fusion des sous-cartes et au secours)
+    espn_reference_events = []
+    if discipline_id == "ufc":
+        espn_reference_events = clean_and_validate_events(fetch_espn_events_direct("mma", "ufc"))
+    elif discipline_id == "boxe-monde":
+        espn_reference_events = clean_and_validate_events(fetch_espn_events_direct("boxing", "boxing"))
 
     live_web_context = build_prefetched_context(discipline_id)
 
@@ -868,7 +1296,10 @@ MISSION :
 
 CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
-- EXHAUSTIVITÉ DES SOUS-CARTES ET DES GALAS À VENIR : Tu dois extraire la CARTE COMPLÈTE de chaque événement (Main Event, Co-Main Event, et TOUS les combats de l'Undercard / Prelims). Inclus à la fois les événements du week-end en cours ET tous les événements programmés la semaine prochaine jusqu'au {valid_dates_fr[-1]}.
+- FILTRE TEMPOREL STRICT : Seuls les événements ayant réellement lieu dans la fenêtre {DATE_WINDOW_STR} sont autorisés. Si un combat annoncé dans l'actualité a lieu à une date ultérieure (en décembre ou plus tard), IL EST STRICTEMENT INTERDIT de l'inclure ou de lui attribuer la date d'un autre gala.
+- CHAMP 'date_iso' OBLIGATOIRE : Indique toujours la date de la soirée où commence le gala au format YYYY-MM-DD (ex: "2026-11-14" pour un gala dans la nuit du Samedi 14 au Dimanche 15). Cette date doit obligatoirement figurer parmi : {', '.join(valid_dates_iso)}.
+- INTERDICTION DE RÉSUMER LES SOUS-CARTES : Tu dois extraire 100 % des combats connus de chaque carte (Main Event, Co-Main Event, Main Card, Prelims, Early Prelims, Undercard). S'il y a 10, 12 ou 14 combats programmés sur un gala, tu DOIS inclure les 10, 12 ou 14 combats dans le tableau "combats".
+- CONCISION SUR LES PRELIMS POUR ÉVITER LA COUPURE JSON : Pour le Main Event et le Co-Main Event, rédige une "enjeu_et_analyse" complète (1 à 2 phrases). Pour tous les autres combats de la sous-carte (Main Card / Prelims / Undercard), rédige une "enjeu_et_analyse" très courte (maximum 12 mots) afin d'économiser les jetons et de lister tous les combats sans exception.
 - INTERDICTION ABSOLUE DES ADVERSAIRES "N/C" OU "TBA" : Chaque combat listé dans "combats" DOIT avoir le Prénom et Nom de combattant_a ET le Prénom et Nom de combattant_b. Si l'adversaire d'un combattant n'est pas connu, ne crée pas de combat "vs. N/C" (mentionne-le seulement dans "presentation").
 - DOUBLE INDICATION HORAIRE (HEURE DE PARIS) :
   1. 'heure_debut_paris' : Heure du lancement du gala / début des combats préliminaires (ex: "19h00", "01h00").
@@ -884,12 +1315,13 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement cette structure, s
   "evenements": [
     {{
       "nom_gala": "Nom officiel du gala : Combattant A vs. Combattant B",
-      "date_paris": "Samedi 14/11/2026",
+      "date_iso": "2026-11-14",
+      "date_paris": "Nuit du Samedi 14/11 au Dimanche 15/11/2026",
       "lieu": "Salle / Arène, Ville, Pays",
       "url_officielle": "https://...",
       "poster_url": "https://...",
-      "heure_debut_paris": "19h00",
-      "heure_ringwalk_paris": "vers 23h30",
+      "heure_debut_paris": "01h00",
+      "heure_ringwalk_paris": "vers 04h30",
       "diffuseur_origine": "DAZN Global",
       "diffuseur_france": "DAZN France",
       "enjeu_principal": "Titre mondial WBC Super-Légers (-63,5 kg)",
@@ -917,7 +1349,12 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
     active_candidates = [m for m in AVAILABLE_MODELS if m not in DEAD_MODELS_TOTAL]
 
     for model_name in active_candidates:
-        modes_to_try = [True, False] if model_name not in DEAD_MODELS_SEARCH else [False]
+        # Sur le Free Tier, les modèles 'lite' ne supportent pas Google Search : passage direct en mode sans Search
+        is_lite = "lite" in model_name.lower()
+        if is_lite or model_name in DEAD_MODELS_SEARCH:
+            modes_to_try = [False]
+        else:
+            modes_to_try = [True, False]
 
         for use_search in modes_to_try:
             mode_label = "avec Google Search" if use_search else "mode Direct (sans quota Search)"
@@ -931,6 +1368,20 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
                         print(f"  [Info] JSON mal formé sur {model_name} ({mode_label}), suite...")
                         continue
 
+                    # Fusion déterministe des sous-cartes avec ESPN API (UFC / Boxe) et le cache valide
+                    if espn_reference_events:
+                        events = merge_undercard_bouts(
+                            events,
+                            espn_reference_events,
+                            add_missing_events=(discipline_id == "ufc"),
+                        )
+                    if valid_cached_events:
+                        events = merge_undercard_bouts(
+                            events,
+                            valid_cached_events,
+                            add_missing_events=False,
+                        )
+
                     grounding_urls = extract_grounding_urls(response)
                     total_ev = len(events)
 
@@ -942,7 +1393,8 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
                             ev, ev_url, grounding_urls, discipline_id, total_ev
                         )
 
-                    print(f"  -> Succès ({model_name} - {mode_label}) : {len(events)} événement(s) extrait(s) pour [{discipline_id}].")
+                    total_bouts = sum(len(e.get("combats") or []) for e in events)
+                    print(f"  -> Succès ({model_name} - {mode_label}) : {len(events)} événement(s) et {total_bouts} combat(s) extrait(s) pour [{discipline_id}].")
                     cached_data[discipline_id] = events
                     return events, True
 
@@ -968,31 +1420,19 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
 
                 time.sleep(2)
 
-    if discipline_id == "ufc":
-        direct_ufc = fetch_espn_events_direct("mma", "ufc")
-        if direct_ufc:
-            for ev in direct_ufc:
-                ev["poster_url"] = resolve_event_poster(ev, ev["url_officielle"], [], discipline_id, len(direct_ufc))
-            print(f"  -> [Succès Mode Autonome ESPN] {len(direct_ufc)} événement(s) UFC extrait(s) directement.")
-            cached_data[discipline_id] = direct_ufc
-            return direct_ufc, True
+    if espn_reference_events:
+        for ev in espn_reference_events:
+            ev["poster_url"] = resolve_event_poster(ev, ev["url_officielle"], [], discipline_id, len(espn_reference_events))
+        print(f"  -> [Succès Mode Autonome ESPN] {len(espn_reference_events)} événement(s) [{discipline_id}] extrait(s) directement.")
+        cached_data[discipline_id] = espn_reference_events
+        return espn_reference_events, True
 
-    if discipline_id == "boxe-monde":
-        direct_box = fetch_espn_events_direct("boxing", "boxing")
-        if direct_box:
-            for ev in direct_box:
-                ev["poster_url"] = resolve_event_poster(ev, ev["url_officielle"], [], discipline_id, len(direct_box))
-            print(f"  -> [Succès Mode Autonome ESPN] {len(direct_box)} événement(s) Boxe extrait(s) directement.")
-            cached_data[discipline_id] = direct_box
-            return direct_box, True
-
-    if discipline_id in cached_data and cached_data[discipline_id]:
-        print(f"  [Secours Cache] Restauration des événements en cache pour [{discipline_id}].")
-        return clean_and_validate_events(cached_data[discipline_id]), False
+    if valid_cached_events:
+        print(f"  [Secours Cache] Restauration des {len(valid_cached_events)} événement(s) valides en cache pour [{discipline_id}].")
+        return valid_cached_events, False
 
     print(f"  [Info] Aucun résultat récupéré pour [{discipline_id}].")
     return [], False
-
 # ==============================================================================
 # 7. CONSTRUCTION DU HTML PAR SECTION À PARTIR DU JSON VÉRIFIÉ
 # ==============================================================================
@@ -1010,9 +1450,13 @@ def render_event_card_html(ev):
     presentation = html.escape(ev.get("presentation") or "")
     combats = ev.get("combats") or []
 
-    if date_str in date_paris:
+    ev_iso = ev.get("date_iso") or ""
+    today_iso = now_paris.strftime("%Y-%m-%d")
+    yesterday_iso = (now_paris + timedelta(days=-1)).strftime("%Y-%m-%d")
+
+    if ev_iso == today_iso or date_str in date_paris:
         status_badge = '<span class="today-pill">🔴 AUJOURD\'HUI</span>'
-    elif yesterday_str in date_paris:
+    elif ev_iso == yesterday_iso or yesterday_str in date_paris:
         status_badge = '<span class="yesterday-pill">⏮️ HIER / RÉCENT</span>'
     else:
         status_badge = ""
