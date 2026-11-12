@@ -4,10 +4,20 @@ on:
   schedule:
     # Exécution tous les jours à 08h30 UTC (09h30 CET / 10h30 CEST, après le reset quotidien Google de 09h00)
     - cron: '30 8 * * *'
-  workflow_dispatch: # Permet de lancer la mise à jour manuellement en 1 clic
+  workflow_dispatch:
+    inputs:
+      reset_cache:
+        description: 'Purger totalement le cache avant la mise à jour'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
+
+concurrency:
+  group: update-fight-calendar
+  cancel-in-progress: true
 
 jobs:
   update-calendar:
@@ -22,20 +32,29 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: 3. Installation des dépendances
         run: |
           python -m pip install --upgrade pip
-          pip install google-genai requests pytz
+          pip install -r requirements.txt
 
-      - name: 4. Exécution du script des Micro-Agents
+      - name: 4. Nettoyage optionnel du cache
+        if: ${{ github.event.inputs.reset_cache == 'true' }}
+        run: |
+          rm -f cache_calendar.json
+          echo "Ancien fichier cache_calendar.json supprimé avec succès."
+
+      - name: 5. Exécution du script des Micro-Agents
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PYTHONUNBUFFERED: "1"
         run: python main.py
 
-      - name: 5. Publication des mises à jour sur GitHub Pages
+      - name: 6. Publication des mises à jour sur GitHub Pages
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          touch cache_calendar.json
           git add index.html calendrier.html cache_calendar.json
           git diff --staged --quiet || (git commit -m "Mise à jour automatique du calendrier" && git pull --rebase origin main && git push origin main)
