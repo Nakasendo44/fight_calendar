@@ -160,7 +160,6 @@ MONTH_NAME_TO_NUM = {
     "december": 12, "dec": 12, "décembre": 12, "decembre": 12,
 }
 
-# Mois interdits dans les titres RSS (ex: "december", "january" quand on est en novembre)
 FORBIDDEN_MONTH_WORDS_RSS = [
     word for word, m_num in MONTH_NAME_TO_NUM.items()
     if len(word) >= 4 and m_num not in valid_months_int
@@ -284,62 +283,149 @@ def clean_html_to_text(raw_html, max_chars=24000):
     clean_lines = [line for line in lines if line]
     return "\n".join(clean_lines)[:max_chars]
 
-def filter_english_html_by_date_blocks(raw_html):
+def extract_boxlive_subpage_text(raw_html):
     """
-    Parcourt une page calendrier anglophone bloc de date par bloc de date.
-    Conserve uniquement les blocs dont la date appartient à la fenêtre J-1..J+7.
+    Sur les sous-pages box.live/fights/..., l'Undercard se trouve en bas de page après un très long
+    tableau de statistiques 'Tale of the Tape'. On extrait le haut (infos clés) + le bas (Undercard).
     """
-    if not raw_html:
-        return ""
+    full_txt = clean_html_to_text(raw_html, max_chars=45000)
+    if len(full_txt) <= 10000:
+        return full_txt
 
-    date_header_pattern = re.compile(
-        r"(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]+"
-        r"(?:"
-        r"(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)"
-        r"|"
-        r"(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\s+(\d{1,2})(?:st|nd|rd|th)?"
-        r")"
-        r"(?:[,\s]+(\d{4}))?",
-        flags=re.IGNORECASE
-    )
+    top_part = full_txt[:4500]
+    low_txt = full_txt.lower()
+    undercard_markers = ["undercard", "also on the", "fight card", "running order", "on the bill", "co-main"]
+    best_pos = -1
+    for marker in undercard_markers:
+        pos = low_txt.find(marker, 2000)
+        if pos != -1:
+            if best_pos == -1 or pos < best_pos:
+                best_pos = pos
 
-    matches = list(date_header_pattern.finditer(raw_html))
-    if len(matches) < 2:
-        return raw_html
+    if best_pos != -1:
+        start_idx = max(4500, best_pos - 400)
+        undercard_part = full_txt[start_idx : start_idx + 10000]
+        return top_part + "\n--- SECTION SOUS-CARTE (UNDERCARD) ---\n" + undercard_part
 
-    kept_chunks = []
-    for i, m in enumerate(matches):
-        day_str = m.group(1) or m.group(4)
-        month_str = (m.group(2) or m.group(3) or "").lower()
-        day_num = int(day_str)
-        month_num = MONTH_NAME_TO_NUM.get(month_str, 0)
+    return full_txt[:9000] + "\n" + full_txt[-5000:]
 
-        chunk_start = max(0, m.start() - 120)
-        chunk_end = matches[i + 1].start() if i + 1 < len(matches) else len(raw_html)
-
-        if (month_num, day_num) in valid_month_day_tuples:
-            kept_chunks.append(raw_html[chunk_start:chunk_end])
-
-    if kept_chunks:
-        return "\n".join(kept_chunks)
-    return raw_html
-
-def fetch_webpage_and_sublinks(url, link_pattern=None, max_subpages=10, max_chars=22000, subpage_chars=12000, filter_window_en=False):
+def fetch_rss_snippets(query, lang="en-US", country="US", max_items=22):
     """
-    Récupère le texte d'une page calendrier et suit les liens des sous-cartes de la semaine.
+    Récupère les articles Google News RSS de la semaine (cartes complètes, horaires, promoteurs)
+    en filtrant automatiquement tout article mentionnant un mois hors de la fenêtre J-1..J+7.
+    """
+    encoded_q = urllib.parse.quote(query)
+    rss_url = f"https://news.google.com/rss/search?q={encoded_q}&hl={lang}&gl={country}&ceid={country}:{lang.split('-')[0]}"
+    items_txt = []
+    try:
+        r = requests.get(rss_url, headers=HEADERS, timeout=8)
+        if r.status_code == 200:
+            root = ET.fromstring(r.content)
+            for item in root.findall(".//item"):
+                title = item.findtext("title") or ""
+                pub_date = item.findtext("pubDate") or ""
+                desc = clean_html_to_text(item.findtext("description") or "", 450)
+                combined_low = f"{title} {desc}".lower()
+
+                if any(re.search(rf"\b{re.escape(m_word)}\b", combined_low) for m_word in FORBIDDEN_MONTH_WORDS_RSS):
+                    continue
+
+                items_txt.append(f"- [{pub_date}] {title} :: {desc}")
+                if len(items_txt) >= max_items:
+                    break
+    except Exception:
+        pass
+    return "\n".join(items_txt)
+
+def fetch_boxlive_window_and_undercards(max_subpages=10):
+    """
+    Extrait les galas de la fenêtre J-1..J+7 sur box.live sans couper le début des cartes HTML,
+    ouvre chaque sous-page pour extraire le bloc Undercard, et lance une recherche RSS dédiée
+    sur chaque affiche trouvée pour garantir 100 % des combats de la sous-carte.
+    """
+    url = "https://box.live/upcoming-fights-schedule/"
+    combined_texts = []
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=12)
+        if r.status_code != 200 or not r.text:
+            return ""
+
+        raw_html = r.text
+        # On cherche la première date hors fenêtre (J+8 à J+45) pour couper uniquement la fin lointaine du calendrier
+        stop_pos = len(raw_html)
+        date_pattern = re.compile(
+            r"(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]+"
+            r"(?:(\d{1,2})(?:st|nd|rd|th)?\s+(January|February|March|April|May|June|July|August|September|October|November|December)"
+            r"|(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})(?:st|nd|rd|th)?)",
+            flags=re.IGNORECASE
+        )
+        for m in date_pattern.finditer(raw_html):
+            d_num = int(m.group(1) or m.group(4))
+            m_name = (m.group(2) or m.group(3) or "").lower()
+            m_num = MONTH_NAME_TO_NUM.get(m_name, 0)
+            if (m_num, d_num) not in valid_month_day_tuples and m.start() > 1500:
+                # Dès qu'on dépasse la fenêtre J+7, on coupe (avec une marge de sécurité)
+                stop_pos = m.start()
+                break
+
+        window_html = raw_html[:stop_pos]
+        main_txt = clean_html_to_text(window_html, max_chars=18000)
+        combined_texts.append(f"[CALENDRIER BOX.LIVE (FILTRÉ J-1 à J+7) {url}] :\n{main_txt}")
+
+        found_links = []
+        slug_fighters = []
+        link_regex = re.compile(r'href=["\']((?:https://box\.live)?/fights/([a-z0-9\-]+)/?)["\']', re.IGNORECASE)
+        for lm in link_regex.finditer(window_html):
+            sub_url = urllib.parse.urljoin(url, html.unescape(lm.group(1)))
+            slug = lm.group(2)
+            if sub_url not in found_links:
+                found_links.append(sub_url)
+                if "-vs-" in slug:
+                    parts = slug.split("-vs-")
+                    fa = parts[0].replace("-", " ").strip()
+                    fb = parts[1].replace("-", " ").strip()
+                    if fa and fb:
+                        slug_fighters.append((fa, fb))
+
+        for sub_u in found_links[:max_subpages]:
+            try:
+                sr = requests.get(sub_u, headers=HEADERS, timeout=8)
+                if sr.status_code == 200 and sr.text:
+                    sub_txt = extract_boxlive_subpage_text(sr.text)
+                    combined_texts.append(f"[FICHE & SOUS-CARTE BOX.LIVE {sub_u}] :\n{sub_txt}")
+            except Exception:
+                pass
+
+        # Enrichissement automatique des sous-cartes via RSS ciblé sur chaque Main Event détecté
+        undercard_rss_chunks = []
+        for fa, fb in slug_fighters[:8]:
+            q = f'"{fa}" "{fb}" ("undercard" OR "fight card" OR "full card" OR "co-main") when:14d'
+            snippet = fetch_rss_snippets(q, max_items=6)
+            if snippet:
+                undercard_rss_chunks.append(f"--- DÉTAILS SOUS-CARTE POUR {fa.upper()} VS {fb.upper()} ---\n{snippet}")
+        if undercard_rss_chunks:
+            combined_texts.append("[SOUS-CARTES DÉTAILLÉES EXTRAITES DE LA PRESSE SPÉCIALISÉE] :\n" + "\n".join(undercard_rss_chunks))
+
+    except Exception as e:
+        print(f"  [Info Box.live] {e}")
+    return "\n\n".join(combined_texts)
+
+def fetch_webpage_and_sublinks(url, link_pattern=None, max_subpages=8, max_chars=18000, subpage_chars=14000):
+    """
+    Récupère le texte complet d'une page officielle (ex: Zuffa Boxing sur ufc.com, Matchroom, BKFC, Glory, Rizin)
+    et suit les liens des cartes d'événements pour extraire tous les combats de la sous-carte.
     """
     combined_texts = []
     try:
         r = requests.get(url, headers=HEADERS, timeout=12)
         if r.status_code == 200 and r.text:
-            working_html = filter_english_html_by_date_blocks(r.text) if filter_window_en else r.text
-            main_txt = clean_html_to_text(working_html, max_chars=max_chars)
+            main_txt = clean_html_to_text(r.text, max_chars=max_chars)
             if main_txt:
-                combined_texts.append(f"[PAGE CALENDRIER {url}] :\n{main_txt}")
+                combined_texts.append(f"[PAGE OFFICIELLE {url}] :\n{main_txt}")
 
             if link_pattern:
                 found_links = []
-                for m in re.finditer(link_pattern, working_html, flags=re.IGNORECASE):
+                for m in re.finditer(link_pattern, r.text, flags=re.IGNORECASE):
                     sub_url = urllib.parse.urljoin(url, html.unescape(m.group(1)))
                     if sub_url not in found_links:
                         found_links.append(sub_url)
@@ -349,7 +435,7 @@ def fetch_webpage_and_sublinks(url, link_pattern=None, max_subpages=10, max_char
                         sr = requests.get(sub_u, headers=HEADERS, timeout=8)
                         if sr.status_code == 200 and sr.text:
                             sub_txt = clean_html_to_text(sr.text, max_chars=subpage_chars)
-                            combined_texts.append(f"[SOUS-CARTE COMPLÈTE {sub_u}] :\n{sub_txt}")
+                            combined_texts.append(f"[CARTE OFFICIELLE DÉTAILLÉE {sub_u}] :\n{sub_txt}")
                     except Exception:
                         pass
         else:
@@ -358,7 +444,7 @@ def fetch_webpage_and_sublinks(url, link_pattern=None, max_subpages=10, max_char
         print(f"  [Info Web {url}] {e}")
     return "\n\n".join(combined_texts)
 
-def fetch_boxmob_window_data(max_subpages=12, subpage_chars=14000):
+def fetch_boxmob_window_data(max_subpages=12, subpage_chars=15000):
     """
     Parcourt Boxmob.jp jour par jour, conserve uniquement les dates de la fenêtre J-1..J+7,
     et télécharge l'intégralité des sous-cartes (index.html?sid=...) de la semaine.
@@ -377,14 +463,13 @@ def fetch_boxmob_window_data(max_subpages=12, subpage_chars=14000):
         kept_blocks = []
         valid_sublinks = []
         seen_urls = set()
-        # Accepte les liens relatifs "index.html?sid=..." comme "/sp/schedule/index.html?sid=..."
         link_regex = re.compile(r'href=["\']([^"\']*index\.html\?sid=[0-9]+[^"\']*)["\']', re.IGNORECASE)
 
         if matches:
             for i, m in enumerate(matches):
                 m_num = int(m.group(1))
                 d_num = int(m.group(2))
-                block_start = max(0, m.start() - 80)
+                block_start = max(0, m.start() - 150)
                 block_end = matches[i + 1].start() if i + 1 < len(matches) else len(raw_html)
                 block_html = raw_html[block_start:block_end]
 
@@ -517,39 +602,13 @@ def fetch_espn_events_direct(sport_slug, league_slug):
         print(f"  [Info ESPN Direct] {e}")
     return extracted_events
 
-def fetch_rss_snippets(query, lang="en-US", country="US", max_items=22):
-    """
-    Récupère les articles Google News RSS de la semaine (cartes complètes, horaires, promoteurs)
-    en filtrant automatiquement tout article mentionnant un mois hors de la fenêtre J-1..J+7.
-    """
-    encoded_q = urllib.parse.quote(query)
-    rss_url = f"https://news.google.com/rss/search?q={encoded_q}&hl={lang}&gl={country}&ceid={country}:{lang.split('-')[0]}"
-    items_txt = []
-    try:
-        r = requests.get(rss_url, headers=HEADERS, timeout=8)
-        if r.status_code == 200:
-            root = ET.fromstring(r.content)
-            for item in root.findall(".//item"):
-                title = item.findtext("title") or ""
-                pub_date = item.findtext("pubDate") or ""
-                desc = clean_html_to_text(item.findtext("description") or "", 450)
-                combined_low = f"{title} {desc}".lower()
-
-                # Bloque les annonces de combats pour des mois hors-fenêtre (ex: "December", "January")
-                if any(re.search(rf"\b{ re.escape(m_word) }\b", combined_low) for m_word in FORBIDDEN_MONTH_WORDS_RSS):
-                    continue
-
-                items_txt.append(f"- [{pub_date}] {title} :: {desc}")
-                if len(items_txt) >= max_items:
-                    break
-    except Exception:
-        pass
-    return "\n".join(items_txt)
-
 def build_prefetched_context(discipline_id):
     """
-    Construit un dossier pré-filtré sur la fenêtre J-1..J+7 avec l'intégralité des sous-cartes
-    (API + Pages Calendriers + Sous-cartes + Flux RSS filtrés sans mois futurs).
+    Construit un dossier multi-sources complet sur la fenêtre J-1..J+7 incluant :
+    - Zuffa Boxing (ufc.com/zuffaboxing)
+    - Matchroom Boxing (matchroomboxing.com/events)
+    - Box.live + extraction du bas de page (Undercards) + recherche RSS par Main Event
+    - MF Pro / Misfits Boxing / DAZN / Queensberry / Top Rank / PBC / Golden Boy
     """
     chunks = []
     if discipline_id == "ufc":
@@ -568,56 +627,59 @@ def build_prefetched_context(discipline_id):
         if espn_box:
             chunks.append("DONNÉES ESPN BOXING API :\n" + json.dumps(espn_box, ensure_ascii=False, indent=2))
 
-        box_deep = fetch_webpage_and_sublinks(
-            "https://box.live/upcoming-fights-schedule/",
-            link_pattern=r'href=["\'](https://box\.live/fights/[^"\']+)["\']',
-            max_subpages=10,
-            max_chars=20000,
-            subpage_chars=12000,
-            filter_window_en=True,
+        # 1. ZUFFA BOXING OFFICIEL (ufc.com/zuffaboxing + sous-page official-fight-card)
+        zuffa_txt = fetch_webpage_and_sublinks(
+            "https://www.ufc.com/zuffaboxing",
+            link_pattern=r'href=["\']((?:https://www\.ufc\.com)?/news/zuffa-boxing-[^"\']*official-fight-card[^"\']*)["\']',
+            max_subpages=3,
+            max_chars=12000,
+            subpage_chars=15000,
         )
+        if zuffa_txt:
+            chunks.append("DONNÉES OFFICIELLES ZUFFA BOXING (UFC.COM) :\n" + zuffa_txt)
+
+        # 2. MATCHROOM BOXING OFFICIEL (matchroomboxing.com/events)
+        matchroom_txt = fetch_webpage_and_sublinks(
+            "https://www.matchroomboxing.com/events/",
+            link_pattern=r'href=["\'](https://www\.matchroomboxing\.com/events/[^"\']+)["\']',
+            max_subpages=4,
+            max_chars=12000,
+            subpage_chars=14000,
+        )
+        if matchroom_txt:
+            chunks.append("DONNÉES OFFICIELLES MATCHROOM BOXING :\n" + matchroom_txt)
+
+        # 3. BOX.LIVE CALENDRIER + EXTRACTION CIBLÉE DES SOUS-CARTES (BAS DE PAGE + RSS PAR AFFICHE)
+        box_deep = fetch_boxlive_window_and_undercards(max_subpages=10)
         if box_deep:
             chunks.append(box_deep)
 
-        uk_tv = fetch_webpage_and_sublinks(
-            "https://box.live/uk-boxing-tv-schedule/",
-            max_subpages=0,
-            max_chars=12000,
-            filter_window_en=True,
-        )
+        # 4. PAGES TV UK & US DE BOX.LIVE
+        uk_tv = fetch_webpage_and_sublinks("https://box.live/uk-boxing-tv-schedule/", max_subpages=0, max_chars=10000)
         if uk_tv:
             chunks.append(uk_tv)
-
-        us_tv = fetch_webpage_and_sublinks(
-            "https://box.live/us-boxing-tv-schedule/",
-            max_subpages=0,
-            max_chars=12000,
-            filter_window_en=True,
-        )
+        us_tv = fetch_webpage_and_sublinks("https://box.live/us-boxing-tv-schedule/", max_subpages=0, max_chars=10000)
         if us_tv:
             chunks.append(us_tv)
 
-        # Flux RSS filtrés (garantit la présence de Matchroom, MF Pro / Misfits, Queensberry, DAZN, etc.)
-        rss_box_1 = fetch_rss_snippets(
-            '("Matchroom" OR "Queensberry" OR "Misfits" OR "MF Pro" OR "DAZN" OR "Ring") boxing fight card undercard schedule when:7d',
-            max_items=25
-        )
-        rss_box_2 = fetch_rss_snippets(
-            '("Top Rank" OR "PBC" OR "Golden Boy" OR "Boxxer" OR "ProBox") boxing full fight card schedule when:7d',
+        # 5. FLUX RSS CIBLÉS PAR PROMOTEUR (MF Pro / Misfits, Zuffa Boxing, Matchroom, Queensberry, DAZN, etc.)
+        rss_zuffa_mf = fetch_rss_snippets(
+            '("Zuffa Boxing" OR "MF Pro" OR "Misfits Boxing" OR "Viddal Riley") ("fight card" OR "undercard" OR "schedule") when:10d',
             max_items=20
         )
-        if rss_box_1 or rss_box_2:
-            chunks.append("CARTES & SOUS-CARTES BOXE MONDE (PRESSE FILTRÉE CETTE SEMAINE) :\n" + rss_box_1 + "\n" + rss_box_2)
+        rss_majors = fetch_rss_snippets(
+            '("Matchroom" OR "Queensberry" OR "Top Rank" OR "PBC" OR "Golden Boy" OR "DAZN") ("full fight card" OR "undercard") boxing when:7d',
+            max_items=20
+        )
+        if rss_zuffa_mf or rss_majors:
+            chunks.append("CARTES COMPLÈTES & SOUS-CARTES PRESSE (ZUFFA, MF PRO, MATCHROOM, DAZN) :\n" + rss_zuffa_mf + "\n" + rss_majors)
 
     elif discipline_id == "boxe-japon":
-        jp_deep = fetch_boxmob_window_data(max_subpages=12, subpage_chars=14000)
+        jp_deep = fetch_boxmob_window_data(max_subpages=12, subpage_chars=15000)
         if jp_deep:
             chunks.append(jp_deep)
-        bn_txt = fetch_webpage_and_sublinks("https://boxingnews.jp/", max_subpages=0, max_chars=8000)
-        if bn_txt:
-            chunks.append(bn_txt)
         rss_jp = fetch_rss_snippets(
-            "プロボクシング 後楽園ホール OR フェニックスバトル OR ダイナミックグローブ OR KNOCK OUT BOXING OR 興行 when:7d",
+            "後楽園ホール OR フェニックスバトル OR ダイナミックグローブ OR 興行 プロボクシング when:7d",
             lang="ja", country="JP", max_items=20
         )
         if rss_jp:
@@ -644,7 +706,6 @@ def build_prefetched_context(discipline_id):
             max_subpages=3,
             max_chars=16000,
             subpage_chars=14000,
-            filter_window_en=True,
         )
         if bk_txt:
             chunks.append(bk_txt)
@@ -659,7 +720,6 @@ def build_prefetched_context(discipline_id):
             max_subpages=3,
             max_chars=16000,
             subpage_chars=14000,
-            filter_window_en=True,
         )
         if gl_txt:
             chunks.append(gl_txt)
@@ -681,22 +741,24 @@ AGENTS_CONFIG = [
         "fallback_url": "https://box.live/upcoming-fights-schedule/",
         "empty_msg": "Aucun grand gala international programmé dans la fenêtre des 7 prochains jours.",
         "search_hint": (
-            "Recherche tous les galas majeurs de boxe anglaise prévus dans la fenêtre stricte du "
-            + valid_dates_fr[0] + " au " + valid_dates_fr[-1] + " "
-            "(Matchroom Boxing, Queensberry, MF Pro / Misfits Boxing / DAZN X Series, Top Rank, PBC, Golden Boy, "
-            "Riyadh Season / The Ring, Boxxer, MVP, ProBox TV, Zuffa) et leur carte complète (full fight card / undercard) sur : "
-            "box.live, tapology.com/fightcenter, matchroomboxing.com/events, queensberry.co.uk, dazn.com, espn.com/boxing/schedule."
+            "Recherche TOUS les galas majeurs de boxe anglaise prévus entre le "
+            + valid_dates_fr[0] + " et le " + valid_dates_fr[-1] + " inclus, "
+            "notamment : Matchroom Boxing, Zuffa Boxing (Riyadh Season / Paramount+ / Sky Sports), "
+            "MF Pro / Misfits Boxing (DAZN), Queensberry, Top Rank, PBC, Golden Boy, Boxxer, ProBox TV, MVP. "
+            "Pour chaque gala, extrais impérativement toute la sous-carte (Main Card + Prelims / Undercard)."
         ),
         "specific_rules": (
-            "- PÉRIMÈTRE DES GALAS MAJEURS : Inclus impérativement tous les galas organisés par Matchroom, Queensberry, "
-            "MF Pro / Misfits Boxing (DAZN), Top Rank, PBC, Golden Boy, Riyadh Season / The Ring, Boxxer, MVP, ProBox TV, "
-            "ainsi que tout gala mettant en jeu un titre mondial (WBA, WBC, IBF, WBO, IBO, The Ring) ou européen (EBU), "
-            "ou diffusé sur DAZN, ESPN, Sky Sports, TNT Sports, Prime Video, Canal+ ou RMC Sport.\n"
-            "- VÉRIFICATION STRICTE DES DATES ET LIEUX : Ne confonds JAMAIS la date d'une annonce pour décembre ou janvier "
-            "avec les galas ayant réellement lieu entre le " + valid_dates_fr[0] + " et le " + valid_dates_fr[-1] + ". "
-            "Ne mélange jamais les combats de deux galas différents.\n"
-            "- SOUS-CARTE COMPLÈTE OBLIGATOIRE : Pour chaque gala retenu, liste TOUS les combats programmés sur la carte (Main Event, Co-Main Event et toute l'Undercard).\n"
-            "- INTERDICTION DES 'vs. N/C' ou 'TBA' : Indique toujours le Prénom et le Nom des deux boxeurs."
+            "- PÉRIMÈTRE DES GALAS MAJEURS À INCLURE ABSOLUMENT : Inclus tous les galas programmés cette semaine par "
+            "Matchroom Boxing (ex: Pacheco vs Fulghum, Teremoana vs Ahio), "
+            "Zuffa Boxing (ex: Zuffa Boxing 13 Adames vs Warburton à Riyad sur Paramount+ / Sky Sports), "
+            "MF Pro / Misfits Boxing (ex: Viddal Riley vs Seydi Coupe à l'OVO Arena Wembley sur DAZN), "
+            "Queensberry, Top Rank, PBC, Golden Boy, Riyadh Season / The Ring, Boxxer, MVP et ProBox TV.\n"
+            "- SOUS-CARTES COMPLÈTES OBLIGATOIRES : Il est INTERDIT de ne mettre qu'un seul combat (le Main Event) quand une sous-carte existe. "
+            "Tu dois lister TOUS les combats connus de la carte :\n"
+            "  * Exemple pour Zuffa Boxing : inclus le Main Event, Co-Main Event, Main Card et les Prelims (9 combats).\n"
+            "  * Exemple pour MF Pro (Riley vs Coupe) : inclus Zelfa Barrett vs Gavin Gwynne, Kieron Molloy vs Steve Suppan, Dan Toward vs Jak Corrie, Yaser Al Ghena vs Ben Marksby, Tom Welland vs Jack Dillingham.\n"
+            "  * Exemple pour Matchroom (Pacheco vs Fulghum) : inclus le Co-Main Event Anthony Olascuaga vs Yuberjen Martinez (titre mondial WBO mouches), Charlie Sheehy, David Adeleye vs Alexander Flores, etc.\n"
+            "- VÉRIFICATION STRICTE DES DATES ET LIEUX : Ne mélange jamais deux galas différents et n'inclus aucun gala de décembre."
         ),
     },
     {
@@ -707,16 +769,15 @@ AGENTS_CONFIG = [
         "fallback_url": "https://boxmob.jp/sp/schedule/",
         "empty_msg": "Aucun gala professionnel japonais répertorié sur cette période de 7 jours.",
         "search_hint": (
-            f"Recherche le calendrier complet de boxe professionnelle japonaise (プロボクシング 日程 結果 / {', '.join(valid_dates_jp)}) sur : "
-            "boxmob.jp (Boxing Mobile), boxingnews.jp, tapology.com/fightcenter, ibu4gin.net, asianboxing.info, box.live. "
-            "Cherche à la fois les grands galas en arènes (Ariake Arena, Yokohama Arena, Saitama Super Arena, Osaka, Tokyo) "
-            "et les réunions du Korakuen Hall (後楽園ホール : KNOCK OUT BOXING, Phoenix Battle, Dynamic Glove, Dynamite Glove, Who's Next, Lemino Boxing, U-NEXT)."
+            f"Recherche le calendrier complet de boxe professionnelle ayant lieu PHYSIQUEMENT AU JAPON ({', '.join(valid_dates_jp)}) sur : "
+            "boxmob.jp (Boxing Mobile), jbc.or.jp, tapology.com/fightcenter. "
+            "Cherche les galas dans les arènes japonaises (Ariake Arena, Yokohama, Osaka, Nagoya, Aichi) "
+            "et toutes les réunions du Korakuen Hall à Tokyo (後楽園ホール)."
         ),
         "specific_rules": (
-            "- HIÉRARCHIE ET EXHAUSTIVITÉ JAPON :\n"
-            "  1. Priorité absolue aux grands galas en arènes et championnats mondiaux/internationaux diffusés sur Prime Video JP, Lemino, U-NEXT, WOWOW ou ABEMA.\n"
-            "  2. Inclus impérativement toutes les réunions majeures et championnats JBC / OPBF / WBO Asia-Pacific (KNOCK OUT BOXING, Phoenix Battle, Dynamic Glove, Who's Next).\n"
-            "  3. Pour CHAQUE gala japonais retenu, extrais TOUS les combats de la sous-carte présents dans les blocs [SOUS-CARTE COMPLÈTE BOXMOB] (pas seulement le Main Event).\n"
+            "- EXCLUSIVITÉ GÉOGRAPHIQUE JAPON : N'inclus QUE les galas qui se déroulent physiquement au Japon (Tokyo, Osaka, Aichi, Yokohama, etc.). "
+            "N'inclus JAMAIS un gala ayant lieu aux Philippines (ex: Cebu), aux États-Unis (ex: Anthony Olascuaga vs Yuberjen Martinez qui a lieu en Californie sur la carte Pacheco vs Fulghum) ou en Europe, même si un média japonais en parle.\n"
+            "- SOUS-CARTES COMPLÈTES BOXMOB : Pour chaque réunion japonaise retenue dans les blocs [SOUS-CARTE COMPLÈTE BOXMOB], extrais TOUS les combats listés sur la carte (pas uniquement le Main Event).\n"
             "- INTERDICTION DES 'vs. N/C' : Ne crée jamais de ligne de combat avec 'vs. N/C'.\n"
             "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn)."
         ),
@@ -761,7 +822,7 @@ AGENTS_CONFIG = [
         "fallback_url": "https://www.bkfc.com/events",
         "empty_msg": "Aucun événement BKFC programmé cette semaine.",
         "search_hint": (
-            "Recherche le calendrier officiel Bare Knuckle Fighting Championship (BKFC numérotés et BKFC Fight Night) sur : "
+            "Recherche le calendrier officiel Bare Knuckle Fighting Championship (BKFC numérotés et BKFC Fight Night, ex: BKFC Myrtle Beach) sur : "
             "bkfc.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
@@ -781,7 +842,7 @@ AGENTS_CONFIG = [
             "glorykickboxing.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
-            "- Liste tous les combats annoncés (tournois Grand Prix, championnats du monde Glory, Superfights et Prelims)."
+            "- Liste tous les combats annoncés uniquement si l'événement tombe dans la fenêtre des 7 prochains jours (attention : Glory Collision 10 a lieu en décembre, ne l'inclus pas en novembre)."
         ),
     },
 ]
@@ -824,7 +885,7 @@ def make_svg_banner(bg_start, bg_end, accent_color, main_title, subtitle, letter
 FIXED_PROMOTER_BANNERS = {
     "matchroom": make_svg_banner("#141414", "#050505", "#E5E5E5", "MATCHROOM", "B O X I N G", "8"),
     "queensberry": make_svg_banner("#1A140B", "#080604", "#D4AF37", "QUEENSBERRY", "P R O M O T I O N S", "6"),
-    "misfits": make_svg_banner("#1D1908", "#080702", "#F5C518", "M F   P R O", "MISFITS BOXING • DAZN X SERIES", "8"),
+    "misfits": make_svg_banner("#1D1908", "#080702", "#F5C518", "M F   P R O", "MISFITS BOXING • DAZN", "8"),
     "top rank": make_svg_banner("#1B120C", "#090604", "#C89D54", "TOP RANK", "B O X I N G", "8"),
     "golden boy": make_svg_banner("#1F1709", "#0A0703", "#E6B84D", "GOLDEN BOY", "P R O M O T I O N S", "7"),
     "pbc": make_svg_banner("#121824", "#06080E", "#D4AF37", "P B C", "PREMIER BOXING CHAMPIONS", "10"),
@@ -832,7 +893,7 @@ FIXED_PROMOTER_BANNERS = {
     "dazn": make_svg_banner("#161616", "#050505", "#F7D388", "DAZN BOXING", "WORLD CHAMPIONSHIP NIGHT", "8"),
     "lemino": make_svg_banner("#101B2B", "#060A11", "#E2B049", "LEMINO BOXING", "PHOENIX BATTLE TOKYO", "7"),
     "u-next": make_svg_banner("#141A24", "#07090E", "#D4AF37", "U-NEXT BOXING", "KORAKUEN HALL CHAMPIONSHIP", "6"),
-    "zuffa": make_svg_banner("#220D0D", "#0A0404", "#D20A0A", "ZUFFA BOXING", "UFC FIGHT PASS", "6"),
+    "zuffa": make_svg_banner("#220D0D", "#0A0404", "#D20A0A", "ZUFFA BOXING", "RIYADH SEASON • PARAMOUNT+", "6"),
     "ufc": make_svg_banner("#260B0B", "#090303", "#D20A0A", "U F C", "ULTIMATE FIGHTING CHAMPIONSHIP", "14"),
     "rizin": make_svg_banner("#1A1326", "#08050E", "#E5C158", "R I Z I N", "FIGHTING FEDERATION", "12"),
     "bkfc": make_svg_banner("#1E190A", "#090703", "#F5C518", "B K F C", "BARE KNUCKLE FIGHTING CHAMPIONSHIP", "12"),
@@ -848,9 +909,6 @@ def is_url_allowed_for_poster(url):
     return not any(b in low for b in BLOCKED_IMAGE_DOMAINS)
 
 def is_valid_poster_image(img_url):
-    """
-    Vérifie que l'URL pointe réellement vers un fichier image (et non vers une page HTML comme 'https://boxingnews.jp/').
-    """
     if not img_url or not img_url.startswith("http"):
         return False
     low = img_url.lower()
@@ -969,6 +1027,7 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
 
     gala_context = f"{ev.get('nom_gala', '')} {ev.get('diffuseur_origine', '')} {discipline_id}".lower()
     promoter_sites = [
+        ("zuffa", "https://www.ufc.com/zuffaboxing", "zuffa"),
         ("matchroom", "https://www.matchroomboxing.com/", "matchroom"),
         ("queensberry", "https://www.queensberry.co.uk/", "queensberry"),
         ("misfits", "", "misfits"),
@@ -986,7 +1045,6 @@ def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events
         ("knock out boxing", "", "u-next"),
         ("dynamic glove", "", "u-next"),
         ("dazn", "", "dazn"),
-        ("zuffa", "https://www.ufcfightpass.com/", "zuffa"),
         ("bkfc", "https://www.bkfc.com/events", "bkfc"),
         ("ufc", "https://www.ufc.com/events", "ufc"),
         ("rizin", "https://jp.rizinff.com/", "rizin"),
@@ -1050,7 +1108,6 @@ def extract_grounding_urls(response):
     return urls
 
 def extract_iso_date_fallback(date_paris_str):
-    """Extrait une date YYYY-MM-DD depuis une chaîne 'dd/mm/yyyy' si date_iso est manquant."""
     if not date_paris_str:
         return None
     matches = re.findall(r"(\d{2})/(\d{2})/(\d{4})", str(date_paris_str))
@@ -1059,12 +1116,27 @@ def extract_iso_date_fallback(date_paris_str):
         return f"{y_str}-{m_str}-{d_str}"
     return None
 
-def clean_and_validate_events(events_list):
+def is_location_in_japan(lieu_str):
+    """Vérifie qu'un événement de la section boxe-japon a bien lieu physiquement au Japon."""
+    if not lieu_str:
+        return True
+    low = lieu_str.lower()
+    non_japan_places = [
+        "philippines", "cebu", "manila", "usa", "états-unis", "etats-unis",
+        "california", "carson", "las vegas", "new york", "london", "londres",
+        "uk", "royaume-uni", "riyadh", "riyad", "arabie", "australia", "melbourne", "mexico"
+    ]
+    if any(p in low for p in non_japan_places):
+        return False
+    return True
+
+def clean_and_validate_events(events_list, discipline_id=""):
     """
     1. Rejette strictement tout événement dont la date n'est pas dans la fenêtre J-1 à J+7 (VALID_DATES_ISO_SET).
-    2. Formate automatiquement 'Nuit du Samedi X au Dimanche Y' pour les galas nocturnes (00h00 - 06h59 Paris).
-    3. Supprime tout combat dont l'un des deux adversaires est 'N/C', 'TBA', 'TBD' ou vide.
-    4. Trie les événements par ordre chronologique strict.
+    2. Pour 'boxe-japon', rejette tout événement ayant lieu hors du Japon (ex: Philippines, USA) ou concernant Olascuaga (qui boxe en Californie).
+    3. Formate automatiquement 'Nuit du Samedi X au Dimanche Y' pour les galas nocturnes (00h00 - 06h59 Paris).
+    4. Supprime tout combat dont l'un des deux adversaires est 'N/C', 'TBA', 'TBD' ou vide.
+    5. Trie les événements par ordre chronologique strict.
     """
     if not isinstance(events_list, list):
         return []
@@ -1083,6 +1155,13 @@ def clean_and_validate_events(events_list):
         if raw_iso not in VALID_DATES_ISO_SET:
             print(f"  [Filtre Temporel] Événement rejeté (hors fenêtre {valid_dates_iso[0]}..{valid_dates_iso[-1]}) : {ev.get('nom_gala')} (date_iso={raw_iso})")
             continue
+
+        if discipline_id == "boxe-japon":
+            lieu_check = ev.get("lieu") or ""
+            gala_check = (ev.get("nom_gala") or "").lower()
+            if not is_location_in_japan(lieu_check) or "olascuaga" in gala_check:
+                print(f"  [Filtre Géographique Japon] Événement hors Japon rejeté : {ev.get('nom_gala')} ({lieu_check})")
+                continue
 
         ev["date_iso"] = raw_iso
 
@@ -1167,10 +1246,6 @@ EVENT_JSON_SCHEMA = {
 }
 
 def call_gemini_smart(model_name, prompt, target_tokens, use_search_tool):
-    """
-    En mode Google Search, on n'impose pas response_schema pour laisser le modèle exécuter
-    ses requêtes de recherche web sans blocage. En mode Direct, on active response_schema.
-    """
     cfg_kwargs = {
         "temperature": 0.1,
         "max_output_tokens": target_tokens,
@@ -1201,7 +1276,7 @@ def call_gemini_smart(model_name, prompt, target_tokens, use_search_tool):
             )
         raise err
 
-def parse_agent_json(raw_text):
+def parse_agent_json(raw_text, discipline_id=""):
     if not raw_text:
         return None
     cleaned = raw_text.replace("```json", "").replace("```", "").strip()
@@ -1215,9 +1290,9 @@ def parse_agent_json(raw_text):
         try:
             data = json.loads(candidate)
             if isinstance(data, dict):
-                return clean_and_validate_events(data.get("evenements", []))
+                return clean_and_validate_events(data.get("evenements", []), discipline_id)
             if isinstance(data, list):
-                return clean_and_validate_events(data)
+                return clean_and_validate_events(data, discipline_id)
         except Exception:
             pass
 
@@ -1229,7 +1304,7 @@ def parse_agent_json(raw_text):
         try:
             data = json.loads(candidate)
             if isinstance(data, list):
-                return clean_and_validate_events(data)
+                return clean_and_validate_events(data, discipline_id)
         except Exception:
             pass
 
@@ -1242,7 +1317,7 @@ def parse_agent_json(raw_text):
                 try:
                     data = json.loads(attempt)
                     if isinstance(data, dict) and "evenements" in data:
-                        return clean_and_validate_events(data["evenements"])
+                        return clean_and_validate_events(data["evenements"], discipline_id)
                 except Exception:
                     pass
             last_complete_bout = cleaned.rfind("}", first_brace, last_complete_bout)
@@ -1257,7 +1332,7 @@ GENERIC_EVENT_WORDS = {
     "championship", "arena", "hall", "center", "centre", "stadium",
     "matchroom", "queensberry", "toprank", "golden", "premier", "rizin",
     "glory", "bkfc", "landmark", "dynamic", "glove", "phoenix", "battle",
-    "misfits", "series"
+    "misfits", "series", "zuffa"
 }
 
 def extract_fighter_tokens(text):
@@ -1356,14 +1431,14 @@ def run_micro_agent(agent_cfg, cached_data):
     fallback_url = agent_cfg.get("fallback_url", "https://box.live/upcoming-fights-schedule/")
     print(f"\n--- Lancement Micro-Agent [{discipline_id}] (Plafond : {target_tokens} tokens) ---")
 
-    valid_cached_events = clean_and_validate_events(cached_data.get(discipline_id, []))
+    valid_cached_events = clean_and_validate_events(cached_data.get(discipline_id, []), discipline_id)
     cached_data[discipline_id] = valid_cached_events
 
     espn_reference_events = []
     if discipline_id == "ufc":
-        espn_reference_events = clean_and_validate_events(fetch_espn_events_direct("mma", "ufc"))
+        espn_reference_events = clean_and_validate_events(fetch_espn_events_direct("mma", "ufc"), discipline_id)
     elif discipline_id == "boxe-monde":
-        espn_reference_events = clean_and_validate_events(fetch_espn_events_direct("boxing", "boxing"))
+        espn_reference_events = clean_and_validate_events(fetch_espn_events_direct("boxing", "boxing"), discipline_id)
 
     live_web_context = build_prefetched_context(discipline_id)
 
@@ -1378,8 +1453,8 @@ CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
 - FILTRE TEMPOREL STRICT : Seuls les événements ayant réellement lieu dans la fenêtre {DATE_WINDOW_STR} sont autorisés. Si un combat annoncé dans l'actualité a lieu à une date ultérieure (en décembre ou plus tard), IL EST STRICTEMENT INTERDIT de l'inclure ou de lui attribuer la date d'un autre gala.
 - CHAMP 'date_iso' OBLIGATOIRE : Indique toujours la date de la soirée où commence le gala au format YYYY-MM-DD (ex: "2026-11-14" pour un gala dans la nuit du Samedi 14 au Dimanche 15). Cette date doit obligatoirement figurer parmi : {', '.join(valid_dates_iso)}.
-- INTERDICTION DE RÉSUMER LES SOUS-CARTES : Tu dois extraire 100 % des combats connus de chaque carte (Main Event, Co-Main Event, Main Card, Prelims, Early Prelims, Undercard). S'il y a 6, 10 ou 14 combats programmés sur un gala, tu DOIS inclure tous ces combats dans le tableau "combats".
-- CONCISION SUR LES PRELIMS POUR ÉVITER LA COUPURE JSON : Pour le Main Event et le Co-Main Event, rédige une "enjeu_et_analyse" complète (1 à 2 phrases). Pour tous les autres combats de la sous-carte (Main Card / Prelims / Undercard), rédige une "enjeu_et_analyse" très courte (maximum 12 mots) afin d'économiser les jetons et de lister tous les combats sans exception.
+- INTERDICTION DE RÉSUMER LES SOUS-CARTES : Tu dois extraire 100 % des combats connus de chaque carte (Main Event, Co-Main Event, Main Card, Prelims, Early Prelims, Undercard) présents dans les données pré-collectées ET via ta recherche. Ne renvoie jamais un gala avec seulement 1 combat si d'autres combats de la carte sont mentionnés dans le contexte.
+- CONCISION SUR LES PRELIMS POUR ÉVITER LA COUPURE JSON : Pour le Main Event et le Co-Main Event, rédige une "enjeu_et_analyse" complète (1 à 2 phrases). Pour tous les autres combats de la sous-carte (Main Card / Prelims / Undercard), rédige une "enjeu_et_analyse" très courte (maximum 10 mots) afin d'économiser les jetons et de lister tous les combats sans exception.
 - INTERDICTION ABSOLUE DES ADVERSAIRES "N/C" OU "TBA" : Chaque combat listé dans "combats" DOIT avoir le Prénom et Nom de combattant_a ET le Prénom et Nom de combattant_b.
 - CHAMP 'poster_url' : Indique uniquement une URL d'image directe (.jpg, .png, .webp) ou laisse une chaîne vide "". Ne mets JAMAIS l'URL d'une page web HTML dans 'poster_url'.
 - DOUBLE INDICATION HORAIRE (HEURE DE PARIS) :
@@ -1387,7 +1462,7 @@ CONSIGNES IMPÉRATIVES :
   2. 'heure_ringwalk_paris' : Heure annoncée ou estimée de la marche vers le ring (ringwalk) du Main Event à l'heure de Paris (ex: "vers 23h30", "vers 05h00 (estimation)").
 - Convertis tous les poids en kilogrammes (ex: "-63,5 kg") et les tailles en mètres (ex: "1m78").
 
-DONNÉES EN DIRECT PRÉ-COLLECTÉES PAR LE SYSTÈME (CONTIENT LES PAGES PRINCIPALES ET SOUS-CARTES) :
+DONNÉES EN DIRECT PRÉ-COLLECTÉES PAR LE SYSTÈME (CONTIENT LES PAGES OFFICIELLES, ZUFFA, MATCHROOM, BOX.LIVE, BOXMOB ET SOUS-CARTES) :
 {live_web_context if live_web_context else "Aucune donnée pré-collectée, utilise ta recherche."}
 
 FORMAT DE SORTIE OBLIGATOIRE :
@@ -1428,7 +1503,7 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
 """
 
     active_candidates = [m for m in AVAILABLE_MODELS if m not in DEAD_MODELS_TOTAL]
-    always_active_disciplines = {"boxe-monde", "boxe-japon"}
+    always_active_disciplines = {"boxe-monde"}
     empty_fallback_candidate = None
 
     for model_name in active_candidates:
@@ -1445,7 +1520,7 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
                 response = call_gemini_smart(model_name, base_prompt, target_tokens, use_search)
 
                 if response and getattr(response, "text", None):
-                    events = parse_agent_json(response.text)
+                    events = parse_agent_json(response.text, discipline_id)
                     if events is None:
                         print(f"  [Info] JSON mal formé sur {model_name} ({mode_label}), suite...")
                         continue
@@ -1463,7 +1538,6 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
                             add_missing_events=False,
                         )
 
-                    # Si 0 événement trouvé sur une discipline qui a toujours des galas chaque semaine, on tente le mode suivant
                     if not events and discipline_id in always_active_disciplines:
                         print(f"  [Info] 0 événement retourné sur {model_name} ({mode_label}) pour [{discipline_id}], essai suivant...")
                         empty_fallback_candidate = []
