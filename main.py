@@ -351,7 +351,6 @@ def fetch_boxlive_window_and_undercards(max_subpages=10):
             return ""
 
         raw_html = r.text
-        # On cherche la première date hors fenêtre (J+8 à J+45) pour couper uniquement la fin lointaine du calendrier
         stop_pos = len(raw_html)
         date_pattern = re.compile(
             r"(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]+"
@@ -364,7 +363,6 @@ def fetch_boxlive_window_and_undercards(max_subpages=10):
             m_name = (m.group(2) or m.group(3) or "").lower()
             m_num = MONTH_NAME_TO_NUM.get(m_name, 0)
             if (m_num, d_num) not in valid_month_day_tuples and m.start() > 1500:
-                # Dès qu'on dépasse la fenêtre J+7, on coupe (avec une marge de sécurité)
                 stop_pos = m.start()
                 break
 
@@ -396,7 +394,6 @@ def fetch_boxlive_window_and_undercards(max_subpages=10):
             except Exception:
                 pass
 
-        # Enrichissement automatique des sous-cartes via RSS ciblé sur chaque Main Event détecté
         undercard_rss_chunks = []
         for fa, fb in slug_fighters[:8]:
             q = f'"{fa}" "{fb}" ("undercard" OR "fight card" OR "full card" OR "co-main") when:14d'
@@ -412,8 +409,7 @@ def fetch_boxlive_window_and_undercards(max_subpages=10):
 
 def fetch_webpage_and_sublinks(url, link_pattern=None, max_subpages=8, max_chars=18000, subpage_chars=14000):
     """
-    Récupère le texte complet d'une page officielle (ex: Zuffa Boxing sur ufc.com, Matchroom, BKFC, Glory, Rizin)
-    et suit les liens des cartes d'événements pour extraire tous les combats de la sous-carte.
+    Récupère le texte complet d'une page officielle et suit les liens des cartes d'événements.
     """
     combined_texts = []
     try:
@@ -585,6 +581,7 @@ def fetch_espn_events_direct(sport_slug, league_slug):
 
             extracted_events.append({
                 "nom_gala": ev_name,
+                "promoteur": "UFC" if league_slug == "ufc" else "World Boxing",
                 "date_iso": date_iso_p,
                 "date_paris": date_p_str,
                 "lieu": lieu_str,
@@ -603,13 +600,6 @@ def fetch_espn_events_direct(sport_slug, league_slug):
     return extracted_events
 
 def build_prefetched_context(discipline_id):
-    """
-    Construit un dossier multi-sources complet sur la fenêtre J-1..J+7 incluant :
-    - Zuffa Boxing (ufc.com/zuffaboxing)
-    - Matchroom Boxing (matchroomboxing.com/events)
-    - Box.live + extraction du bas de page (Undercards) + recherche RSS par Main Event
-    - MF Pro / Misfits Boxing / DAZN / Queensberry / Top Rank / PBC / Golden Boy
-    """
     chunks = []
     if discipline_id == "ufc":
         espn_ufc = fetch_espn_events_direct("mma", "ufc")
@@ -627,7 +617,6 @@ def build_prefetched_context(discipline_id):
         if espn_box:
             chunks.append("DONNÉES ESPN BOXING API :\n" + json.dumps(espn_box, ensure_ascii=False, indent=2))
 
-        # 1. ZUFFA BOXING OFFICIEL (ufc.com/zuffaboxing + sous-page official-fight-card)
         zuffa_txt = fetch_webpage_and_sublinks(
             "https://www.ufc.com/zuffaboxing",
             link_pattern=r'href=["\']((?:https://www\.ufc\.com)?/news/zuffa-boxing-[^"\']*official-fight-card[^"\']*)["\']',
@@ -638,7 +627,6 @@ def build_prefetched_context(discipline_id):
         if zuffa_txt:
             chunks.append("DONNÉES OFFICIELLES ZUFFA BOXING (UFC.COM) :\n" + zuffa_txt)
 
-        # 2. MATCHROOM BOXING OFFICIEL (matchroomboxing.com/events)
         matchroom_txt = fetch_webpage_and_sublinks(
             "https://www.matchroomboxing.com/events/",
             link_pattern=r'href=["\'](https://www\.matchroomboxing\.com/events/[^"\']+)["\']',
@@ -649,12 +637,10 @@ def build_prefetched_context(discipline_id):
         if matchroom_txt:
             chunks.append("DONNÉES OFFICIELLES MATCHROOM BOXING :\n" + matchroom_txt)
 
-        # 3. BOX.LIVE CALENDRIER + EXTRACTION CIBLÉE DES SOUS-CARTES (BAS DE PAGE + RSS PAR AFFICHE)
         box_deep = fetch_boxlive_window_and_undercards(max_subpages=10)
         if box_deep:
             chunks.append(box_deep)
 
-        # 4. PAGES TV UK & US DE BOX.LIVE
         uk_tv = fetch_webpage_and_sublinks("https://box.live/uk-boxing-tv-schedule/", max_subpages=0, max_chars=10000)
         if uk_tv:
             chunks.append(uk_tv)
@@ -662,9 +648,8 @@ def build_prefetched_context(discipline_id):
         if us_tv:
             chunks.append(us_tv)
 
-        # 5. FLUX RSS CIBLÉS PAR PROMOTEUR (MF Pro / Misfits, Zuffa Boxing, Matchroom, Queensberry, DAZN, etc.)
         rss_zuffa_mf = fetch_rss_snippets(
-            '("Zuffa Boxing" OR "MF Pro" OR "Misfits Boxing" OR "Viddal Riley") ("fight card" OR "undercard" OR "schedule") when:10d',
+            '("Zuffa Boxing" OR "MF Pro" OR "Misfits Boxing" OR "Boxxer" OR "Viddal Riley") ("fight card" OR "undercard" OR "schedule") when:10d',
             max_items=20
         )
         rss_majors = fetch_rss_snippets(
@@ -672,14 +657,14 @@ def build_prefetched_context(discipline_id):
             max_items=20
         )
         if rss_zuffa_mf or rss_majors:
-            chunks.append("CARTES COMPLÈTES & SOUS-CARTES PRESSE (ZUFFA, MF PRO, MATCHROOM, DAZN) :\n" + rss_zuffa_mf + "\n" + rss_majors)
+            chunks.append("CARTES COMPLÈTES & SOUS-CARTES PRESSE (ZUFFA, MF PRO, BOXXER, MATCHROOM, DAZN) :\n" + rss_zuffa_mf + "\n" + rss_majors)
 
     elif discipline_id == "boxe-japon":
         jp_deep = fetch_boxmob_window_data(max_subpages=12, subpage_chars=15000)
         if jp_deep:
             chunks.append(jp_deep)
         rss_jp = fetch_rss_snippets(
-            "後楽園ホール OR フェニックスバトル OR ダイナミックグローブ OR 興行 プロボクシング when:7d",
+            "後楽園ホール OR フェニックスバトル OR ダイナミックグローブ OR 大橋ジム OR 帝拳 OR 興行 プロボクシング when:7d",
             lang="ja", country="JP", max_items=20
         )
         if rss_jp:
@@ -744,21 +729,18 @@ AGENTS_CONFIG = [
             "Recherche TOUS les galas majeurs de boxe anglaise prévus entre le "
             + valid_dates_fr[0] + " et le " + valid_dates_fr[-1] + " inclus, "
             "notamment : Matchroom Boxing, Zuffa Boxing (Riyadh Season / Paramount+ / Sky Sports), "
-            "MF Pro / Misfits Boxing (DAZN), Queensberry, Top Rank, PBC, Golden Boy, Boxxer, ProBox TV, MVP. "
+            "MF Pro / Misfits Boxing (DAZN), Queensberry, Boxxer, Top Rank, PBC, Golden Boy, ProBox TV, MVP. "
             "Pour chaque gala, extrais impérativement toute la sous-carte (Main Card + Prelims / Undercard)."
         ),
         "specific_rules": (
             "- PÉRIMÈTRE DES GALAS MAJEURS À INCLURE ABSOLUMENT : Inclus tous les galas programmés cette semaine par "
-            "Matchroom Boxing (ex: Pacheco vs Fulghum, Teremoana vs Ahio), "
-            "Zuffa Boxing (ex: Zuffa Boxing 13 Adames vs Warburton à Riyad sur Paramount+ / Sky Sports), "
-            "MF Pro / Misfits Boxing (ex: Viddal Riley vs Seydi Coupe à l'OVO Arena Wembley sur DAZN), "
-            "Queensberry, Top Rank, PBC, Golden Boy, Riyadh Season / The Ring, Boxxer, MVP et ProBox TV.\n"
+            "Matchroom Boxing, Zuffa Boxing, MF Pro / Misfits Boxing, Queensberry, Boxxer, Top Rank, PBC, Golden Boy, "
+            "Riyadh Season / The Ring, MVP et ProBox TV.\n"
+            "- CHAMP 'promoteur' OBLIGATOIRE : Renseigne précisément le nom de l'organisateur dans 'promoteur' parmi : "
+            "'Matchroom Boxing', 'Queensberry', 'Boxxer', 'Zuffa Boxing', 'MF Pro', 'Top Rank', 'PBC', 'Golden Boy', 'The Ring / Riyadh Season', 'DAZN Boxing'.\n"
             "- SOUS-CARTES COMPLÈTES OBLIGATOIRES : Il est INTERDIT de ne mettre qu'un seul combat (le Main Event) quand une sous-carte existe. "
-            "Tu dois lister TOUS les combats connus de la carte :\n"
-            "  * Exemple pour Zuffa Boxing : inclus le Main Event, Co-Main Event, Main Card et les Prelims (9 combats).\n"
-            "  * Exemple pour MF Pro (Riley vs Coupe) : inclus Zelfa Barrett vs Gavin Gwynne, Kieron Molloy vs Steve Suppan, Dan Toward vs Jak Corrie, Yaser Al Ghena vs Ben Marksby, Tom Welland vs Jack Dillingham.\n"
-            "  * Exemple pour Matchroom (Pacheco vs Fulghum) : inclus le Co-Main Event Anthony Olascuaga vs Yuberjen Martinez (titre mondial WBO mouches), Charlie Sheehy, David Adeleye vs Alexander Flores, etc.\n"
-            "- VÉRIFICATION STRICTE DES DATES ET LIEUX : Ne mélange jamais deux galas différents et n'inclus aucun gala de décembre."
+            "Tu dois lister TOUS les combats connus de la carte (Main Event, Co-Main Event, Main Card et Prelims).\n"
+            "- VÉRIFICATION STRICTE DES DATES ET LIEUX : Ne mélange jamais deux galas différents et n'inclus aucun gala hors de la fenêtre des 7 jours."
         ),
     },
     {
@@ -771,13 +753,17 @@ AGENTS_CONFIG = [
         "search_hint": (
             f"Recherche le calendrier complet de boxe professionnelle ayant lieu PHYSIQUEMENT AU JAPON ({', '.join(valid_dates_jp)}) sur : "
             "boxmob.jp (Boxing Mobile), jbc.or.jp, tapology.com/fightcenter. "
-            "Cherche les galas dans les arènes japonaises (Ariake Arena, Yokohama, Osaka, Nagoya, Aichi) "
-            "et toutes les réunions du Korakuen Hall à Tokyo (後楽園ホール)."
+            "Cherche les galas dans les arènes japonaises (Ohashi Promotions / Phoenix Battle / Lemino, Teiken Promotions / Prime Video Boxing) "
+            "et toutes les réunions du Korakuen Hall à Tokyo (Dynamic Glove, Who's Next, KNOCK OUT BOXING, etc.)."
         ),
         "specific_rules": (
             "- EXCLUSIVITÉ GÉOGRAPHIQUE JAPON : N'inclus QUE les galas qui se déroulent physiquement au Japon (Tokyo, Osaka, Aichi, Yokohama, etc.). "
-            "N'inclus JAMAIS un gala ayant lieu aux Philippines (ex: Cebu), aux États-Unis (ex: Anthony Olascuaga vs Yuberjen Martinez qui a lieu en Californie sur la carte Pacheco vs Fulghum) ou en Europe, même si un média japonais en parle.\n"
-            "- SOUS-CARTES COMPLÈTES BOXMOB : Pour chaque réunion japonaise retenue dans les blocs [SOUS-CARTE COMPLÈTE BOXMOB], extrais TOUS les combats listés sur la carte (pas uniquement le Main Event).\n"
+            "N'inclus JAMAIS un gala ayant lieu aux Philippines, aux États-Unis ou en Europe.\n"
+            "- CHAMP 'promoteur' JAPON OBLIGATOIRE : Indique le promoteur ou la série officielle japonaise dans 'promoteur' : "
+            "'Ohashi Promotions' (pour les galas Phoenix Battle / Lemino / Naoya Inoue / Ohashi Gym), "
+            "'Teiken Promotions' (pour les galas Prime Video Boxing / Dynamic Glove / Who's Next / Tenshin Nasukawa / Junto Nakatani / Teiken Gym), "
+            "'U-NEXT Boxing' (pour KNOCK OUT BOXING / U-NEXT), ou 'JBC / Korakuen Hall'.\n"
+            "- SOUS-CARTES COMPLÈTES BOXMOB : Pour chaque réunion japonaise retenue dans les blocs [SOUS-CARTE COMPLÈTE BOXMOB], extrais TOUS les combats listés sur la carte.\n"
             "- INTERDICTION DES 'vs. N/C' : Ne crée jamais de ligne de combat avec 'vs. N/C'.\n"
             "- Transcris tous les noms des boxeurs japonais en alphabet latin (Romaji Hepburn)."
         ),
@@ -795,7 +781,7 @@ AGENTS_CONFIG = [
         ),
         "specific_rules": (
             "- Liste l'intégralité des 10 à 14 combats annoncés pour chaque événement UFC de la période en séparant clairement le statut (Main Card, Prelims, Early Prelims).\n"
-            "- Pour la France, indique systématiquement 'RMC Sport / UFC Fight Pass' comme diffuseur."
+            "- Indique 'UFC' dans 'promoteur' et 'RMC Sport / UFC Fight Pass' comme diffuseur France."
         ),
     },
     {
@@ -822,7 +808,7 @@ AGENTS_CONFIG = [
         "fallback_url": "https://www.bkfc.com/events",
         "empty_msg": "Aucun événement BKFC programmé cette semaine.",
         "search_hint": (
-            "Recherche le calendrier officiel Bare Knuckle Fighting Championship (BKFC numérotés et BKFC Fight Night, ex: BKFC Myrtle Beach) sur : "
+            "Recherche le calendrier officiel Bare Knuckle Fighting Championship (BKFC numérotés et BKFC Fight Night) sur : "
             "bkfc.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
@@ -842,224 +828,165 @@ AGENTS_CONFIG = [
             "glorykickboxing.com/events, tapology.com/fightcenter."
         ),
         "specific_rules": (
-            "- Liste tous les combats annoncés uniquement si l'événement tombe dans la fenêtre des 7 prochains jours (attention : Glory Collision 10 a lieu en décembre, ne l'inclus pas en novembre)."
+            "- Liste tous les combats annoncés uniquement si l'événement tombe dans la fenêtre des 7 prochains jours."
         ),
     },
 ]
 
 # ==============================================================================
-# 5. MOTEUR D'EXTRACTION D'AFFICHES + BANNIÈRES OFFICIELLES GARANTIES
+# 5. SYSTÈME HYBRIDE 100 % LOGOS OFFICIELS (AUTO + SURCHARGE MANUELLE DANS logos/)
 # ==============================================================================
-POSTER_CACHE = {}
-USED_EVENT_POSTERS = set()
+LOGOS_DIR = "logos"
+os.makedirs(LOGOS_DIR, exist_ok=True)
 
-BLOCKED_IMAGE_DOMAINS = [
-    "ringwalks.com", "box.live", "sherdog.com", "boxrec.com",
-    "fightnights.com", "wikipedia.org", "wikimedia.org", "reddit.com"
-]
-
-TRUSTED_PROMOTER_DOMAINS = [
-    "matchroomboxing.com", "queensberry.co.uk", "ufc.com", "ufcfightpass.com",
-    "bkfc.com", "glorykickboxing.com", "rizinff.com", "dazn.com", "ringtv.com",
-    "toprank.com", "goldenboy.com", "premierboxingchampions.com", "boxmob.jp",
-    "boxingnews.jp", "ibu4gin.net", "asianboxing.info"
-]
-
-def make_svg_banner(bg_start, bg_end, accent_color, main_title, subtitle, letter_spacing="8"):
-    svg = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="100%" height="100%">'
-        f'<defs><radialGradient id="g" cx="50%" cy="45%" r="75%">'
-        f'<stop offset="0%" stop-color="{bg_start}"/><stop offset="100%" stop-color="{bg_end}"/>'
-        f'</radialGradient></defs>'
-        f'<rect width="1200" height="600" fill="url(#g)"/>'
-        f'<rect x="350" y="135" width="500" height="3" fill="{accent_color}" opacity="0.85"/>'
-        f'<text x="600" y="265" text-anchor="middle" fill="#FFFFFF" font-family="Outfit, Arial, sans-serif" '
-        f'font-size="80" font-weight="800" letter-spacing="{letter_spacing}">{main_title}</text>'
-        f'<text x="600" y="335" text-anchor="middle" fill="{accent_color}" font-family="Plus Jakarta Sans, Arial, sans-serif" '
-        f'font-size="26" font-weight="700" letter-spacing="11">{subtitle}</text>'
-        f'<rect x="350" y="375" width="500" height="3" fill="{accent_color}" opacity="0.85"/>'
-        f'</svg>'
+def build_official_logo_svg(bg_start, bg_end, accent_color, main_title, subtitle, letter_spacing="8", badge_top=""):
+    """Génère un fichier logo vectoriel officiel haute définition propre dans logos/<key>.svg."""
+    top_text_el = (
+        f'<text x="600" y="115" text-anchor="middle" fill="{accent_color}" '
+        f'font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="20" font-weight="700" '
+        f'letter-spacing="9" opacity="0.9">{badge_top}</text>'
+        if badge_top else ""
     )
-    return "data:image/svg+xml;utf8," + urllib.parse.quote(svg)
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">\n'
+        f'  <defs>\n'
+        f'    <radialGradient id="g" cx="50%" cy="42%" r="75%">\n'
+        f'      <stop offset="0%" stop-color="{bg_start}"/>\n'
+        f'      <stop offset="100%" stop-color="{bg_end}"/>\n'
+        f'    </radialGradient>\n'
+        f'  </defs>\n'
+        f'  <rect width="1200" height="600" fill="url(#g)"/>\n'
+        f'  {top_text_el}\n'
+        f'  <rect x="330" y="140" width="540" height="3" fill="{accent_color}" opacity="0.85"/>\n'
+        f'  <text x="600" y="265" text-anchor="middle" fill="#FFFFFF" font-family="Outfit, Arial Black, sans-serif" '
+        f'font-size="82" font-weight="800" letter-spacing="{letter_spacing}">{main_title}</text>\n'
+        f'  <text x="600" y="335" text-anchor="middle" fill="{accent_color}" font-family="Plus Jakarta Sans, Arial, sans-serif" '
+        f'font-size="25" font-weight="700" letter-spacing="10">{subtitle}</text>\n'
+        f'  <rect x="330" y="375" width="540" height="3" fill="{accent_color}" opacity="0.85"/>\n'
+        f'</svg>\n'
+    )
+    return svg
 
-FIXED_PROMOTER_BANNERS = {
-    "matchroom": make_svg_banner("#141414", "#050505", "#E5E5E5", "MATCHROOM", "B O X I N G", "8"),
-    "queensberry": make_svg_banner("#1A140B", "#080604", "#D4AF37", "QUEENSBERRY", "P R O M O T I O N S", "6"),
-    "misfits": make_svg_banner("#1D1908", "#080702", "#F5C518", "M F   P R O", "MISFITS BOXING • DAZN", "8"),
-    "top rank": make_svg_banner("#1B120C", "#090604", "#C89D54", "TOP RANK", "B O X I N G", "8"),
-    "golden boy": make_svg_banner("#1F1709", "#0A0703", "#E6B84D", "GOLDEN BOY", "P R O M O T I O N S", "7"),
-    "pbc": make_svg_banner("#121824", "#06080E", "#D4AF37", "P B C", "PREMIER BOXING CHAMPIONS", "10"),
-    "the ring": make_svg_banner("#1C130E", "#0A0604", "#E2B049", "THE RING", "OFFICIAL FIGHT NIGHT", "8"),
-    "dazn": make_svg_banner("#161616", "#050505", "#F7D388", "DAZN BOXING", "WORLD CHAMPIONSHIP NIGHT", "8"),
-    "lemino": make_svg_banner("#101B2B", "#060A11", "#E2B049", "LEMINO BOXING", "PHOENIX BATTLE TOKYO", "7"),
-    "u-next": make_svg_banner("#141A24", "#07090E", "#D4AF37", "U-NEXT BOXING", "KORAKUEN HALL CHAMPIONSHIP", "6"),
-    "zuffa": make_svg_banner("#220D0D", "#0A0404", "#D20A0A", "ZUFFA BOXING", "RIYADH SEASON • PARAMOUNT+", "6"),
-    "ufc": make_svg_banner("#260B0B", "#090303", "#D20A0A", "U F C", "ULTIMATE FIGHTING CHAMPIONSHIP", "14"),
-    "rizin": make_svg_banner("#1A1326", "#08050E", "#E5C158", "R I Z I N", "FIGHTING FEDERATION", "12"),
-    "bkfc": make_svg_banner("#1E190A", "#090703", "#F5C518", "B K F C", "BARE KNUCKLE FIGHTING CHAMPIONSHIP", "12"),
-    "glory": make_svg_banner("#1D160B", "#080603", "#E6B84D", "G L O R Y", "GLORY KICKBOXING WORLD SERIES", "12"),
-    "boxe-monde": make_svg_banner("#24150E", "#0C0604", "#D4AF37", "WORLD BOXING", "CHAMPIONSHIP FIGHT NIGHT", "8"),
-    "boxe-japon": make_svg_banner("#260E12", "#0D0406", "#E8C574", "BOXING JAPAN", "KORAKUEN HALL & ARENAS", "8"),
+OFFICIAL_LOGOS_CATALOG = {
+    # 4 Ligues exclusives
+    "ufc": ("#260B0B", "#090303", "#D20A0A", "U F C", "ULTIMATE FIGHTING CHAMPIONSHIP", "14", "OFFICIAL OCTAGON EVENT"),
+    "rizin": ("#1A1326", "#08050E", "#E5C158", "R I Z I N", "FIGHTING FEDERATION", "12", "JAPAN MMA SERIES"),
+    "bkfc": ("#1E190A", "#090703", "#F5C518", "B K F C", "BARE KNUCKLE FIGHTING CHAMPIONSHIP", "12", "WORLD SERIES"),
+    "glory": ("#1D160B", "#080603", "#E6B84D", "G L O R Y", "GLORY KICKBOXING WORLD SERIES", "12", "STAND-UP STRIKING"),
+    # Promoteurs Boxe Internationale
+    "matchroom": ("#141414", "#050505", "#E5E5E5", "MATCHROOM", "B O X I N G", "8", "EDDIE HEARN PROMOTIONS"),
+    "queensberry": ("#1A140B", "#080604", "#D4AF37", "QUEENSBERRY", "P R O M O T I O N S", "6", "FRANK WARREN"),
+    "boxxer": ("#0F1D1D", "#050A0A", "#00E5FF", "B O X X E R", "SKY SPORTS & BBC BOXING", "10", "UK CHAMPIONSHIP BOXING"),
+    "zuffa": ("#220D0D", "#0A0404", "#D20A0A", "ZUFFA BOXING", "RIYADH SEASON • PARAMOUNT+", "6", "TKO BOXING CHAMPIONSHIP"),
+    "misfits": ("#1D1908", "#080702", "#F5C518", "M F   P R O", "MISFITS BOXING • DAZN", "8", "CROSSOVER & PRO SERIES"),
+    "toprank": ("#1B120C", "#090604", "#C89D54", "TOP RANK", "B O X I N G", "8", "BOB ARUM PROMOTIONS"),
+    "pbc": ("#121824", "#06080E", "#D4AF37", "P B C", "PREMIER BOXING CHAMPIONS", "10", "CHAMPIONSHIP BOXING"),
+    "goldenboy": ("#1F1709", "#0A0703", "#E6B84D", "GOLDEN BOY", "P R O M O T I O N S", "7", "OSCAR DE LA HOYA"),
+    "thering": ("#1C130E", "#0A0604", "#E2B049", "THE RING", "RIYADH SEASON OFFICIAL", "8", "CHAMPIONSHIP FIGHT NIGHT"),
+    "dazn": ("#161616", "#050505", "#F7D388", "DAZN BOXING", "GLOBAL FIGHT NIGHT", "8", "LIVE WORLDWIDE"),
+    # Promoteurs & Séries Boxe Japon
+    "ohashi": ("#101B2B", "#060A11", "#E2B049", "OHASHI PROMOTIONS", "PHOENIX BATTLE • LEMINO BOXING", "5", "大橋プロモーション • TOKYO / YOKOHAMA"),
+    "teiken": ("#241111", "#0B0404", "#E6B84D", "TEIKEN PROMOTIONS", "PRIME VIDEO BOXING • DYNAMIC GLOVE", "5", "帝拳プロモーション • TOKYO"),
+    "unext": ("#141A24", "#07090E", "#D4AF37", "U-NEXT BOXING", "DYNAMIC GLOVE & KNOCK OUT BOXING", "6", "KORAKUEN HALL TOKYO"),
+    "boxe-japon": ("#260E12", "#0D0406", "#E8C574", "JBC BOXING JAPAN", "KORAKUEN HALL & ARENAS", "7", "日本ボクシングコミッション"),
+    "boxe-monde": ("#24150E", "#0C0604", "#D4AF37", "WORLD BOXING", "CHAMPIONSHIP FIGHT NIGHT", "8", "INTERNATIONAL PRO BOXING"),
 }
 
-def is_url_allowed_for_poster(url):
-    if not url or not url.startswith("http"):
-        return False
-    low = url.lower()
-    return not any(b in low for b in BLOCKED_IMAGE_DOMAINS)
+def initialize_logos_directory():
+    """
+    Crée dans le dossier 'logos/' les fichiers .svg pour chaque promoteur/ligue UNIQUEMENT s'ils n'existent pas encore.
+    Ainsi, si l'utilisateur remplace manuellement un fichier dans 'logos/' (en .png, .jpg, .webp ou .svg),
+    son fichier personnalisé est toujours conservé et utilisé en priorité.
+    """
+    for key, params in OFFICIAL_LOGOS_CATALOG.items():
+        svg_path = os.path.join(LOGOS_DIR, f"{key}.svg")
+        if not os.path.exists(svg_path):
+            try:
+                svg_content = build_official_logo_svg(*params)
+                with open(svg_path, "w", encoding="utf-8") as f:
+                    f.write(svg_content)
+            except Exception as e:
+                print(f"  [Info Logo] Impossible de créer {svg_path} : {e}")
 
-def is_valid_poster_image(img_url):
-    if not img_url or not img_url.startswith("http"):
-        return False
-    low = img_url.lower()
-    bad_tokens = [
-        "ringwalks", "favicon", "logo.svg", "default-share", "placeholder",
-        "avatar", ".svg", "assets/icons/", "/icons/image.png", "apple-touch-icon",
-        "site-logo", "og-default", "/sp/schedule"
-    ]
-    if any(t in low for t in bad_tokens):
-        return False
+initialize_logos_directory()
 
-    parsed = urllib.parse.urlparse(low)
-    path = parsed.path or ""
-    if not path or path == "/" or path.endswith(".html") or path.endswith(".php"):
-        return False
-
-    image_indicators = (
-        ".jpg", ".jpeg", ".png", ".webp", ".avif",
-        "/uploads/", "/images/", "/media/", "poster_images", "wp-content", "cloudinary", "ctfassets"
-    )
-    return any(ind in low for ind in image_indicators)
-
-def extract_og_image_from_url(url):
-    if not is_url_allowed_for_poster(url):
-        return None
-    if url in POSTER_CACHE:
-        return POSTER_CACHE[url]
-
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=8, allow_redirects=True)
-        final_url = resp.url if resp else url
-
-        if resp.status_code >= 400 and any(t in final_url.lower() for t in TRUSTED_PROMOTER_DOMAINS):
-            parsed_root = urllib.parse.urlparse(final_url)
-            root_url = f"{parsed_root.scheme}://{parsed_root.netloc}/"
-            resp = requests.get(root_url, headers=HEADERS, timeout=8, allow_redirects=True)
-            final_url = resp.url
-
-        if not is_url_allowed_for_poster(final_url):
-            POSTER_CACHE[url] = None
-            return None
-
-        if resp.status_code == 200:
-            raw = resp.text
-            if "tapology.com" in final_url.lower():
-                tap_match = re.search(
-                    r'(https://images\.tapology\.com/poster_images/[0-9]+/profile/[^"\'\s>]+)',
-                    raw,
-                    flags=re.IGNORECASE,
-                )
-                if tap_match:
-                    tap_img = html.unescape(tap_match.group(1).strip())
-                    if is_valid_poster_image(tap_img):
-                        POSTER_CACHE[url] = tap_img
-                        return tap_img
-                POSTER_CACHE[url] = None
-                return None
-
-            patterns = [
-                r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
-                r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
-                r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']',
-            ]
-            for pat in patterns:
-                m = re.search(pat, raw, flags=re.IGNORECASE)
-                if m:
-                    img = html.unescape(m.group(1).strip())
-                    if img.startswith("//"):
-                        img = "https:" + img
-                    elif img.startswith("/"):
-                        parsed = urllib.parse.urlparse(final_url)
-                        img = f"{parsed.scheme}://{parsed.netloc}{img}"
-                    if is_url_allowed_for_poster(img) and is_valid_poster_image(img):
-                        POSTER_CACHE[url] = img
-                        return img
-    except Exception:
-        pass
-
-    POSTER_CACHE[url] = None
-    return None
-
-def get_event_keywords(ev):
-    keywords = []
-    combats = ev.get("combats") or []
-    if combats:
-        for field in ["combattant_a", "combattant_b"]:
-            name = (combats[0].get(field) or "").strip()
-            parts = [p.lower() for p in re.split(r"[\s\-]+", name) if len(p) >= 4]
-            keywords.extend(parts)
-    title_words = [w.lower() for w in re.split(r"[\s\-:]+", ev.get("nom_gala") or "") if len(w) >= 5]
-    keywords.extend(title_words)
-    return list(set(keywords))
+def get_logo_path_for_key(logo_key):
+    """
+    Vérifie d'abord si l'utilisateur a déposé manuellement une image personnalisée (.png, .webp, .jpg, .jpeg)
+    dans le dossier 'logos/' (ex: 'logos/teiken.png'). Sinon, utilise 'logos/<logo_key>.svg'.
+    """
+    for ext in [".png", ".webp", ".jpg", ".jpeg", ".svg"]:
+        candidate = f"{LOGOS_DIR}/{logo_key}{ext}"
+        if os.path.exists(candidate):
+            return candidate
+    return f"{LOGOS_DIR}/boxe-monde.svg"
 
 def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events_in_section):
-    raw_poster = (ev.get("poster_url") or "").strip()
-    if raw_poster.startswith("data:image/"):
-        return raw_poster
-    if is_url_allowed_for_poster(raw_poster) and is_valid_poster_image(raw_poster):
-        if raw_poster not in USED_EVENT_POSTERS:
-            USED_EVENT_POSTERS.add(raw_poster)
-            return raw_poster
+    """
+    Attribution 100 % déterministe du logo officiel :
+    1. Si la discipline est UFC, Rizin, BKFC ou Glory : attribution directe de la ligue (0 % d'erreur).
+    2. Si Boxe Japon : détection prioritaire Ohashi Promotions (Phoenix Battle / Lemino / Inoue) et Teiken Promotions (Prime Video / Dynamic Glove / Nasukawa / Nakatani).
+    3. Si Boxe Monde : détection prioritaire par le champ 'promoteur', l'URL officielle et le titre (Matchroom, Queensberry, Boxxer, Zuffa, MF Pro, Top Rank, PBC, Golden Boy, The Ring, DAZN).
+    """
+    # 1. Verrouillage absolu pour les 4 ligues uniques
+    if discipline_id in {"ufc", "rizin", "bkfc", "glory"}:
+        return get_logo_path_for_key(discipline_id)
 
-    found_poster = extract_og_image_from_url(ev_url)
-    if found_poster and found_poster not in USED_EVENT_POSTERS:
-        USED_EVENT_POSTERS.add(found_poster)
-        return found_poster
+    promoteur_field = (ev.get("promoteur") or "").lower()
+    nom_gala = (ev.get("nom_gala") or "").lower()
+    presentation = (ev.get("presentation") or "").lower()
+    diff_orig = (ev.get("diffuseur_origine") or "").lower()
+    url_low = (ev_url or "").lower()
 
-    ev_keywords = get_event_keywords(ev)
-    for g_url in grounding_urls[:6]:
-        g_low = g_url.lower()
-        if total_events_in_section == 1 or any(kw in g_low for kw in ev_keywords):
-            candidate = extract_og_image_from_url(g_url)
-            if candidate and candidate not in USED_EVENT_POSTERS:
-                USED_EVENT_POSTERS.add(candidate)
-                return candidate
+    fighters_blob = " ".join(
+        f"{b.get('combattant_a', '')} {b.get('combattant_b', '')}".lower()
+        for b in (ev.get("combats") or [])
+    )
+    full_context = f"{promoteur_field} {nom_gala} {url_low} {presentation} {fighters_blob} {diff_orig}"
 
-    gala_context = f"{ev.get('nom_gala', '')} {ev.get('diffuseur_origine', '')} {discipline_id}".lower()
-    promoter_sites = [
-        ("zuffa", "https://www.ufc.com/zuffaboxing", "zuffa"),
-        ("matchroom", "https://www.matchroomboxing.com/", "matchroom"),
-        ("queensberry", "https://www.queensberry.co.uk/", "queensberry"),
-        ("misfits", "", "misfits"),
-        ("mf pro", "", "misfits"),
-        ("x series", "", "misfits"),
-        ("top rank", "https://www.toprank.com/", "top rank"),
-        ("golden boy", "https://www.goldenboy.com/", "golden boy"),
-        ("pbc", "https://www.premierboxingchampions.com/", "pbc"),
-        ("premier boxing", "https://www.premierboxingchampions.com/", "pbc"),
-        ("the ring", "https://www.ringtv.com/", "the ring"),
-        ("riyadh season", "https://www.ringtv.com/", "the ring"),
-        ("lemino", "", "lemino"),
-        ("phoenix battle", "", "lemino"),
-        ("u-next", "", "u-next"),
-        ("knock out boxing", "", "u-next"),
-        ("dynamic glove", "", "u-next"),
-        ("dazn", "", "dazn"),
-        ("bkfc", "https://www.bkfc.com/events", "bkfc"),
-        ("ufc", "https://www.ufc.com/events", "ufc"),
-        ("rizin", "https://jp.rizinff.com/", "rizin"),
-        ("glory", "https://glorykickboxing.com/events", "glory"),
+    # 2. Règles dédiées Boxe Japon (Ohashi / Teiken / U-NEXT / JBC)
+    if discipline_id == "boxe-japon":
+        ohashi_markers = [
+            "ohashi", "大橋", "phoenix battle", "フェニックスバトル", "lemino",
+            "naoya inoue", "takuma inoue", "yoshiki takei", "jin sasaki"
+        ]
+        teiken_markers = [
+            "teiken", "帝拳", "prime video boxing", "dynamic glove", "ダイナミックグローブ",
+            "who's next", "tenshin nasukawa", "junto nakatani", "kenshiro teraji", "ryosuke nishida"
+        ]
+        unext_markers = ["u-next", "knock out boxing"]
+
+        if any(m in full_context for m in ohashi_markers):
+            return get_logo_path_for_key("ohashi")
+        if any(m in full_context for m in teiken_markers):
+            return get_logo_path_for_key("teiken")
+        if any(m in full_context for m in unext_markers):
+            return get_logo_path_for_key("unext")
+        return get_logo_path_for_key("boxe-japon")
+
+    # 3. Règles dédiées Boxe Monde (Priorité au champ promoteur + titre + URL avant le diffuseur)
+    primary_context = f"{promoteur_field} {nom_gala} {url_low} {presentation}"
+    world_promoters_priority = [
+        (["zuffa"], "zuffa"),
+        (["matchroom"], "matchroom"),
+        (["queensberry", "frank warren"], "queensberry"),
+        (["boxxer", "ben shalom"], "boxxer"),
+        (["mf pro", "misfits", "x series"], "misfits"),
+        (["top rank", "toprank"], "toprank"),
+        (["pbc", "premier boxing"], "pbc"),
+        (["golden boy", "goldenboy"], "goldenboy"),
+        (["the ring", "riyadh season", "ring magazine"], "thering"),
+        (["ohashi", "phoenix battle", "lemino"], "ohashi"),
+        (["teiken", "prime video boxing"], "teiken"),
     ]
-    for keyword, site_url, svg_key in promoter_sites:
-        if keyword in gala_context:
-            if site_url:
-                web_banner = extract_og_image_from_url(site_url)
-                if web_banner and web_banner not in USED_EVENT_POSTERS:
-                    USED_EVENT_POSTERS.add(web_banner)
-                    return web_banner
-            return FIXED_PROMOTER_BANNERS.get(svg_key, "")
+    for keywords, logo_key in world_promoters_priority:
+        if any(kw in primary_context for kw in keywords):
+            return get_logo_path_for_key(logo_key)
 
-    return FIXED_PROMOTER_BANNERS.get(discipline_id, "")
+    if "dazn" in full_context:
+        return get_logo_path_for_key("dazn")
+
+    return get_logo_path_for_key("boxe-monde")
 
 def verify_and_fix_official_url(ev_url, ev, fallback_url, grounding_urls):
     url = (ev_url or "").strip()
@@ -1131,13 +1058,6 @@ def is_location_in_japan(lieu_str):
     return True
 
 def clean_and_validate_events(events_list, discipline_id=""):
-    """
-    1. Rejette strictement tout événement dont la date n'est pas dans la fenêtre J-1 à J+7 (VALID_DATES_ISO_SET).
-    2. Pour 'boxe-japon', rejette tout événement ayant lieu hors du Japon (ex: Philippines, USA) ou concernant Olascuaga (qui boxe en Californie).
-    3. Formate automatiquement 'Nuit du Samedi X au Dimanche Y' pour les galas nocturnes (00h00 - 06h59 Paris).
-    4. Supprime tout combat dont l'un des deux adversaires est 'N/C', 'TBA', 'TBD' ou vide.
-    5. Trie les événements par ordre chronologique strict.
-    """
     if not isinstance(events_list, list):
         return []
 
@@ -1200,6 +1120,10 @@ EVENT_JSON_SCHEMA = {
                 "type": "OBJECT",
                 "properties": {
                     "nom_gala": {"type": "STRING"},
+                    "promoteur": {
+                        "type": "STRING",
+                        "description": "Nom officiel du promoteur ou de la ligue (ex: Matchroom Boxing, Queensberry, Boxxer, Zuffa Boxing, MF Pro, Top Rank, PBC, Golden Boy, Ohashi Promotions, Teiken Promotions, UFC, Rizin, BKFC, Glory)."
+                    },
                     "date_iso": {
                         "type": "STRING",
                         "description": "Date de la soirée de l'événement au format strict YYYY-MM-DD. Doit obligatoirement faire partie de la fenêtre autorisée."
@@ -1235,7 +1159,7 @@ EVENT_JSON_SCHEMA = {
                     },
                 },
                 "required": [
-                    "nom_gala", "date_iso", "date_paris", "lieu", "url_officielle",
+                    "nom_gala", "promoteur", "date_iso", "date_paris", "lieu", "url_officielle",
                     "heure_debut_paris", "heure_ringwalk_paris", "diffuseur_origine",
                     "diffuseur_france", "enjeu_principal", "presentation", "combats"
                 ],
@@ -1332,7 +1256,7 @@ GENERIC_EVENT_WORDS = {
     "championship", "arena", "hall", "center", "centre", "stadium",
     "matchroom", "queensberry", "toprank", "golden", "premier", "rizin",
     "glory", "bkfc", "landmark", "dynamic", "glove", "phoenix", "battle",
-    "misfits", "series", "zuffa"
+    "misfits", "series", "zuffa", "boxxer", "ohashi", "teiken"
 }
 
 def extract_fighter_tokens(text):
@@ -1453,10 +1377,10 @@ CONSIGNES IMPÉRATIVES :
 {agent_cfg['specific_rules']}
 - FILTRE TEMPOREL STRICT : Seuls les événements ayant réellement lieu dans la fenêtre {DATE_WINDOW_STR} sont autorisés. Si un combat annoncé dans l'actualité a lieu à une date ultérieure (en décembre ou plus tard), IL EST STRICTEMENT INTERDIT de l'inclure ou de lui attribuer la date d'un autre gala.
 - CHAMP 'date_iso' OBLIGATOIRE : Indique toujours la date de la soirée où commence le gala au format YYYY-MM-DD (ex: "2026-11-14" pour un gala dans la nuit du Samedi 14 au Dimanche 15). Cette date doit obligatoirement figurer parmi : {', '.join(valid_dates_iso)}.
+- CHAMP 'promoteur' OBLIGATOIRE : Indique le nom exact du promoteur ou de la ligue organisatrice (ex: "Matchroom Boxing", "Queensberry", "Boxxer", "Zuffa Boxing", "MF Pro", "Top Rank", "PBC", "Golden Boy", "Ohashi Promotions", "Teiken Promotions", "U-NEXT Boxing", "UFC", "Rizin", "BKFC", "Glory").
 - INTERDICTION DE RÉSUMER LES SOUS-CARTES : Tu dois extraire 100 % des combats connus de chaque carte (Main Event, Co-Main Event, Main Card, Prelims, Early Prelims, Undercard) présents dans les données pré-collectées ET via ta recherche. Ne renvoie jamais un gala avec seulement 1 combat si d'autres combats de la carte sont mentionnés dans le contexte.
 - CONCISION SUR LES PRELIMS POUR ÉVITER LA COUPURE JSON : Pour le Main Event et le Co-Main Event, rédige une "enjeu_et_analyse" complète (1 à 2 phrases). Pour tous les autres combats de la sous-carte (Main Card / Prelims / Undercard), rédige une "enjeu_et_analyse" très courte (maximum 10 mots) afin d'économiser les jetons et de lister tous les combats sans exception.
 - INTERDICTION ABSOLUE DES ADVERSAIRES "N/C" OU "TBA" : Chaque combat listé dans "combats" DOIT avoir le Prénom et Nom de combattant_a ET le Prénom et Nom de combattant_b.
-- CHAMP 'poster_url' : Indique uniquement une URL d'image directe (.jpg, .png, .webp) ou laisse une chaîne vide "". Ne mets JAMAIS l'URL d'une page web HTML dans 'poster_url'.
 - DOUBLE INDICATION HORAIRE (HEURE DE PARIS) :
   1. 'heure_debut_paris' : Heure du lancement du gala / début des combats préliminaires (ex: "19h00", "01h00").
   2. 'heure_ringwalk_paris' : Heure annoncée ou estimée de la marche vers le ring (ringwalk) du Main Event à l'heure de Paris (ex: "vers 23h30", "vers 05h00 (estimation)").
@@ -1471,6 +1395,7 @@ Renvoie UNIQUEMENT un objet JSON valide respectant exactement cette structure, s
   "evenements": [
     {{
       "nom_gala": "Nom officiel du gala : Combattant A vs. Combattant B",
+      "promoteur": "Matchroom Boxing",
       "date_iso": "2026-11-14",
       "date_paris": "Nuit du Samedi 14/11 au Dimanche 15/11/2026",
       "lieu": "Salle / Arène, Ville, Pays",
@@ -1589,6 +1514,8 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
         return espn_reference_events, True
 
     if valid_cached_events:
+        for ev in valid_cached_events:
+            ev["poster_url"] = resolve_event_poster(ev, ev.get("url_officielle", ""), [], discipline_id, len(valid_cached_events))
         print(f"  [Secours Cache] Restauration des {len(valid_cached_events)} événement(s) valides en cache pour [{discipline_id}].")
         return valid_cached_events, False
 
@@ -1627,7 +1554,7 @@ def render_event_card_html(ev):
         status_badge = ""
 
     belt_badge = f'<div class="poster-belt">👑 {enjeu}</div>' if enjeu else ""
-    if poster_url.startswith("http") or poster_url.startswith("data:image/"):
+    if poster_url:
         poster_block = f"""
         <div class="poster-container">
             <img src="{html.escape(poster_url)}" alt="{nom_gala}" class="event-poster-img"
@@ -1767,7 +1694,7 @@ nav_links_html = "\n                ".join(nav_links)
 all_sections_content = "\n".join(sections_html)
 
 # ==============================================================================
-# 8. ASSEMBLAGE DU SITE FINAL (DESIGN BEIGE/MARRON + RECHERCHE AUTO-EXPAND)
+# 8. ASSEMBLAGE DU SITE FINAL (BARRE FIXE EN HAUT SANS STICKY + RECHERCHE)
 # ==============================================================================
 FINAL_HTML = f"""<!DOCTYPE html>
 <html lang="fr">
@@ -1850,11 +1777,8 @@ FINAL_HTML = f"""<!DOCTYPE html>
             font-weight: 600;
         }}
         .sticky-bar {{
-            position: sticky;
-            top: 10px;
-            z-index: 50;
-            background-color: rgba(255, 253, 249, 0.96);
-            backdrop-filter: blur(8px);
+            position: relative;
+            background-color: var(--bg-card);
             border: 1px solid var(--border-warm);
             border-radius: 14px;
             padding: 0.75rem;
@@ -1935,7 +1859,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
         }}
         .sport-section {{
             margin-bottom: 3rem;
-            scroll-margin-top: 135px;
+            scroll-margin-top: 20px;
         }}
         .sport-section h2 {{
             font-family: 'Outfit', sans-serif;
