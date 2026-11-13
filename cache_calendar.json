@@ -1,262 +1,465 @@
 {
   "boxe-monde": [
     {
-      "nom_gala": "Matchroom Boxing : Diego Pacheco vs. Darius Fulghum",
+      "nom_gala": "Zuffa Boxing 13: Adames vs. Warburton",
       "date_iso": "2026-11-14",
-      "date_paris": "Nuit du Samedi 14/11 au Dimanche 15/11/2026",
-      "lieu": "Fontainebleau Las Vegas, Las Vegas, États-Unis",
-      "url_officielle": "https://www.dazn.com",
-      "poster_url": "https://www.matchroomboxing.com/app/uploads/2025/07/Social-Sharing-Image-Option-1.jpg.png",
-      "heure_debut_paris": "02h00",
-      "heure_ringwalk_paris": "vers 05h00",
-      "diffuseur_origine": "DAZN",
+      "date_paris": "Samedi 14/11/2026",
+      "lieu": "The Venue, Riyad, Arabie saoudite",
+      "url_officielle": "https://www.ufc.com/zuffaboxing",
+      "poster_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23220D0D%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230A0404%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2280%22%20font-weight%3D%22800%22%20letter-spacing%3D%226%22%3EZUFFA%20BOXING%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23D20A0A%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22700%22%20letter-spacing%3D%2211%22%3ERIYADH%20SEASON%20%E2%80%A2%20PARAMOUNT%2B%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3C/svg%3E",
+      "heure_debut_paris": "14h00",
+      "heure_ringwalk_paris": "vers 21h30",
+      "diffuseur_origine": "Paramount+ / Sky Sports",
       "diffuseur_france": "DAZN France",
-      "enjeu_principal": "Eliminatoire mondial WBO Super-Moyens (-76,2 kg)",
-      "presentation": "Diego Pacheco affronte l invaincu Darius Fulghum dans un choc décisif chez les super-moyens. Le vainqueur de ce duel se rapprochera directement d une opportunité pour un titre mondial.",
+      "enjeu_principal": "Combat en 10 rounds dans la catégorie des poids super-moyens (-76,2 kg)",
+      "presentation": "Zuffa Boxing pose ses valises à Riyad pour un événement majeur, avec en tête d'affiche le champion dominicain Carlos Adames face au redoutable gaucher gallois Gerome Warburton, dans le cadre de la Riyadh Season.",
       "combats": [
         {
           "statut": "Main Event",
-          "combattant_a": "Diego Pacheco",
-          "palmares_a": "22-0-0, 18 KOs",
-          "taille_a": "1m93",
-          "combattant_b": "Darius Fulghum",
-          "palmares_b": "12-0-0, 10 KOs",
-          "taille_b": "1m85",
+          "combattant_a": "Carlos Adames",
+          "palmares_a": "24-1-0, 18 KOs",
+          "taille_a": "1m80",
+          "combattant_b": "Gerome Warburton",
+          "palmares_b": "17-0-1, 5 KOs",
+          "taille_b": "1m82",
           "categorie_kg": "Super-moyens (-76,2 kg)",
-          "rounds": "12 rounds",
-          "enjeu_et_analyse": "Choc au sommet entre deux espoirs invaincus pour une place de challenger officiel WBO."
-        }
-      ]
-    }
-  ],
-  "boxe-japon": [
-    {
-      "nom_gala": "KNOCK OUT BOXING vol.16 : Anthony Olascuaga vs. Jimmel Martinez",
-      "date_iso": "2026-11-15",
-      "date_paris": "Dimanche 15/11/2026",
-      "lieu": "Korakuen Hall, Tokyo, Japon",
-      "url_officielle": "https://boxmob.jp/sp/schedule/",
-      "poster_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23141A24%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2307090E%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D4AF37%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2280%22%20font-weight%3D%22800%22%20letter-spacing%3D%226%22%3EU-NEXT%20BOXING%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23D4AF37%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22700%22%20letter-spacing%3D%2211%22%3EKORAKUEN%20HALL%20CHAMPIONSHIP%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D4AF37%22%20opacity%3D%220.85%22/%3E%3C/svg%3E",
-      "heure_debut_paris": "09h00",
-      "heure_ringwalk_paris": "vers 12h00",
-      "diffuseur_origine": "U-NEXT",
-      "diffuseur_france": "Non diffusé",
-      "enjeu_principal": "Titre mondial WBO des poids mouches (-50,8 kg)",
-      "presentation": "La 16e édition du gala KNOCK OUT BOXING au Korakuen Hall propose en tête d'affiche un championnat du monde WBO. Le champion américain Anthony Olascuaga défend son titre face à son challenger officiel.",
-      "combats": [
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Adames cherche à imposer sa puissance face à l'invaincu Warburton dans un combat test très attendu."
+        },
         {
-          "statut": "Main Event",
-          "combattant_a": "Anthony Olascuaga",
-          "palmares_a": "7-1-0, 5 KOs",
-          "taille_a": "1m63",
-          "combattant_b": "Jimmel Martinez",
-          "palmares_b": "14-2-0, 10 KOs",
-          "taille_b": "1m65",
-          "categorie_kg": "Mouches (-50,8 kg)",
-          "rounds": "12 rounds",
-          "enjeu_et_analyse": "Anthony Olascuaga remet sa ceinture mondiale WBO des poids mouches en jeu face au redoutable challenger Jimmel Martinez dans un choc explosif."
+          "statut": "Co-Main Event",
+          "combattant_a": "Jason Moloney",
+          "palmares_a": "27-3-0, 19 KOs",
+          "taille_a": "1m65",
+          "combattant_b": "Andres Teran",
+          "palmares_b": "15-2-0, 10 KOs",
+          "taille_b": "1m68",
+          "categorie_kg": "Poids coqs (-53,5 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "L'ancien champion du monde Jason Moloney affronte le Mexicain Andres Teran pour se relancer."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Bruno Surace",
+          "palmares_a": "25-0-2, 4 KOs",
+          "taille_a": "1m83",
+          "combattant_b": "Kamil Bednarek",
+          "palmares_b": "16-0-0, 9 KOs",
+          "taille_b": "1m84",
+          "categorie_kg": "Super-moyens (-76,2 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Choc d'invaincus européens."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Jakhongir Zokirov",
+          "palmares_a": "4-0-0, 3 KOs",
+          "taille_a": "1m98",
+          "combattant_b": "Brandon Colantonio",
+          "palmares_b": "3-0-0, 2 KOs",
+          "taille_b": "1m93",
+          "categorie_kg": "Poids lourds (+90,7 kg)",
+          "rounds": "6 rounds",
+          "enjeu_et_analyse": "Affrontement de prospects chez les lourds."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Radzhab Butaev",
+          "palmares_a": "15-1-0, 12 KOs",
+          "taille_a": "1m78",
+          "combattant_b": "Alexander Castro",
+          "palmares_b": "28-4-0, 23 KOs",
+          "taille_b": "1m80",
+          "categorie_kg": "Poids moyens (-72,6 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Test de rebond pour Butaev."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Ivan Ortiz",
+          "palmares_a": "14-0-0, 8 KOs",
+          "taille_a": "1m75",
+          "combattant_b": "Dariial Kuchmenov",
+          "palmares_b": "6-0-0, 4 KOs",
+          "taille_b": "1m73",
+          "categorie_kg": "Poids légers (-61,2 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Combat explosif chez les légers."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Tullo Boymatov",
+          "palmares_a": "5-0-0, 3 KOs",
+          "taille_a": "1m83",
+          "combattant_b": "Moro Kanla",
+          "palmares_b": "4-1-0, 2 KOs",
+          "taille_b": "1m80",
+          "categorie_kg": "Poids mi-lourds (-79,4 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Duel d'espoirs en mi-lourds."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Rayan Awaji",
+          "palmares_a": "2-0-0, 2 KOs",
+          "taille_a": "1m77",
+          "combattant_b": "Sudais Lubega",
+          "palmares_b": "3-1-0, 2 KOs",
+          "taille_b": "1m75",
+          "categorie_kg": "Poids welters (-66,7 kg)",
+          "rounds": "4 rounds",
+          "enjeu_et_analyse": "Vitrine pour le jeune talent saoudien."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Abdulaziz Alotaibi",
+          "palmares_a": "1-0-0, 1 KO",
+          "taille_a": "1m70",
+          "combattant_b": "Syed Ibrahim",
+          "palmares_b": "2-0-0, 1 KO",
+          "taille_b": "1m68",
+          "categorie_kg": "Poids plumes (-57,2 kg)",
+          "rounds": "4 rounds",
+          "enjeu_et_analyse": "Ouverture de la carte en poids plumes."
         }
       ]
     },
     {
-      "nom_gala": "Golden Child Boxing vol.146",
-      "date_iso": "2026-11-17",
-      "date_paris": "Mardi 17/11/2026",
-      "lieu": "Korakuen Hall, Tokyo, Japon",
-      "url_officielle": "https://boxmob.jp/sp/schedule/",
-      "poster_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23260E12%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230D0406%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23E8C574%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2280%22%20font-weight%3D%22800%22%20letter-spacing%3D%228%22%3EBOXING%20JAPAN%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23E8C574%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22700%22%20letter-spacing%3D%2211%22%3EKORAKUEN%20HALL%20%26%20ARENAS%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23E8C574%22%20opacity%3D%220.85%22/%3E%3C/svg%3E",
-      "heure_debut_paris": "09h50",
-      "heure_ringwalk_paris": "vers 12h30",
-      "diffuseur_origine": "BOXING RAISE",
-      "diffuseur_france": "Non diffusé",
-      "enjeu_principal": "Réunion professionnelle régionale JBC",
-      "presentation": "Nouvelle édition de la franchise Golden Child Boxing organisée au temple de la boxe japonaise, le Korakuen Hall. L'événement rassemble plusieurs espoirs montants du circuit nippon.",
+      "nom_gala": "Matchroom Boxing: Pacheco vs. Fulghum",
+      "date_iso": "2026-11-14",
+      "date_paris": "Nuit du Samedi 14/11 au Dimanche 15/11/2026",
+      "lieu": "Dignity Health Sports Park, Carson, Californie, États-Unis",
+      "url_officielle": "https://www.matchroomboxing.com/events/pacheco-vs-fulghum/",
+      "poster_url": "https://www.matchroomboxing.com/app/uploads/2025/07/Social-Sharing-Image-Option-1.jpg.png",
+      "heure_debut_paris": "01h00",
+      "heure_ringwalk_paris": "vers 05h00",
+      "diffuseur_origine": "DAZN",
+      "diffuseur_france": "DAZN France",
+      "enjeu_principal": "Combat éliminatoire et test de premier plan chez les super-moyens",
+      "presentation": "Matchroom Boxing propose une soirée explosive en Californie avec Diego Pacheco face à l'invaincu Darius Fulghum, ainsi que la défense de titre de l'olympien Yuberjen Martinez face à Anthony Olascuaga.",
       "combats": [
         {
           "statut": "Main Event",
-          "combattant_a": "Ryuto Oribe",
-          "palmares_a": "6-1-0, 3 KOs",
-          "taille_a": "1m68",
-          "combattant_b": "Taiga Tamegai",
-          "palmares_b": "5-2-1, 2 KOs",
-          "taille_b": "1m70",
-          "categorie_kg": "Super-coqs (-55,3 kg)",
+          "combattant_a": "Diego Pacheco",
+          "palmares_a": "26-0-0, 19 KOs",
+          "taille_a": "1m93",
+          "combattant_b": "Darius Fulghum",
+          "palmares_b": "15-1-1, 13 KOs",
+          "taille_b": "1m85",
+          "categorie_kg": "Super-moyens (-76,2 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Pacheco met son invincibilité en jeu face au cogneur Fulghum dans un duel crucial pour la division."
+        },
+        {
+          "statut": "Co-Main Event",
+          "combattant_a": "Anthony Olascuaga",
+          "palmares_a": "12-1-0, 9 KOs",
+          "taille_a": "1m63",
+          "combattant_b": "Yuberjen Martinez",
+          "palmares_b": "7-0-0, 7 KOs",
+          "taille_b": "1m57",
+          "categorie_kg": "Poids mouches (-50,8 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Défense de titre mondial WBO des poids mouches par Olascuaga face à l'olympien colombien."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Charlie Sheehy",
+          "palmares_a": "13-0-0, 8 KOs",
+          "taille_a": "1m75",
+          "combattant_b": "Gabe Flores",
+          "palmares_b": "27-3-0, 8 KOs",
+          "taille_b": "1m73",
+          "categorie_kg": "Poids légers (-61,2 kg)",
           "rounds": "8 rounds",
-          "enjeu_et_analyse": "Un duel très équilibré entre deux prospects japonais cherchant à intégrer le classement national JBC."
+          "enjeu_et_analyse": "Test important pour Sheehy face au dur Flores."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "David Adeleye",
+          "palmares_a": "14-2-0, 13 KOs",
+          "taille_a": "1m96",
+          "combattant_b": "Alexander Flores",
+          "palmares_b": "21-6-1, 19 KOs",
+          "taille_b": "1m88",
+          "categorie_kg": "Poids lourds (+90,7 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Choc de cogneurs chez les lourds."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Zaquin Moses",
+          "palmares_a": "8-0-0, 4 KOs",
+          "taille_a": "1m72",
+          "combattant_b": "Frankie Lewis",
+          "palmares_b": "5-0-0, 3 KOs",
+          "taille_b": "1m70",
+          "categorie_kg": "Poids plumes (-57,2 kg)",
+          "rounds": "6 rounds",
+          "enjeu_et_analyse": "Duel d'espoirs prometteurs."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Frank Espinoza",
+          "palmares_a": "5-0-0, 5 KOs",
+          "taille_a": "1m78",
+          "combattant_b": "Jose Lopez",
+          "palmares_b": "4-1-0, 2 KOs",
+          "taille_b": "1m75",
+          "categorie_kg": "Poids super-légers (-63,5 kg)",
+          "rounds": "6 rounds",
+          "enjeu_et_analyse": "Espinoza vise la passe de six avant la limite."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Nishant Dev",
+          "palmares_a": "7-0-0, 5 KOs",
+          "taille_a": "1m83",
+          "combattant_b": "Carlos Garcia",
+          "palmares_b": "6-2-0, 4 KOs",
+          "taille_b": "1m80",
+          "categorie_kg": "Poids super-welters (-69,9 kg)",
+          "rounds": "6 rounds",
+          "enjeu_et_analyse": "Le talent indien poursuit son ascension."
+        }
+      ]
+    },
+    {
+      "nom_gala": "Matchroom Boxing: Teremoana vs. Ahio",
+      "date_iso": "2026-11-18",
+      "date_paris": "Mercredi 18/11/2026",
+      "lieu": "Pullman Melbourne Albert Park, Melbourne, Australie",
+      "url_officielle": "https://www.matchroomboxing.com/events/teremoana-vs-ahio/",
+      "poster_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23141414%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23050505%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23E5E5E5%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2280%22%20font-weight%3D%22800%22%20letter-spacing%3D%228%22%3EMATCHROOM%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23E5E5E5%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22700%22%20letter-spacing%3D%2211%22%3EB%20O%20X%20I%20N%20G%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23E5E5E5%22%20opacity%3D%220.85%22/%3E%3C/svg%3E",
+      "heure_debut_paris": "09h00",
+      "heure_ringwalk_paris": "vers 13h00",
+      "diffuseur_origine": "DAZN",
+      "diffuseur_france": "DAZN France",
+      "enjeu_principal": "Combat explosif chez les poids lourds en Australie",
+      "presentation": "Le phénomène des poids lourds Teremoana Teremoana met son invincibilité en jeu face au puissant Hemi Ahio sur ses terres océaniennes.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Teremoana Teremoana",
+          "palmares_a": "12-0-0, 12 KOs",
+          "taille_a": "1m98",
+          "combattant_b": "Hemi Ahio",
+          "palmares_b": "25-1-0, 19 KOs",
+          "taille_b": "1m83",
+          "categorie_kg": "Poids lourds (+90,7 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Teremoana cherche à conserver son 100% de KOs face à l'expérimenté et dangereux Ahio."
+        },
+        {
+          "statut": "Co-Main Event",
+          "combattant_a": "Joel Camilleri",
+          "palmares_a": "31-8-0, 15 KOs",
+          "taille_a": "1m78",
+          "combattant_b": "Mitch Leek",
+          "palmares_b": "14-0-0, 8 KOs",
+          "taille_b": "1m80",
+          "categorie_kg": "Poids super-welters (-69,9 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Confrontation intergénérationnelle sur le sol australien."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Omar El-Abdallah",
+          "palmares_a": "6-0-0, 5 KOs",
+          "taille_a": "1m82",
+          "combattant_b": "Lilo Telepe",
+          "palmares_b": "6-1-0, 6 KOs",
+          "taille_b": "1m85",
+          "categorie_kg": "Poids mi-lourds (-79,4 kg)",
+          "rounds": "6 rounds",
+          "enjeu_et_analyse": "Duel de puncheurs invaincus ou presque."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Ky Hodgson",
+          "palmares_a": "7-1-0, 5 KOs",
+          "taille_a": "1m75",
+          "combattant_b": "Matt Faron",
+          "palmares_b": "2-0-0, 0 KO",
+          "taille_b": "1m73",
+          "categorie_kg": "Poids super-légers (-63,5 kg)",
+          "rounds": "6 rounds",
+          "enjeu_et_analyse": "Hodgson favori face à Faron."
         }
       ]
     }
   ],
+  "boxe-japon": [],
   "ufc": [
     {
       "nom_gala": "UFC 334: Gane vs. Hokit",
       "date_iso": "2026-11-14",
       "date_paris": "Nuit du Samedi 14/11 au Dimanche 15/11/2026",
-      "lieu": "Madison Square Garden, New York, États-Unis",
+      "lieu": "Madison Square Garden, New York, USA",
       "url_officielle": "https://www.ufc.com/events",
       "poster_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23260B0B%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23090303%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2280%22%20font-weight%3D%22800%22%20letter-spacing%3D%2214%22%3EU%20F%20C%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23D20A0A%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22700%22%20letter-spacing%3D%2211%22%3EULTIMATE%20FIGHTING%20CHAMPIONSHIP%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23D20A0A%22%20opacity%3D%220.85%22/%3E%3C/svg%3E",
       "heure_debut_paris": "23h00",
-      "heure_ringwalk_paris": "vers 05h00",
+      "heure_ringwalk_paris": "vers 05h30 (estimation) ",
       "diffuseur_origine": "ESPN+ / UFC Fight Pass",
       "diffuseur_france": "RMC Sport / UFC Fight Pass",
-      "enjeu_principal": "Choc chez les poids lourds entre le Français Ciryl Gane et l'invaincu Josh Hokit",
-      "presentation": "L'UFC s'installe au mythique Madison Square Garden pour l'UFC 334. En combat principal, le Français Ciryl Gane tente d'éteindre l'ascension fulgurante de l'américain invaincu Josh Hokit dans la catégorie reine.",
+      "enjeu_principal": "Josh Hokit vs. Ciryl Gane (Main Event UFC 334 en 5 rounds) ",
+      "presentation": "L'UFC 334 se déroule au Madison Square Garden de New York avec une carte officielle de 13 combats. Le Main Event oppose l'invaincu Josh Hokit au Français Ciryl Gane, précédé d'un Co-Main Event en 5 rounds entre Amanda Nunes et Kayla Harrison.",
       "combats": [
         {
           "statut": "Main Event",
           "combattant_a": "Josh Hokit",
           "palmares_a": "10-0-0",
-          "taille_a": "1m85",
+          "taille_a": "N/C",
           "combattant_b": "Ciryl Gane",
           "palmares_b": "14-2-0",
-          "taille_b": "1m96",
-          "categorie_kg": "Poids lourds (-120,2 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Choc capital chez les lourds. Le combattant français Ciryl Gane met à l'épreuve son striking face à l'invaincu lutteur américain Josh Hokit."
+          "enjeu_et_analyse": "Combat principal de l'UFC 334 prévu en cinq rounds au Madison Square Garden. L'invaincu Josh Hokit (10-0-0) affronte l'ancien challenger Ciryl Gane (14-2-0)."
         },
         {
           "statut": "Co-Main Event",
           "combattant_a": "Amanda Nunes",
           "palmares_a": "23-5-0",
-          "taille_a": "1m73",
+          "taille_a": "N/C",
           "combattant_b": "Kayla Harrison",
           "palmares_b": "19-1-0",
-          "taille_b": "1m73",
-          "categorie_kg": "Poids coqs féminins (-61,2 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Duel au sommet très attendu entre la légende brésilienne Amanda Nunes et la double championne olympique de judo Kayla Harrison."
+          "enjeu_et_analyse": "Co-Main Event féminin de prestige programmé en cinq rounds. Amanda Nunes (23-5-0) fait face à Kayla Harrison (19-1-0) sur la carte principale."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Caio Borralho",
           "palmares_a": "18-2-0",
-          "taille_a": "1m85",
+          "taille_a": "N/C",
           "combattant_b": "Yousri Belgaroui",
           "palmares_b": "11-3-0",
-          "taille_b": "1m96",
-          "categorie_kg": "Poids moyens (-83,9 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Affrontement stratégique entre deux spécialistes du striking chez les poids moyens."
+          "enjeu_et_analyse": "Duel de la carte principale en trois rounds."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Kevin Holland",
           "palmares_a": "29-15-0",
-          "taille_a": "1m91",
+          "taille_a": "N/C",
           "combattant_b": "Uroš Medić",
           "palmares_b": "14-3-0",
-          "taille_b": "1m85",
-          "categorie_kg": "Poids mi-moyens (-77,1 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Choc explosif garanti entre deux strikers spectaculaires de la division."
+          "enjeu_et_analyse": "Combat de la carte principale à New York."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Luis Gurule",
           "palmares_a": "11-4-0",
-          "taille_a": "1m70",
+          "taille_a": "N/C",
           "combattant_b": "Bilal Hasan",
           "palmares_b": "10-0-0",
-          "taille_b": "1m73",
-          "categorie_kg": "Poids mouches (-56,7 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel de vitesse chez les mouches avec l'invaincu Bilal Hasan."
+          "enjeu_et_analyse": "Duel sur la carte principale UFC 334."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Stephen Thompson",
           "palmares_a": "17-9-1",
-          "taille_a": "1m83",
+          "taille_a": "N/C",
           "combattant_b": "Charles Radtke",
           "palmares_b": "12-5-0",
-          "taille_b": "1m78",
-          "categorie_kg": "Poids mi-moyens (-77,1 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Le vétéran Thompson cherche à imposer son style unique de karaté."
+          "enjeu_et_analyse": "Combat en trois rounds sur la carte principale."
         },
         {
           "statut": "Prelims",
           "combattant_a": "Drew Dober",
           "palmares_a": "29-15-0",
-          "taille_a": "1m73",
+          "taille_a": "N/C",
           "combattant_b": "Chris Duncan",
           "palmares_b": "15-3-0",
-          "taille_b": "1m78",
-          "categorie_kg": "Poids légers (-70,3 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Combat intense entre deux combattants réputés pour leur puissance physique."
+          "enjeu_et_analyse": "Combat de la carte préliminaire UFC 334."
         },
         {
           "statut": "Prelims",
           "combattant_a": "Jim Miller",
           "palmares_a": "39-19-0",
-          "taille_a": "1m73",
+          "taille_a": "N/C",
           "combattant_b": "Terrance McKinney",
           "palmares_b": "18-9-0",
-          "taille_b": "1m78",
-          "categorie_kg": "Poids légers (-70,3 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Le vétéran légendaire Jim Miller face au dangereux finisher McKinney."
+          "enjeu_et_analyse": "Combat de la carte préliminaire en trois rounds."
         },
         {
           "statut": "Prelims",
           "combattant_a": "Cesar Almeida",
           "palmares_a": "7-3-0",
-          "taille_a": "1m85",
+          "taille_a": "N/C",
           "combattant_b": "Donte Johnson",
           "palmares_b": "9-0-0",
-          "taille_b": "1m88",
-          "categorie_kg": "Poids moyens (-83,9 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Test important pour le prospect invaincu Donte Johnson."
+          "enjeu_et_analyse": "Duel préliminaire en trois rounds à New York."
         },
         {
           "statut": "Prelims",
           "combattant_a": "Jared Gordon",
           "palmares_a": "21-9-0",
-          "taille_a": "1m75",
+          "taille_a": "N/C",
           "combattant_b": "Melquizael Costa",
           "palmares_b": "26-8-0",
-          "taille_b": "1m78",
-          "categorie_kg": "Poids légers (-70,3 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel engagé pour remonter au classement de la catégorie."
+          "enjeu_et_analyse": "Combat de la carte préliminaire UFC 334."
         },
         {
           "statut": "Prelims",
           "combattant_a": "Macy Chiasson",
           "palmares_a": "11-6-0",
-          "taille_a": "1m80",
+          "taille_a": "N/C",
           "combattant_b": "Bia Mesquita",
           "palmares_b": "8-0-0",
-          "taille_b": "1m68",
-          "categorie_kg": "Poids coqs féminins (-61,2 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Confrontation majeure entre grappeleuses de haut niveau."
+          "enjeu_et_analyse": "Combat féminin de la carte préliminaire."
         },
         {
           "statut": "Prelims",
           "combattant_a": "Alatengheili",
           "palmares_a": "18-10-2",
-          "taille_a": "1m68",
+          "taille_a": "N/C",
           "combattant_b": "Juan Diaz",
           "palmares_b": "16-1-1",
-          "taille_b": "1m70",
-          "categorie_kg": "Poids coqs (-61,2 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Opposition de styles chez les poids coqs en ouverture."
+          "enjeu_et_analyse": "Duel préliminaire en trois rounds UFC 334."
         },
         {
           "statut": "Prelims",
           "combattant_a": "Evan Elder",
           "palmares_a": "10-2-0",
-          "taille_a": "1m78",
+          "taille_a": "N/C",
           "combattant_b": "Samuel Sanches",
           "palmares_b": "11-1-0",
-          "taille_b": "1m75",
-          "categorie_kg": "Poids légers (-70,3 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Affrontement prometteur entre deux jeunes prospects de la division."
+          "enjeu_et_analyse": "Combat de la carte préliminaire UFC 334."
         }
       ]
     }
@@ -267,15 +470,15 @@
       "nom_gala": "BKFC Fight Night Myrtle Beach: Richardson vs. Oxendine",
       "date_iso": "2026-11-20",
       "date_paris": "Nuit du Vendredi 20/11 au Samedi 21/11/2026",
-      "lieu": "Myrtle Beach Sports Center, Myrtle Beach, SC, États-Unis",
+      "lieu": "Myrtle Beach Sports Center, Myrtle Beach, Caroline du Sud, États-Unis",
       "url_officielle": "https://www.bkfc.com/events/bkfc-fight-night-myrtle-beach",
-      "poster_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%201200%20600%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2245%25%22%20r%3D%2275%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23161616%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23050505%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width%3D%221200%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20x%3D%22350%22%20y%3D%22135%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23F7D388%22%20opacity%3D%220.85%22/%3E%3Ctext%20x%3D%22600%22%20y%3D%22265%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22Outfit%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2280%22%20font-weight%3D%22800%22%20letter-spacing%3D%228%22%3EDAZN%20BOXING%3C/text%3E%3Ctext%20x%3D%22600%22%20y%3D%22335%22%20text-anchor%3D%22middle%22%20fill%3D%22%23F7D388%22%20font-family%3D%22Plus%20Jakarta%20Sans%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22700%22%20letter-spacing%3D%2211%22%3EWORLD%20CHAMPIONSHIP%20NIGHT%3C/text%3E%3Crect%20x%3D%22350%22%20y%3D%22375%22%20width%3D%22500%22%20height%3D%223%22%20fill%3D%22%23F7D388%22%20opacity%3D%220.85%22/%3E%3C/svg%3E",
+      "poster_url": "https://static-media.gigcasters.com/images/gm4h/1791936341-1-1d478b25_BKFC---Logo-_Aug2020_.png",
       "heure_debut_paris": "03h00",
       "heure_ringwalk_paris": "vers 05h30",
-      "diffuseur_origine": "BKFC App / TrillerTV / DAZN",
-      "diffuseur_france": "BKFC App / TrillerTV / DAZN",
-      "enjeu_principal": "Combat vedette en catégorie poids coqs (-61,2 kg)",
-      "presentation": "Le BKFC fait escale en Caroline du Sud pour une soirée d'action à mains nues spectaculaire. En Main Event, l'ancien champion Keith Richardson tente de réaffirmer sa domination face au redoutable Joshua Oxendine.",
+      "diffuseur_origine": "BKFC App",
+      "diffuseur_france": "BKFC App / TrillerTV",
+      "enjeu_principal": "Choc chez les poids bantamweights de la BKFC",
+      "presentation": "Le Bare Knuckle Fighting Championship pose ses valises à Myrtle Beach pour une soirée intense de boxe à mains nues. En Main Event, l'ancien champion Keith Richardson fait son retour face au dangereux challenger Joshua Oxendine.",
       "combats": [
         {
           "statut": "Main Event",
@@ -285,9 +488,9 @@
           "combattant_b": "Joshua Oxendine",
           "palmares_b": "1-1-0",
           "taille_b": "",
-          "categorie_kg": "Poids coqs (-61,2 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Un choc palpitant chez les poids coqs entre le vétéran Keith Richardson et Joshua Oxendine pour se rapprocher d'une chance de titre mondial."
+          "categorie_kg": "Bantamweight (-61,2 kg)",
+          "rounds": "5 rounds de 2 min",
+          "enjeu_et_analyse": "L'ancien champion Keith Richardson cherche à s'imposer face au redoutable Joshua Oxendine dans un choc bantamweight très spectaculaire."
         },
         {
           "statut": "Co-Main Event",
@@ -297,9 +500,9 @@
           "combattant_b": "Theo Doukas",
           "palmares_b": "0-1-0",
           "taille_b": "",
-          "categorie_kg": "Poids lourd-légers (-93 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "L'ancien prétendant au titre UFC Derek Brunson effectue ses grands débuts en boxe à mains nues face à Theo Doukas."
+          "categorie_kg": "Cruiserweight (-93 kg)",
+          "rounds": "5 rounds de 2 min",
+          "enjeu_et_analyse": "L'ancien vétéran de l'UFC Derek Brunson effectue ses débuts très attendus en boxe à mains nues face à Theo Doukas."
         },
         {
           "statut": "Main Card",
@@ -309,9 +512,9 @@
           "combattant_b": "Rodney Hinton",
           "palmares_b": "2-0-0",
           "taille_b": "",
-          "categorie_kg": "Poids mi-moyens (-75 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Affrontement en poids mi-moyens entre l'invaincu Rodney Hinton et Ryan Jett."
+          "categorie_kg": "Welterweight (-75 kg)",
+          "rounds": "5 rounds de 2 min",
+          "enjeu_et_analyse": "Choc welterweight opposant Ryan Jett à Rodney Hinton."
         },
         {
           "statut": "Main Card",
@@ -321,9 +524,9 @@
           "combattant_b": "Diego Romo",
           "palmares_b": "0-1-0",
           "taille_b": "1m80",
-          "categorie_kg": "Poids moyens (-84 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Duel intense de poids moyens opposant Evan Pierce à Diego Romo."
+          "categorie_kg": "Middleweight (-79,4 kg)",
+          "rounds": "5 rounds de 2 min",
+          "enjeu_et_analyse": "Duel middleweight entre Evan Pierce et Diego Romo."
         },
         {
           "statut": "Main Card",
@@ -333,9 +536,9 @@
           "combattant_b": "Robert Fichtner",
           "palmares_b": "0-2-0",
           "taille_b": "",
-          "categorie_kg": "Poids coqs (-61,2 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Opposition de poids coqs entre le prospect Windson Ramos et Robert Fichtner."
+          "categorie_kg": "Bantamweight (-61,2 kg)",
+          "rounds": "5 rounds de 2 min",
+          "enjeu_et_analyse": "Combat bantamweight opposant Windson Ramos à Robert Fichtner."
         },
         {
           "statut": "Main Card",
@@ -345,57 +548,57 @@
           "combattant_b": "Joshua Claudio",
           "palmares_b": "0-0-0",
           "taille_b": "",
-          "categorie_kg": "Poids plumes (-66 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Brandon Bushaw affronte Joshua Claudio dans un duel explosif en plumes."
+          "categorie_kg": "Featherweight (-65,8 kg)",
+          "rounds": "5 rounds de 2 min",
+          "enjeu_et_analyse": "Confrontation featherweight entre Brandon Bushaw et Joshua Claudio."
         },
         {
-          "statut": "Undercard",
+          "statut": "Main Card",
           "combattant_a": "Austin Coleman",
           "palmares_a": "0-0-0",
           "taille_a": "",
           "combattant_b": "Alex Eliam",
           "palmares_b": "0-0-0",
           "taille_b": "",
-          "categorie_kg": "Poids coqs (-61,2 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Combat de débutants en poids coqs entre Austin Coleman et Alex Eliam."
+          "categorie_kg": "Bantamweight (-61,2 kg)",
+          "rounds": "5 rounds de 2 min",
+          "enjeu_et_analyse": "Combat bantamweight entre Austin Coleman et Alex Eliam."
         },
         {
-          "statut": "Undercard",
+          "statut": "Main Card",
           "combattant_a": "Amos Collins",
           "palmares_a": "0-0-0",
           "taille_a": "1m68",
           "combattant_b": "Ashton Caniglia",
           "palmares_b": "1-3-0",
           "taille_b": "",
-          "categorie_kg": "Poids plumes (-66 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Choc en catégorie poids plumes opposant Amos Collins à Ashton Caniglia."
+          "categorie_kg": "Featherweight (-65,8 kg)",
+          "rounds": "5 rounds de 2 min",
+          "enjeu_et_analyse": "Affrontement featherweight entre Amos Collins et Ashton Caniglia."
         },
         {
-          "statut": "Undercard",
+          "statut": "Main Card",
           "combattant_a": "Justin Howell",
           "palmares_a": "0-0-0",
           "taille_a": "1m85",
           "combattant_b": "Brian Maxwell",
           "palmares_b": "1-9-0",
           "taille_b": "",
-          "categorie_kg": "Poids mi-lourds (-93 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Justin Howell fait face au très expérimenté Brian Maxwell chez les mi-lourds."
+          "categorie_kg": "Light Heavyweight (-84 kg)",
+          "rounds": "5 rounds de 2 min",
+          "enjeu_et_analyse": "Combat light heavyweight entre Justin Howell et Brian Maxwell."
         },
         {
-          "statut": "Undercard",
+          "statut": "Main Card",
           "combattant_a": "Maurice Morris",
           "palmares_a": "1-0-0",
           "taille_a": "1m83",
           "combattant_b": "Lewis Glover",
           "palmares_b": "1-2-0",
           "taille_b": "1m80",
-          "categorie_kg": "Poids lourd-légers (-93 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Maurice Morris cherche la passe de deux face à Lewis Glover."
+          "categorie_kg": "Cruiserweight (-93 kg)",
+          "rounds": "5 rounds de 2 min",
+          "enjeu_et_analyse": "Duel cruiserweight entre Maurice Morris et Lewis Glover."
         }
       ]
     }
