@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#260E12"/>
+      <stop offset="100%" stop-color="#0D0406"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#g)"/>
+  <text x="600" y="115" text-anchor="middle" fill="#E8C574" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="9" opacity="0.9">日本ボクシングコミッション</text>
+  <rect x="330" y="140" width="540" height="3" fill="#E8C574" opacity="0.85"/>
+  <text x="600" y="265" text-anchor="middle" fill="#FFFFFF" font-family="Outfit, Arial Black, sans-serif" font-size="82" font-weight="800" letter-spacing="7">JBC BOXING JAPAN</text>
+  <text x="600" y="335" text-anchor="middle" fill="#E8C574" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="25" font-weight="700" letter-spacing="10">KORAKUEN HALL & ARENAS</text>
+  <rect x="330" y="375" width="540" height="3" fill="#E8C574" opacity="0.85"/>
+</svg>
