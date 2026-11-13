@@ -56,5 +56,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           touch cache_calendar.json
-          git add index.html calendrier.html cache_calendar.json
+          git add index.html calendrier.html cache_calendar.json logos/
           git diff --staged --quiet || (git commit -m "Mise à jour automatique du calendrier" && git pull --rebase origin main && git push origin main)
