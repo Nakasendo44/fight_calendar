@@ -256,22 +256,64 @@
       ]
     }
   ],
-  "boxe-japon": [],
+  "boxe-japon": [
+    {
+      "nom_gala": "Boxing Mobile Live : Jukiya Iimura vs. Alvin John Pasiones",
+      "promoteur": "JBC / Korakuen Hall",
+      "date_iso": "2026-11-21",
+      "date_paris": "Samedi 21/11/2026",
+      "lieu": "Tokyo, Japon",
+      "url_officielle": "https://boxmob.jp/sp/schedule/",
+      "poster_url": "logos/boxe-japon.svg",
+      "heure_debut_paris": "10h00",
+      "heure_ringwalk_paris": "vers 13h00",
+      "diffuseur_origine": "Boxmob / TV Japonaise",
+      "diffuseur_france": "N/C",
+      "enjeu_principal": "Combats professionnels au Japon",
+      "presentation": "Réunion de boxe japonaise proposant plusieurs combats de classement.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Jukiya Iimura",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Alvin John Pasiones",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids mi-mouches (-48,9 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Affrontement international entre le Japon et les Philippines."
+        },
+        {
+          "statut": "Co-Main Event",
+          "combattant_a": "Riku Sasaki",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Ai Kamikaze",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids coqs (-53,5 kg)",
+          "rounds": "6 rounds",
+          "enjeu_et_analyse": "Duel de prospect."
+        }
+      ]
+    }
+  ],
   "ufc": [
     {
       "nom_gala": "UFC 334: Gane vs. Hokit",
       "promoteur": "UFC",
       "date_iso": "2026-11-14",
       "date_paris": "Nuit du Samedi 14/11 au Dimanche 15/11/2026",
-      "lieu": "Madison Square Garden, New York, États-Unis",
+      "lieu": "Madison Square Garden, New York, USA",
       "url_officielle": "https://www.ufc.com/events",
       "poster_url": "logos/ufc.svg",
       "heure_debut_paris": "23h00",
-      "heure_ringwalk_paris": "vers 04h00 (estimation)",
+      "heure_ringwalk_paris": "env. +3h après le début",
       "diffuseur_origine": "ESPN+ / UFC Fight Pass",
       "diffuseur_france": "RMC Sport / UFC Fight Pass",
-      "enjeu_principal": "Choc Poids Lourds (-120 kg) entre Ciryl Gane et Josh Hokit",
-      "presentation": "L'UFC 334 investit le mythique Madison Square Garden avec en vedette le retour de Ciryl Gane face au prospect invaincu Josh Hokit chez les lourds. Le Co-Main Event propose un duel au sommet en catégorie féminine entre la légende Amanda Nunes et la championne PFL Kayla Harrison.",
+      "enjeu_principal": "Josh Hokit vs. Ciryl Gane",
+      "presentation": "Événement officiel UFC 334: Gane vs. Hokit programmé à Madison Square Garden, New York, USA avec 13 combats inscrits.",
       "combats": [
         {
           "statut": "Main Event",
@@ -281,9 +323,9 @@
           "combattant_b": "Ciryl Gane",
           "palmares_b": "14-2-0",
           "taille_b": "1m96",
-          "categorie_kg": "Poids lourds (-120 kg)",
+          "categorie_kg": "Poids lourds (-120,2 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Ciryl Gane tente de défendre son rang de prétendant numéro un mondial face à l'américain invaincu Josh Hokit dans un choc captivant."
+          "enjeu_et_analyse": "Choc au sommet chez les poids lourds entre le prospect invaincu Josh Hokit et l'ancien champion intérimaire Ciryl Gane."
         },
         {
           "statut": "Co-Main Event",
@@ -293,9 +335,9 @@
           "combattant_b": "Kayla Harrison",
           "palmares_b": "19-1-0",
           "taille_b": "1m73",
-          "categorie_kg": "Poids coqs féminins (-61,2 kg)",
+          "categorie_kg": "Poids coqs (-61,2 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Un affrontement légendaire entre la plus grande combattante de l'histoire de l'UFC et la double championne olympique d'actuelle domination."
+          "enjeu_et_analyse": "Affrontement très attendu entre deux légendes et anciennes championnes dominant la division féminine."
         },
         {
           "statut": "Main Card",
@@ -307,7 +349,7 @@
           "taille_b": "1m96",
           "categorie_kg": "Poids moyens (-83,9 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Choc explosif chez les poids moyens de la carte principale."
+          "enjeu_et_analyse": "Duel stratégique chez les moyens."
         },
         {
           "statut": "Main Card",
@@ -319,7 +361,7 @@
           "taille_b": "1m85",
           "categorie_kg": "Poids mi-moyens (-77,1 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Affrontement spectaculaire prévu entre deux strikers spectaculaires de la division."
+          "enjeu_et_analyse": "Combat explosif en perspective."
         },
         {
           "statut": "Main Card",
@@ -331,7 +373,7 @@
           "taille_b": "1m68",
           "categorie_kg": "Poids mouches (-56,7 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Test important chez les mouches face au prospect invaincu Hasan."
+          "enjeu_et_analyse": "Affrontement de jeunes talents."
         },
         {
           "statut": "Main Card",
@@ -343,7 +385,7 @@
           "taille_b": "1m78",
           "categorie_kg": "Poids mi-moyens (-77,1 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Le vétéran Thompson face à la puissance de Radtke."
+          "enjeu_et_analyse": "Opposition de styles entre vétéran et puncheur."
         },
         {
           "statut": "Prelims",
@@ -355,7 +397,7 @@
           "taille_b": "1m78",
           "categorie_kg": "Poids légers (-70,3 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Combat engagé en ouverture des préliminaires des légers."
+          "enjeu_et_analyse": "Guerre assurée en striking."
         },
         {
           "statut": "Prelims",
@@ -367,7 +409,7 @@
           "taille_b": "1m78",
           "categorie_kg": "Poids légers (-70,3 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Choc de vétérans toujours spectaculaires chez les légers."
+          "enjeu_et_analyse": "Test de longévité pour le vétéran."
         },
         {
           "statut": "Prelims",
@@ -379,7 +421,7 @@
           "taille_b": "1m88",
           "categorie_kg": "Poids moyens (-83,9 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Almeida fait face à l'américain invaincu Johnson."
+          "enjeu_et_analyse": "Affrontement de kickboxeurs reconvertis."
         },
         {
           "statut": "Prelims",
@@ -391,7 +433,7 @@
           "taille_b": "1m78",
           "categorie_kg": "Poids légers (-70,3 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel technique entre deux guerriers de la catégorie des légers."
+          "enjeu_et_analyse": "Duel tactique chez les légers."
         },
         {
           "statut": "Prelims",
@@ -401,9 +443,9 @@
           "combattant_b": "Bia Mesquita",
           "palmares_b": "8-0-0",
           "taille_b": "1m68",
-          "categorie_kg": "Poids coqs féminins (-61,2 kg)",
+          "categorie_kg": "Poids coqs (-61,2 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel très engagé sur le sol de la division coq."
+          "enjeu_et_analyse": "Choc de grappling."
         },
         {
           "statut": "Prelims",
@@ -415,7 +457,7 @@
           "taille_b": "1m70",
           "categorie_kg": "Poids coqs (-61,2 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Affrontement international disputé chez les poids coqs."
+          "enjeu_et_analyse": "Combat intense en ouverture."
         },
         {
           "statut": "Prelims",
@@ -427,7 +469,156 @@
           "taille_b": "1m75",
           "categorie_kg": "Poids légers (-70,3 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Combat d'ouverture des préliminaires prévus au MSG."
+          "enjeu_et_analyse": "Première carte préliminaire."
+        }
+      ]
+    },
+    {
+      "nom_gala": "UFC Fight Night: Procházka vs. Stirling",
+      "promoteur": "UFC",
+      "date_iso": "2026-11-21",
+      "date_paris": "Nuit du Samedi 21/11 au Dimanche 22/11/2026",
+      "lieu": "ABHA Arena, Doha, Qatar",
+      "url_officielle": "https://www.ufc.com/events",
+      "poster_url": "logos/ufc.svg",
+      "heure_debut_paris": "16h00",
+      "heure_ringwalk_paris": "env. +3h après le début",
+      "diffuseur_origine": "ESPN+ / UFC Fight Pass",
+      "diffuseur_france": "RMC Sport / UFC Fight Pass",
+      "enjeu_principal": "Jiří Procházka vs. Navajo Stirling",
+      "presentation": "Événement officiel UFC Fight Night: Procházka vs. Stirling programmé à ABHA Arena, Doha, Qatar avec 11 combats inscrits.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Jiří Procházka",
+          "palmares_a": "32-6-1",
+          "taille_a": "N/C",
+          "combattant_b": "Navajo Stirling",
+          "palmares_b": "11-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids mi-lourds (-93,0 kg)",
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Affrontement explosif chez les mi-lourds entre l'ancien champion spectaculaire Jiří Procházka et le phénomène invaincu Navajo Stirling."
+        },
+        {
+          "statut": "Co-Main Event",
+          "combattant_a": "Aljamain Sterling",
+          "palmares_a": "26-5-0",
+          "taille_a": "N/C",
+          "combattant_b": "Kevin Vallejos",
+          "palmares_b": "18-1-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids plumes (-65,8 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Test crucial pour l'ancien champion des coqs face à un jeune loup aux dents longues chez les plumes."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Brian Ortega",
+          "palmares_a": "16-5-0",
+          "taille_a": "N/C",
+          "combattant_b": "Dan Hooker",
+          "palmares_b": "24-15-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids légers (-70,3 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Choc de vétérans réputés pour leur résilience."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Kyoji Horiguchi",
+          "palmares_a": "36-6-0",
+          "taille_a": "N/C",
+          "combattant_b": "Asu Almabayev",
+          "palmares_b": "24-3-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids mouches (-56,7 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Combat crucial pour le classement des mouches."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Jared Cannonier",
+          "palmares_a": "18-10-0",
+          "taille_a": "N/C",
+          "combattant_b": "Ikram Aliskerov",
+          "palmares_b": "18-2-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids moyens (-83,9 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Affrontement de puncheurs redoutables."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Aleksandre Topuria",
+          "palmares_a": "7-1-0",
+          "taille_a": "N/C",
+          "combattant_b": "Santiago Luna",
+          "palmares_b": "8-1-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids coqs (-61,2 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Duel de prospects européens."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Shamil Gaziev",
+          "palmares_a": "15-3-0",
+          "taille_a": "N/C",
+          "combattant_b": "Tallison Teixeira",
+          "palmares_b": "9-2-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids lourds (-120,2 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Gros duel chez les lourds."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Amir Albazi",
+          "palmares_a": "17-3-0",
+          "taille_a": "N/C",
+          "combattant_b": "Alessandro Costa",
+          "palmares_b": "17-5-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids mouches (-56,7 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Combat technique au sol."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Jake Matthews",
+          "palmares_a": "23-8-0",
+          "taille_a": "N/C",
+          "combattant_b": "Tahir Abdullayev",
+          "palmares_b": "20-3-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids mi-moyens (-77,1 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Affrontement international."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Nikolas Motta",
+          "palmares_a": "15-6-0",
+          "taille_a": "N/C",
+          "combattant_b": "Dom Mar Fan",
+          "palmares_b": "9-3-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids légers (-70,3 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Opposition de styles."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Diyar Nurgozhay",
+          "palmares_a": "12-2-0",
+          "taille_a": "N/C",
+          "combattant_b": "Alik Lorenz",
+          "palmares_b": "8-2-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids mi-lourds (-93,0 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Ouverture des combats préliminaires."
         }
       ]
     }
@@ -435,19 +626,19 @@
   "rizin": [],
   "bkfc": [
     {
-      "nom_gala": "BKFC Fight Night Myrtle Beach: Keith Richardson vs. Joshua Oxendine",
+      "nom_gala": "BKFC Fight Night Myrtle Beach: Richardson vs. Oxendine",
       "promoteur": "BKFC",
       "date_iso": "2026-11-20",
       "date_paris": "Nuit du Vendredi 20/11 au Samedi 21/11/2026",
-      "lieu": "Myrtle Beach Sports Center, Myrtle Beach, SC, États-Unis",
+      "lieu": "Myrtle Beach Sports Center, Myrtle Beach, SC, USA",
       "url_officielle": "https://www.bkfc.com/events/bkfc-fight-night-myrtle-beach",
       "poster_url": "logos/bkfc.svg",
       "heure_debut_paris": "03h00",
-      "heure_ringwalk_paris": "vers 05h30 (estimation)",
+      "heure_ringwalk_paris": "vers 05h00 (estimation)",
       "diffuseur_origine": "BKFC App / TrillerTV / DAZN",
-      "diffuseur_france": "BKFC App / TrillerTV",
-      "enjeu_principal": "Choc en poids coqs entre l'ancien champion Keith Richardson et Joshua Oxendine",
-      "presentation": "Le Bare Knuckle Fighting Championship s'installe à Myrtle Beach pour une soirée spectaculaire. En main event, l'ancien champion mondial BKFC Keith Richardson effectue son retour face au redoutable Joshua Oxendine, tandis que l'ex-combattant UFC Derek Brunson fait ses débuts à mains nues en co-main event.",
+      "diffuseur_france": "BKFC App / TrillerTV / DAZN",
+      "enjeu_principal": "Duel de poids coqs entre Keith Richardson et Joshua Oxendine",
+      "presentation": "Le BKFC revient à Myrtle Beach pour une soirée de combats à mains nues. Le Main Event oppose l'ancien champion Keith Richardson à Joshua Oxendine dans un affrontement crucial pour la catégorie.",
       "combats": [
         {
           "statut": "Main Event",
@@ -456,46 +647,46 @@
           "taille_a": "1m78",
           "combattant_b": "Joshua Oxendine",
           "palmares_b": "1-1-0",
-          "taille_b": "N/A",
-          "categorie_kg": "Poids coqs (-61,2 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Bantamweight (-61,2 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "L'ancien champion mondial Keith Richardson vise une victoire éclatante pour remonter dans les classements face à Joshua Oxendine."
+          "enjeu_et_analyse": "Richardson cherche à rebondir après son titre perdu, face à un Oxendine déterminé à créer la surprise."
         },
         {
           "statut": "Co-Main Event",
           "combattant_a": "Derek Brunson",
           "palmares_a": "0-0-0",
-          "taille_a": "1m85",
+          "taille_a": "1m78",
           "combattant_b": "Theo Doukas",
           "palmares_b": "0-1-0",
-          "taille_b": "N/A",
-          "categorie_kg": "Poids lourd-légers (-93 kg)",
+          "taille_b": "N/C",
+          "categorie_kg": "Cruiserweight (-93 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Débuts très attendus du vétéran du MMA Derek Brunson dans le cercle à mains nues contre Theo Doukas."
+          "enjeu_et_analyse": "Débuts très attendus de l'ancien combattant UFC Derek Brunson en bare knuckle."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Ryan Jett",
-          "palmares_a": "0-0-0",
+          "palmares_a": "0-2-0",
           "taille_a": "1m63",
           "combattant_b": "Rodney Hinton",
           "palmares_b": "2-0-0",
           "taille_b": "1m71",
-          "categorie_kg": "Poids mi-moyens (-77,1 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Duel d'action entre Jett et l'invaincu Hinton."
+          "categorie_kg": "Welterweight (-74,8 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Duel de welterweights pour grimper dans les classements."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Evan Pierce",
           "palmares_a": "0-0-0",
-          "taille_a": "1m84",
+          "taille_a": "1m80",
           "combattant_b": "Diego Romo",
           "palmares_b": "0-1-0",
           "taille_b": "1m80",
-          "categorie_kg": "Poids moyens (-84 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Affrontement chez les poids moyens."
+          "categorie_kg": "Middleweight (-83,9 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Affrontement de poids moyens pour une première victoire."
         },
         {
           "statut": "Main Card",
@@ -504,46 +695,46 @@
           "taille_a": "1m70",
           "combattant_b": "Robert Fichtner",
           "palmares_b": "0-2-0",
-          "taille_b": "N/A",
-          "categorie_kg": "Poids coqs (-61,2 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Choc en poids coqs."
+          "taille_b": "N/C",
+          "categorie_kg": "Bantamweight (-61,2 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Ramos fait ses débuts face à un Fichtner expérimenté."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Brandon Bushaw",
           "palmares_a": "2-2-0",
-          "taille_a": "N/A",
+          "taille_a": "N/C",
           "combattant_b": "Joshua Claudio",
           "palmares_b": "0-0-0",
-          "taille_b": "N/A",
-          "categorie_kg": "Poids plumes (-65,8 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Bushaw devant son public local en poids plumes."
+          "taille_b": "N/C",
+          "categorie_kg": "Featherweight (-65,8 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Bushaw cherche à stabiliser son palmarès face à Claudio."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Austin Coleman",
           "palmares_a": "0-0-0",
-          "taille_a": "N/A",
+          "taille_a": "N/C",
           "combattant_b": "Alex Eliam",
           "palmares_b": "0-0-0",
-          "taille_b": "N/A",
-          "categorie_kg": "Poids coqs (-61,2 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Débuts professionnels à mains nues."
+          "taille_b": "N/C",
+          "categorie_kg": "Bantamweight (-61,2 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Duel entre deux combattants en quête de première victoire."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Amos Collins",
-          "palmares_a": "0-0-0",
+          "palmares_a": "0-1-0",
           "taille_a": "1m68",
           "combattant_b": "Ashton Caniglia",
           "palmares_b": "1-3-0",
-          "taille_b": "N/A",
-          "categorie_kg": "Poids plumes (-65,8 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Duel chez les poids plumes."
+          "taille_b": "N/C",
+          "categorie_kg": "Featherweight (-65,8 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Collins et Caniglia cherchent à relancer leur carrière."
         },
         {
           "statut": "Main Card",
@@ -553,21 +744,21 @@
           "combattant_b": "Brian Maxwell",
           "palmares_b": "1-9-0",
           "taille_b": "1m72",
-          "categorie_kg": "Poids mi-lourds (-93 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Combat engagé en mi-lourds."
+          "categorie_kg": "Light Heavyweight (-93 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Maxwell apporte son expérience face au débutant Howell."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Maurice Morris",
-          "palmares_a": "1-0-0",
+          "palmares_a": "1-1-0",
           "taille_a": "1m83",
           "combattant_b": "Lewis Glover",
           "palmares_b": "1-2-0",
           "taille_b": "1m80",
-          "categorie_kg": "Poids lourd-légers (-93 kg)",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Opposition physique en lourd-légers."
+          "categorie_kg": "Cruiserweight (-93 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Duel équilibré chez les poids lourds-légers."
         }
       ]
     }
