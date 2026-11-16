@@ -160,7 +160,6 @@ MONTH_NAME_TO_NUM = {
     "december": 12, "dec": 12, "décembre": 12, "decembre": 12,
 }
 
-# Seuls les 3 mois FUTURS suivant la fenêtre (ex: décembre, janvier, février) sont filtrés dans les titres RSS
 FUTURE_FORBIDDEN_MONTHS_RSS = set()
 for future_offset in range(15, 90, 15):
     fd = now_paris + timedelta(days=future_offset)
@@ -221,7 +220,6 @@ def translate_weight_to_fr_kg(raw_cat, sport_slug="boxing"):
     return raw_cat
 
 def is_night_hour_paris(time_str):
-    """Détecte si un horaire (ex: '02h00', 'vers 04h30') se situe entre 00h00 et 06h59 à Paris."""
     if not time_str:
         return False
     m = re.search(r"(?:^|\D)([012]?\d)\s*[hH:]", str(time_str))
@@ -231,11 +229,6 @@ def is_night_hour_paris(time_str):
     return False
 
 def format_paris_date_label(date_iso, heure_debut_str="", heure_ringwalk_str=""):
-    """
-    Construit le libellé exact de la date en français à partir de la date de soirée (date_iso).
-    Si l'événement a lieu ou se termine la nuit (entre 00h00 et 06h59 heure de Paris),
-    renvoie 'Nuit du Samedi 14/11 au Dimanche 15/11/2026'.
-    """
     try:
         dt = datetime.strptime(date_iso, "%Y-%m-%d")
     except Exception:
@@ -269,7 +262,6 @@ def format_iso_to_paris(iso_str):
         return now_paris.strftime("%Y-%m-%d"), date_str, "20h00"
 
 def decode_response_text(resp):
-    """Garantit un décodage UTF-8 propre même sur les sites japonais (Boxmob) qui omettent le charset HTTP."""
     if not resp or not resp.content:
         return ""
     try:
@@ -279,10 +271,6 @@ def decode_response_text(resp):
         return resp.content.decode(enc, errors="replace")
 
 def clean_html_to_text(raw_html, max_chars=24000):
-    """
-    Supprime les scripts/menus et convertit les balises de blocs HTML en sauts de ligne (\n)
-    pour préserver la séparation stricte entre chaque gala et chaque combat de sous-carte.
-    """
     if not raw_html:
         return ""
     txt = re.sub(r"<script.*?</script>", " ", raw_html, flags=re.DOTALL | re.IGNORECASE)
@@ -298,10 +286,6 @@ def clean_html_to_text(raw_html, max_chars=24000):
     return "\n".join(clean_lines)[:max_chars]
 
 def extract_boxlive_subpage_text(raw_html):
-    """
-    Sur les sous-pages box.live/fights/..., l'Undercard se trouve en bas de page après un très long
-    tableau de statistiques 'Tale of the Tape'. On extrait le haut (infos clés) + le bas (Undercard).
-    """
     full_txt = clean_html_to_text(raw_html, max_chars=45000)
     if len(full_txt) <= 10000:
         return full_txt
@@ -324,10 +308,6 @@ def extract_boxlive_subpage_text(raw_html):
     return full_txt[:9000] + "\n" + full_txt[-5000:]
 
 def fetch_rss_snippets(query, lang="en-US", country="US", max_items=22):
-    """
-    Récupère les articles Google News RSS de la semaine (cartes complètes, horaires, promoteurs)
-    en filtrant uniquement les titres annonçant explicitement un gala d'un mois futur hors-fenêtre.
-    """
     encoded_q = urllib.parse.quote(query)
     rss_url = f"https://news.google.com/rss/search?q={encoded_q}&hl={lang}&gl={country}&ceid={country}:{lang.split('-')[0]}"
     items_txt = []
@@ -341,7 +321,6 @@ def fetch_rss_snippets(query, lang="en-US", country="US", max_items=22):
                 desc = clean_html_to_text(item.findtext("description") or "", 480)
                 title_low = title.lower()
 
-                # On filtre uniquement si le TITRE annonce un mois futur hors fenêtre (ex: "December", "January")
                 if any(re.search(rf"\b{re.escape(m_word)}\b", title_low) for m_word in FUTURE_FORBIDDEN_MONTHS_RSS):
                     continue
 
@@ -353,11 +332,6 @@ def fetch_rss_snippets(query, lang="en-US", country="US", max_items=22):
     return "\n".join(items_txt)
 
 def fetch_boxlive_window_and_undercards(max_subpages=10):
-    """
-    Extrait les galas de la fenêtre J-1..J+7 sur box.live sans couper le début des cartes HTML,
-    ouvre chaque sous-page pour extraire le bloc Undercard, et lance une recherche RSS dédiée
-    sur chaque affiche trouvée pour garantir 100 % des combats de la sous-carte.
-    """
     url = "https://box.live/upcoming-fights-schedule/"
     combined_texts = []
     try:
@@ -423,10 +397,6 @@ def fetch_boxlive_window_and_undercards(max_subpages=10):
     return "\n\n".join(combined_texts)
 
 def fetch_webpage_and_sublinks(url, link_pattern=None, max_subpages=8, max_chars=18000, subpage_chars=14000):
-    """
-    Récupère le texte complet d'une page officielle (décodée proprement en UTF-8)
-    et suit les liens des cartes d'événements.
-    """
     combined_texts = []
     try:
         r = requests.get(url, headers=HEADERS, timeout=12)
@@ -458,10 +428,6 @@ def fetch_webpage_and_sublinks(url, link_pattern=None, max_subpages=8, max_chars
     return "\n\n".join(combined_texts)
 
 def fetch_boxmob_window_data(max_subpages=12, subpage_chars=15000):
-    """
-    Parcourt Boxmob.jp jour par jour (en forçant le décodage UTF-8), conserve uniquement
-    les dates de la fenêtre J-1..J+7, et télécharge l'intégralité des sous-cartes (index.html?sid=...).
-    """
     url = "https://boxmob.jp/sp/schedule/"
     combined_texts = []
     try:
@@ -672,7 +638,6 @@ def build_prefetched_context(discipline_id):
         if us_tv:
             chunks.append(us_tv)
 
-        # Requêtes RSS ciblées (fonctionnent même quand le modèle tourne en mode Direct sur Flash Lite)
         rss_mf_pro = fetch_rss_snippets(
             '("Viddal Riley" OR "Seydi Coupe" OR "MF Pro" OR "Misfits Boxing" OR "Zelfa Barrett") ("fight card" OR "undercard" OR "Wembley" OR "DAZN") when:14d',
             max_items=18
@@ -764,10 +729,8 @@ AGENTS_CONFIG = [
         ),
         "specific_rules": (
             "- PÉRIMÈTRE DES GALAS MAJEURS À INCLURE ABSOLUMENT : Inclus tous les galas programmés cette semaine par "
-            "Matchroom Boxing (ex: Pacheco vs Fulghum, Teremoana vs Ahio), "
-            "Zuffa Boxing (ex: Zuffa Boxing 13 Adames vs Warburton à Riyad), "
-            "MF Pro / Misfits Boxing (ex: Viddal Riley vs Seydi Coupe à l'OVO Arena Wembley sur DAZN le samedi 14/11/2026 avec Zelfa Barrett vs Gavin Gwynne, Kieron Molloy vs Steve Suppan, Dan Toward vs Jak Corrie, Yaser Al Ghena vs Ben Marksby, Tom Welland vs Jack Dillingham), "
-            "Queensberry, Boxxer, Top Rank, PBC, Golden Boy, Riyadh Season / The Ring, MVP et ProBox TV.\n"
+            "Matchroom Boxing, Zuffa Boxing, MF Pro / Misfits Boxing, Queensberry, Boxxer, Top Rank, PBC, Golden Boy, "
+            "Riyadh Season / The Ring, MVP et ProBox TV.\n"
             "- CHAMP 'promoteur' OBLIGATOIRE : Renseigne précisément le nom de l'organisateur dans 'promoteur' parmi : "
             "'Matchroom Boxing', 'Queensberry', 'Boxxer', 'Zuffa Boxing', 'MF Pro', 'Top Rank', 'PBC', 'Golden Boy', 'The Ring / Riyadh Season', 'DAZN Boxing'.\n"
             "- SOUS-CARTES COMPLÈTES OBLIGATOIRES : Il est INTERDIT de ne mettre qu'un seul combat (le Main Event) quand une sous-carte existe. "
@@ -872,7 +835,6 @@ LOGOS_DIR = "logos"
 os.makedirs(LOGOS_DIR, exist_ok=True)
 
 def build_official_logo_svg(bg_start, bg_end, accent_color, main_title, subtitle, letter_spacing="8", badge_top=""):
-    """Génère un fichier logo vectoriel officiel haute définition propre dans logos/<key>.svg."""
     top_text_el = (
         f'<text x="600" y="115" text-anchor="middle" fill="{accent_color}" '
         f'font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="20" font-weight="700" '
@@ -900,12 +862,10 @@ def build_official_logo_svg(bg_start, bg_end, accent_color, main_title, subtitle
     return svg
 
 OFFICIAL_LOGOS_CATALOG = {
-    # 4 Ligues exclusives
     "ufc": ("#260B0B", "#090303", "#D20A0A", "U F C", "ULTIMATE FIGHTING CHAMPIONSHIP", "14", "OFFICIAL OCTAGON EVENT"),
     "rizin": ("#1A1326", "#08050E", "#E5C158", "R I Z I N", "FIGHTING FEDERATION", "12", "JAPAN MMA SERIES"),
     "bkfc": ("#1E190A", "#090703", "#F5C518", "B K F C", "BARE KNUCKLE FIGHTING CHAMPIONSHIP", "12", "WORLD SERIES"),
     "glory": ("#1D160B", "#080603", "#E6B84D", "G L O R Y", "GLORY KICKBOXING WORLD SERIES", "12", "STAND-UP STRIKING"),
-    # Promoteurs Boxe Internationale
     "matchroom": ("#141414", "#050505", "#E5E5E5", "MATCHROOM", "B O X I N G", "8", "EDDIE HEARN PROMOTIONS"),
     "queensberry": ("#1A140B", "#080604", "#D4AF37", "QUEENSBERRY", "P R O M O T I O N S", "6", "FRANK WARREN"),
     "boxxer": ("#0F1D1D", "#050A0A", "#00E5FF", "B O X X E R", "SKY SPORTS & BBC BOXING", "10", "UK CHAMPIONSHIP BOXING"),
@@ -916,12 +876,21 @@ OFFICIAL_LOGOS_CATALOG = {
     "goldenboy": ("#1F1709", "#0A0703", "#E6B84D", "GOLDEN BOY", "P R O M O T I O N S", "7", "OSCAR DE LA HOYA"),
     "thering": ("#1C130E", "#0A0604", "#E2B049", "THE RING", "RIYADH SEASON OFFICIAL", "8", "CHAMPIONSHIP FIGHT NIGHT"),
     "dazn": ("#161616", "#050505", "#F7D388", "DAZN BOXING", "GLOBAL FIGHT NIGHT", "8", "LIVE WORLDWIDE"),
-    # Promoteurs & Séries Boxe Japon
     "ohashi": ("#101B2B", "#060A11", "#E2B049", "OHASHI PROMOTIONS", "PHOENIX BATTLE • LEMINO BOXING", "5", "大橋プロモーション • TOKYO / YOKOHAMA"),
     "teiken": ("#241111", "#0B0404", "#E6B84D", "TEIKEN PROMOTIONS", "PRIME VIDEO BOXING • DYNAMIC GLOVE", "5", "帝拳プロモーション • TOKYO"),
     "unext": ("#141A24", "#07090E", "#D4AF37", "U-NEXT BOXING", "DYNAMIC GLOVE & KNOCK OUT BOXING", "6", "KORAKUEN HALL TOKYO"),
     "boxe-japon": ("#260E12", "#0D0406", "#E8C574", "JBC BOXING JAPAN", "KORAKUEN HALL & ARENAS", "7", "日本ボクシングコミッション"),
     "boxe-monde": ("#24150E", "#0C0604", "#D4AF37", "WORLD BOXING", "CHAMPIONSHIP FIGHT NIGHT", "8", "INTERNATIONAL PRO BOXING"),
+}
+
+# Table d'alias pour accepter automatiquement les variantes de noms de fichiers (ex: "zuffa boxing", "misfists")
+LOGO_FILENAME_ALIASES = {
+    "zuffa": ["zuffa", "zuffa boxing", "zuffa-boxing", "zuffaboxing"],
+    "misfits": ["misfits", "misfists", "mf pro", "mf-pro", "mfpro"],
+    "toprank": ["toprank", "top rank", "top-rank"],
+    "goldenboy": ["goldenboy", "golden boy", "golden-boy"],
+    "thering": ["thering", "the ring", "the-ring", "ring"],
+    "unext": ["unext", "u-next", "u next"],
 }
 
 def initialize_logos_directory():
@@ -938,10 +907,25 @@ def initialize_logos_directory():
 initialize_logos_directory()
 
 def get_logo_path_for_key(logo_key):
-    for ext in [".png", ".webp", ".jpg", ".jpeg", ".svg"]:
-        candidate = f"{LOGOS_DIR}/{logo_key}{ext}"
-        if os.path.exists(candidate):
-            return candidate
+    """
+    Cherche en priorité les images personnalisées (.png, .webp, .jpg, .jpeg) dans 'logos/'
+    en prenant en charge les variantes de nommage (ex: 'zuffa boxing.webp', 'misfists.png').
+    Si aucune image personnalisée n'est trouvée, utilise le fichier vectoriel 'logos/<logo_key>.svg'.
+    """
+    possible_names = LOGO_FILENAME_ALIASES.get(logo_key, [logo_key])
+    # 1. Priorité absolue aux images importées manuellement (.png, .webp, .jpg, .jpeg)
+    for name_variant in possible_names:
+        for ext in [".png", ".webp", ".jpg", ".jpeg"]:
+            disk_path = os.path.join(LOGOS_DIR, f"{name_variant}{ext}")
+            if os.path.exists(disk_path):
+                encoded_name = urllib.parse.quote(f"{name_variant}{ext}")
+                return f"{LOGOS_DIR}/{encoded_name}"
+
+    # 2. Repli sur le fichier .svg généré automatiquement
+    svg_disk = os.path.join(LOGOS_DIR, f"{logo_key}.svg")
+    if os.path.exists(svg_disk):
+        return f"{LOGOS_DIR}/{logo_key}.svg"
+
     return f"{LOGOS_DIR}/boxe-monde.svg"
 
 def resolve_event_poster(ev, ev_url, grounding_urls, discipline_id, total_events_in_section):
@@ -1277,7 +1261,6 @@ GENERIC_EVENT_WORDS = {
 def extract_fighter_tokens(text):
     if not text:
         return set()
-    # Seuil abaissé à 2 lettres pour prendre en compte les noms courts japonais/asiatiques (ex: Jin, Sho, Ryo, Lee)
     words = re.findall(r"[a-zA-ZÀ-ÿ]{2,}", text.lower())
     return {w for w in words if w not in GENERIC_EVENT_WORDS and len(w) >= 3}
 
@@ -1510,7 +1493,6 @@ Si aucun événement n'est programmé dans cette fenêtre, renvoie exactement : 
                     break
 
                 if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                    # Si le quota journalier du modèle (20 RPD) est atteint, on passe immédiatement au modèle suivant sans faire un 2e appel inutile
                     DEAD_MODELS_TOTAL.add(model_name)
                     print(f"  [Bascule Quota] Plafond atteint sur {model_name}, passage immédiat au modèle suivant...")
                     time.sleep(2)
@@ -1552,7 +1534,6 @@ def render_event_card_html(ev):
     h_ringwalk = html.escape(ev.get("heure_ringwalk_paris") or ev.get("heure_main_event_paris") or "N/C")
     diff_orig = html.escape(ev.get("diffuseur_origine") or "International")
     diff_fr = html.escape(ev.get("diffuseur_france") or "Streaming officiel")
-    enjeu = html.escape(ev.get("enjeu_principal") or "")
     presentation = html.escape(ev.get("presentation") or "")
     combats = ev.get("combats") or []
 
@@ -1567,14 +1548,13 @@ def render_event_card_html(ev):
     else:
         status_badge = ""
 
-    belt_badge = f'<div class="poster-belt">👑 {enjeu}</div>' if enjeu else ""
+    # Suppression de la mention jaune (belt_badge) au-dessus du titre dans la bannière
     if poster_url:
         poster_block = f"""
         <div class="poster-container">
             <img src="{html.escape(poster_url)}" alt="{nom_gala}" class="event-poster-img"
                  onerror="this.parentElement.classList.add('poster-fallback-mode'); this.style.display='none';">
             <div class="poster-overlay">
-                {belt_badge}
                 <div class="poster-dynamic-title">{nom_gala}</div>
             </div>
         </div>
@@ -1583,7 +1563,6 @@ def render_event_card_html(ev):
         poster_block = f"""
         <div class="poster-container poster-fallback-mode">
             <div class="poster-overlay">
-                {belt_badge}
                 <div class="poster-dynamic-title">{nom_gala}</div>
             </div>
         </div>
@@ -1708,7 +1687,7 @@ nav_links_html = "\n                ".join(nav_links)
 all_sections_content = "\n".join(sections_html)
 
 # ==============================================================================
-# 8. ASSEMBLAGE DU SITE FINAL (BARRE FIXE EN HAUT SANS STICKY + RECHERCHE)
+# 8. ASSEMBLAGE DU SITE FINAL (BARRE FIXE EN HAUT + LOGOS TRANSPARENTS CENTRÉS)
 # ==============================================================================
 FINAL_HTML = f"""<!DOCTYPE html>
 <html lang="fr">
@@ -1896,11 +1875,11 @@ FINAL_HTML = f"""<!DOCTYPE html>
         .poster-container {{
             position: relative;
             width: 100%;
-            height: 320px;
+            height: 290px;
             border-radius: 12px;
             overflow: hidden;
             margin-bottom: 1.25rem;
-            background: radial-gradient(circle at center, #4E2E1B 0%, #1E1008 100%);
+            background: radial-gradient(circle at center, #3A2214 0%, #140B06 100%);
             border: 1px solid #6E452B;
             display: flex;
             align-items: center;
@@ -1912,12 +1891,12 @@ FINAL_HTML = f"""<!DOCTYPE html>
             object-fit: contain;
             object-position: center center;
             display: block;
-            padding-bottom: 2rem;
+            padding: 2rem 2.5rem 4.2rem 2.5rem;
         }}
         .poster-overlay {{
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(24, 12, 5, 0.95) 0%, rgba(24, 12, 5, 0.42) 32%, rgba(24, 12, 5, 0.0) 65%);
+            background: linear-gradient(to top, rgba(18, 9, 4, 0.95) 0%, rgba(18, 9, 4, 0.45) 28%, rgba(18, 9, 4, 0.0) 58%);
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -1928,7 +1907,7 @@ FINAL_HTML = f"""<!DOCTYPE html>
         }}
         .poster-container.poster-fallback-mode {{
             height: auto;
-            min-height: 135px;
+            min-height: 120px;
             background: linear-gradient(135deg, #2D1B10 0%, #5A351E 50%, #2D1B10 100%);
         }}
         .poster-container.poster-fallback-mode .poster-overlay {{
@@ -1939,20 +1918,6 @@ FINAL_HTML = f"""<!DOCTYPE html>
             justify-content: center;
             width: 100%;
             padding: 1.5rem 1rem;
-        }}
-        .poster-belt {{
-            display: inline-block;
-            background-color: rgba(196, 136, 43, 0.32);
-            backdrop-filter: blur(4px);
-            border: 1px solid #F7D388;
-            color: #F7D388;
-            font-size: 0.78rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 0.2rem 0.75rem;
-            border-radius: 99px;
-            margin-bottom: 0.45rem;
         }}
         .poster-dynamic-title {{
             font-family: 'Outfit', sans-serif;
@@ -2160,7 +2125,8 @@ FINAL_HTML = f"""<!DOCTYPE html>
         }}
         @media (max-width: 600px) {{
             header.hero h1 {{ font-size: 1.75rem; }}
-            .poster-container {{ height: 250px; }}
+            .poster-container {{ height: 230px; }}
+            .event-poster-img {{ padding: 1.5rem 1.5rem 3.5rem 1.5rem; }}
             .poster-dynamic-title {{ font-size: 1.18rem; }}
         }}
     </style>
