@@ -9,11 +9,11 @@
       "url_officielle": "https://www.matchroomboxing.com/events/teremoana-vs-ahio/",
       "poster_url": "logos/matchroom.png",
       "heure_debut_paris": "09h00",
-      "heure_ringwalk_paris": "vers 13h00 (estimation)",
+      "heure_ringwalk_paris": "vers 12h30",
       "diffuseur_origine": "DAZN",
       "diffuseur_france": "DAZN France",
-      "enjeu_principal": "Choc des poids lourds sur la scène internationale",
-      "presentation": "Le prodige invaincu des poids lourds Teremoana affronte le dangereux Hemi Ahio dans un combat explosif en terres australiennes, avec un soutien massif de DAZN.",
+      "enjeu_principal": "Choc des poids lourds sur le sol australien",
+      "presentation": "Le prodige des poids lourds Teremoana affronte le redoutable Hemi Ahio dans un combat explosif à Melbourne, encadré par une solide sous-carte régionale.",
       "combats": [
         {
           "statut": "Main Event",
@@ -24,20 +24,20 @@
           "palmares_b": "25-1-0, 19 KOs",
           "taille_b": "1m83",
           "categorie_kg": "Poids lourds (+90,7 kg)",
-          "rounds": "12 rounds",
-          "enjeu_et_analyse": "Combat au sommet chez les poids lourds entre le puncheur invaincu Teremoana et le redoutable vétéran Hemi Ahio."
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Test crucial pour Teremoana face à l'expérimenté et puissant Hemi Ahio."
         },
         {
-          "statut": "Undercard",
+          "statut": "Co-Main Event",
           "combattant_a": "Joel Camilleri",
           "palmares_a": "31-8-0, 15 KOs",
           "taille_a": "1m78",
           "combattant_b": "Mitch Leek",
           "palmares_b": "14-0-0, 8 KOs",
           "taille_b": "1m80",
-          "categorie_kg": "Poids super-welters (-69,9 kg)",
+          "categorie_kg": "Super-welters (-69,8 kg)",
           "rounds": "10 rounds",
-          "enjeu_et_analyse": "Duel test pour Leek."
+          "enjeu_et_analyse": "Affrontement très attendu entre expérience et invincibilité locale."
         },
         {
           "statut": "Undercard",
@@ -48,8 +48,8 @@
           "palmares_b": "6-1-0, 6 KOs",
           "taille_b": "1m73",
           "categorie_kg": "Poids lourds (+90,7 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Affrontement de cogneurs."
+          "rounds": "6 rounds",
+          "enjeu_et_analyse": "Duel de cogneurs lourds."
         },
         {
           "statut": "Undercard",
@@ -59,9 +59,9 @@
           "combattant_b": "Matt Faron",
           "palmares_b": "2-0-0, 0 KO",
           "taille_b": "1m76",
-          "categorie_kg": "Poids moyens (-72,6 kg)",
+          "categorie_kg": "Poids moyens (-72,5 kg)",
           "rounds": "6 rounds",
-          "enjeu_et_analyse": "Match de progression."
+          "enjeu_et_analyse": "Combat de développement."
         }
       ]
     }
@@ -79,7 +79,7 @@
       "heure_ringwalk_paris": "vers 13h00",
       "diffuseur_origine": "Boxmob",
       "diffuseur_france": "Aucun",
-      "enjeu_principal": "Combat professionnel poids super-coqs",
+      "enjeu_principal": "Combat professionnel poids mouches",
       "presentation": "Soirée de boxe organisée au Korakuen Hall mettant en vedette des espoirs locaux. Le combat principal oppose Jukiya Iimura à Alvin John Paquiones.",
       "combats": [
         {
@@ -90,7 +90,7 @@
           "combattant_b": "Alvin John Paquiones",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Super-coqs (-55,3 kg)",
+          "categorie_kg": "Poids mouches (-50,8 kg)",
           "rounds": "8 rounds",
           "enjeu_et_analyse": "Duel international entre le Japonais Iimura et le Philippin Paquiones pour progresser dans les classements."
         },
@@ -102,9 +102,9 @@
           "combattant_b": "Ai Kamikaze",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids légers (-61,2 kg)",
+          "categorie_kg": "Poids super-plumes (-58,9 kg)",
           "rounds": "6 rounds",
-          "enjeu_et_analyse": "Combat de soutien entre deux boxeurs locaux."
+          "enjeu_et_analyse": "Combat de soutien entre deux boxeurs japonais."
         },
         {
           "statut": "Undercard",
@@ -132,8 +132,8 @@
       "heure_ringwalk_paris": "vers 12h00",
       "diffuseur_origine": "Boxmob",
       "diffuseur_france": "Aucun",
-      "enjeu_principal": "Combat éliminatoire WBA poids léger-minime",
-      "presentation": "Gala féminin de haut niveau au Korakuen Hall avec un enjeu majeur pour le classement mondial WBA.",
+      "enjeu_principal": "Combat féminin de haut niveau",
+      "presentation": "Gala dominical au Korakuen Hall avec une affiche féminine importante. Sumire Yamanaka cherche à confirmer son statut face à Isabel Rivero.",
       "combats": [
         {
           "statut": "Main Event",
@@ -143,9 +143,9 @@
           "combattant_b": "Sumire Yamanaka",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Léger-minime (-46,3 kg)",
-          "rounds": "10 rounds",
-          "enjeu_et_analyse": "Combat éliminatoire pour le titre mondial WBA, crucial pour la carrière des deux boxeuses."
+          "categorie_kg": "Poids mouches (-50,8 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Choc féminin pour le prestige et le classement dans la catégorie des poids mouches."
         },
         {
           "statut": "Co-Main Event",
@@ -175,8 +175,8 @@
       "heure_ringwalk_paris": "vers 21h00",
       "diffuseur_origine": "ESPN+ / UFC Fight Pass",
       "diffuseur_france": "RMC Sport / UFC Fight Pass",
-      "enjeu_principal": "Jiří Procházka vs. Navajo Stirling en combat vedette",
-      "presentation": "Événement officiel UFC Fight Night se déroulant à la ABHA Arena de Doha au Qatar, avec une carte riche de 11 combats.",
+      "enjeu_principal": "Jiří Procházka vs. Navajo Stirling dans un choc explosif chez les mi-lourds.",
+      "presentation": "L'UFC pose ses valises à Doha au Qatar pour une soirée explosive emmenée par l'ancien champion Jiří Procházka face au redoutable prospect Navajo Stirling. La carte propose des combats d'une intensité rare de haut en bas.",
       "combats": [
         {
           "statut": "Main Event",
@@ -186,9 +186,9 @@
           "combattant_b": "Navajo Stirling",
           "palmares_b": "11-0-0",
           "taille_b": "N/C",
-          "categorie_kg": "Mi-lourds (-93 kg)",
+          "categorie_kg": "Mi-lourds (-93,0 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "L'ancien champion Jiří Procházka cherche à s'imposer face à l'invaincu Navajo Stirling dans un duel explosif chez les mi-lourds."
+          "enjeu_et_analyse": "Combat au sommet entre l'ancien champion fantasque Jiří Procházka et l'invaincu Navajo Stirling. Un choc de styles spectaculaire qui promet une conclusion expéditive."
         },
         {
           "statut": "Co-Main Event",
@@ -200,7 +200,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids plumes (-65,8 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "L'ancien champion Aljamain Sterling affronte le redoutable prospect Kevin Vallejos dans un test crucial."
+          "enjeu_et_analyse": "L'ancien champion bantamweight Aljamain Sterling teste ses ambitions face au prodige Kevin Vallejos."
         },
         {
           "statut": "Main Card",
@@ -212,7 +212,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids légers (-70,3 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Choc explosif entre vétérans."
+          "enjeu_et_analyse": "Choc de vétérans spectaculaires."
         },
         {
           "statut": "Main Card",
@@ -224,7 +224,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids mouches (-56,7 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Affrontement technique de haut niveau."
+          "enjeu_et_analyse": "Duel technique au sommet en poids mouches."
         },
         {
           "statut": "Main Card",
@@ -236,7 +236,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids moyens (-83,9 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Puissance et lutte au sommet."
+          "enjeu_et_analyse": "Puissance et lutte s'affrontent chez les moyens."
         },
         {
           "statut": "Main Card",
@@ -248,7 +248,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids coqs (-61,2 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Jeunes talents en quête de percée."
+          "enjeu_et_analyse": "Affrontement de jeunes espoirs talentueux."
         },
         {
           "statut": "Prelims",
@@ -260,7 +260,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids lourds (-120,2 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Lourds massifs en ouverture."
+          "enjeu_et_analyse": "Gros duel de poids lourds."
         },
         {
           "statut": "Prelims",
@@ -272,7 +272,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids mouches (-56,7 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel stratégique chez les mouches."
+          "enjeu_et_analyse": "Affrontement crucial en poids mouches."
         },
         {
           "statut": "Prelims",
@@ -284,7 +284,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids mi-moyens (-77,1 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Opposition internationale."
+          "enjeu_et_analyse": "Opposition de styles chez les welters."
         },
         {
           "statut": "Prelims",
@@ -296,7 +296,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids légers (-70,3 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Combat engagé."
+          "enjeu_et_analyse": "Combat explosif en perspective."
         },
         {
           "statut": "Prelims",
@@ -306,9 +306,9 @@
           "combattant_b": "Alik Lorenz",
           "palmares_b": "8-2-0",
           "taille_b": "N/C",
-          "categorie_kg": "Mi-lourds (-93 kg)",
+          "categorie_kg": "Mi-lourds (-93,0 kg)",
           "rounds": "3 rounds",
-          "enjeu_et_analyse": "Affrontement préliminaire."
+          "enjeu_et_analyse": "Duel d'ouvrants de gala intense."
         }
       ]
     }
@@ -320,15 +320,15 @@
       "promoteur": "BKFC",
       "date_iso": "2026-11-20",
       "date_paris": "Nuit du Vendredi 20/11 au Samedi 21/11/2026",
-      "lieu": "Myrtle Beach Sports Center, Myrtle Beach, SC, États-Unis",
+      "lieu": "Myrtle Beach Sports Center, Myrtle Beach, SC, USA",
       "url_officielle": "https://www.bkfc.com/events/bkfc-fight-night-myrtle-beach",
       "poster_url": "logos/bkfc.png",
       "heure_debut_paris": "03h00",
-      "heure_ringwalk_paris": "vers 05h30",
-      "diffuseur_origine": "BKFC App / TrillerTV / DAZN",
-      "diffuseur_france": "BKFC App / DAZN",
-      "enjeu_principal": "Choc explosif en poids bantamweight entre Keith Richardson et Joshua Oxendine.",
-      "presentation": "Le BKFC s'installe à Myrtle Beach pour une soirée sous haute tension avec un combat vedette très attendu en poids bantamweight et une carte préliminaire dense.",
+      "heure_ringwalk_paris": "vers 05h00 (estimation)",
+      "diffuseur_origine": "BKFC App",
+      "diffuseur_france": "BKFC App / TrillerTV",
+      "enjeu_principal": "Choc explosif en poids coqs (-61,2 kg)",
+      "presentation": "Le BKFC s'installe à Myrtle Beach pour une soirée explosive emmenée par l'ancien champion Keith Richardson qui affronte Joshua Oxendine. Une sous-carte riche en talents complète l'événement.",
       "combats": [
         {
           "statut": "Main Event",
@@ -338,9 +338,9 @@
           "combattant_b": "Joshua Oxendine",
           "palmares_b": "1-0-1",
           "taille_b": "N/C",
-          "categorie_kg": "Bantamweight (-61,2 kg)",
+          "categorie_kg": "Poids coqs (-61,2 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "L'ancien champion du monde cherche à briller face au redoutable prospect Oxendine."
+          "enjeu_et_analyse": "L'ancien champion Keith Richardson cherche à briller face à l'ambitieux Joshua Oxendine dans un combat très attendu."
         },
         {
           "statut": "Co-Main Event",
@@ -350,9 +350,9 @@
           "combattant_b": "Theo Doukas",
           "palmares_b": "0-1-0",
           "taille_b": "N/C",
-          "categorie_kg": "Cruiserweight (-93,0 kg)",
+          "categorie_kg": "Poids lourds-légers (-93,0 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Transition explosive en bare knuckle."
+          "enjeu_et_analyse": "Transition en bare knuckle pour la star du MMA Derek Brunson face à Theo Doukas."
         },
         {
           "statut": "Featured Fight",
@@ -362,9 +362,9 @@
           "combattant_b": "Rodney Hinton",
           "palmares_b": "2-0-0",
           "taille_b": "1m71",
-          "categorie_kg": "Welterweight (-74,8 kg)",
+          "categorie_kg": "Poids welters (-74,8 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Duel intense en welterweight."
+          "enjeu_et_analyse": "Duel en welters."
         },
         {
           "statut": "Undercard",
@@ -374,9 +374,9 @@
           "combattant_b": "Diego Romo",
           "palmares_b": "0-1-1",
           "taille_b": "1m80",
-          "categorie_kg": "Middleweight (-83,9 kg)",
+          "categorie_kg": "Poids moyens (-83,9 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Combat de placement middleweight."
+          "enjeu_et_analyse": "Combat de poids moyens."
         },
         {
           "statut": "Undercard",
@@ -386,9 +386,9 @@
           "combattant_b": "Robert Fichtner",
           "palmares_b": "0-2-0",
           "taille_b": "N/C",
-          "categorie_kg": "Bantamweight (-61,2 kg)",
+          "categorie_kg": "Poids coqs (-61,2 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Recherche de première victoire."
+          "enjeu_et_analyse": "Affrontement chez les coqs."
         },
         {
           "statut": "Undercard",
@@ -398,9 +398,9 @@
           "combattant_b": "Joshua Claudio",
           "palmares_b": "0-0-0",
           "taille_b": "N/C",
-          "categorie_kg": "Featherweight (-65,8 kg)",
+          "categorie_kg": "Poids plumes (-65,8 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Affrontement chez les plumes."
+          "enjeu_et_analyse": "Combat en poids plumes."
         },
         {
           "statut": "Undercard",
@@ -410,9 +410,9 @@
           "combattant_b": "Alex Eliam",
           "palmares_b": "0-0-0",
           "taille_b": "N/C",
-          "categorie_kg": "Bantamweight (-61,2 kg)",
+          "categorie_kg": "Poids coqs (-61,2 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Duel d'invaincus."
+          "enjeu_et_analyse": "Duel entre combattants inexpérimentés."
         },
         {
           "statut": "Undercard",
@@ -422,9 +422,9 @@
           "combattant_b": "Ashton Caniglia",
           "palmares_b": "1-3-0",
           "taille_b": "N/C",
-          "categorie_kg": "Featherweight (-65,8 kg)",
+          "categorie_kg": "Poids plumes (-65,8 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Test important en featherweight."
+          "enjeu_et_analyse": "Match de classement en plumes."
         },
         {
           "statut": "Undercard",
@@ -434,9 +434,9 @@
           "combattant_b": "Brian Maxwell",
           "palmares_b": "1-9-0",
           "taille_b": "1m72",
-          "categorie_kg": "Light Heavyweight (-93,0 kg)",
+          "categorie_kg": "Poids mi-lourds (-79,4 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Expérience contre dynamisme."
+          "enjeu_et_analyse": "Le vétéran Maxwell cherche à s'imposer."
         },
         {
           "statut": "Undercard",
@@ -446,9 +446,9 @@
           "combattant_b": "Lewis Glover",
           "palmares_b": "1-2-0",
           "taille_b": "1m80",
-          "categorie_kg": "Cruiserweight (-93,0 kg)",
+          "categorie_kg": "Poids lourds-légers (-93,0 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Clôture de la carte préliminaire."
+          "enjeu_et_analyse": "Affrontement chez les lourds-légers."
         }
       ]
     }
