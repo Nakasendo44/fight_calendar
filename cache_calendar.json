@@ -73,59 +73,6 @@
   ],
   "boxe-japon": [
     {
-      "nom_gala": "Dynamic Glove : Iimura vs. Passiones",
-      "promoteur": "Teiken Promotions",
-      "date_iso": "2026-11-21",
-      "date_paris": "Samedi 21/11/2026",
-      "lieu": "Korakuen Hall, Tokyo, Japon",
-      "url_officielle": "https://boxmob.jp/",
-      "poster_url": "logos/teiken.svg",
-      "heure_debut_paris": "10h00",
-      "heure_ringwalk_paris": "vers 12h30",
-      "diffuseur_origine": "U-NEXT",
-      "diffuseur_france": "N/C",
-      "enjeu_principal": "Combat international de classement",
-      "presentation": "Réunion classique du légendaire Korakuen Hall de Tokyo avec des espoirs japonais en quête de titres régionaux.",
-      "combats": [
-        {
-          "statut": "Main Event",
-          "combattant_a": "Jukiya Iimura",
-          "palmares_a": "N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Alvin John Passionpes",
-          "palmares_b": "N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "Poids mi-mouches (-48,9 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Choc international pour propulser le vainqueur dans les classements mondiaux."
-        },
-        {
-          "statut": "Co-Main Event",
-          "combattant_a": "Ruku Sasaki",
-          "palmares_a": "N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Ai Kamikaze",
-          "palmares_b": "N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "Poids légers (-61,2 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Duel intense entre puncheurs."
-        },
-        {
-          "statut": "Undercard",
-          "combattant_a": "Isabel Rivero",
-          "palmares_a": "N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Sumire Yamanaka",
-          "palmares_b": "N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "Poids light-minimum",
-          "rounds": "10 rounds",
-          "enjeu_et_analyse": "WBA Women World Light Minimumweight Challenger Match."
-        }
-      ]
-    },
-    {
       "nom_gala": "Isabel Rivero vs. Sumire Yamanaka",
       "promoteur": "JBC / Korakuen Hall",
       "date_iso": "2026-11-22",
@@ -167,58 +114,58 @@
       ]
     },
     {
-      "nom_gala": "Phoenix Battle : Yabuki vs. Fajardo",
-      "promoteur": "Ohashi Promotions",
+      "nom_gala": "Yabuki vs. Fajardo & Ishii vs. Medesiro",
+      "promoteur": "Teiken Promotions",
       "date_iso": "2026-11-26",
       "date_paris": "Jeudi 26/11/2026",
-      "lieu": "EBARA WAVE Arena Ota, Tokyo, Japon",
+      "lieu": "Ebara Wave, Ota City General Gymnasium, Tokyo, Japon",
       "url_officielle": "https://boxmob.jp/sp/schedule/",
       "poster_url": "logos/ohashi.png",
       "heure_debut_paris": "10h00",
       "heure_ringwalk_paris": "vers 13h00",
       "diffuseur_origine": "Lemino",
-      "diffuseur_france": "Aucun",
-      "enjeu_principal": "Championnat du monde IBF des poids mouches",
-      "presentation": "Double championnat du monde au Japon avec une affiche explosive menée par Masamichi Yabuki et de nombreux combats de soutien de haut niveau.",
+      "diffuseur_france": "N/C",
+      "enjeu_principal": "Championnat du monde IBF des poids mouches et WBA des mini-mouches",
+      "presentation": "Réunion majeure au Japon avec des championnats du monde et des combats internationaux de premier plan organisés à l'Ebara Wave d'Ota.",
       "combats": [
         {
           "statut": "Main Event",
-          "combattant_a": "Masamichi Yabuki",
+          "combattant_a": "Masado Yabuki",
           "palmares_a": "N/C",
           "taille_a": "N/C",
           "combattant_b": "Miel Fajardo",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids mouches (-50,8 kg)",
+          "categorie_kg": "Poids mi-mouches (-48,9 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Combat pour le titre mondial IBF des poids mouches."
+          "enjeu_et_analyse": "Championnat du monde WBA des poids mini-mouches avec une opposition très attendue."
         },
         {
           "statut": "Co-Main Event",
           "combattant_a": "Madoka Wada",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Wacharaporn Namphorn",
+          "combattant_b": "Wacharaporn Namphon",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids atomes (-46,3 kg)",
+          "categorie_kg": "Poids mouches (-50,8 kg)",
           "rounds": "10 rounds",
-          "enjeu_et_analyse": "Éliminatoire mondiale WBA."
+          "enjeu_et_analyse": "Match éliminatoire WBA mondial féminin des poidsライトミニマム."
         },
         {
-          "statut": "Main Card",
+          "statut": "Undercard",
           "combattant_a": "Takeshi Ishii",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Zayver John Medeshilo",
+          "combattant_b": "Zaivar John Medesiro",
           "palmares_b": "N/C",
           "taille_b": "N/C",
           "categorie_kg": "Poids légers (-61,2 kg)",
           "rounds": "8 rounds",
-          "enjeu_et_analyse": "Combat de placement."
+          "enjeu_et_analyse": "Combat de placement international."
         },
         {
-          "statut": "Main Card",
+          "statut": "Undercard",
           "combattant_a": "Yoshiki Takei",
           "palmares_a": "N/C",
           "taille_a": "N/C",
@@ -227,7 +174,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids légers (-61,2 kg)",
           "rounds": "10 rounds",
-          "enjeu_et_analyse": "Ceinture WBC jeunesse."
+          "enjeu_et_analyse": "Combat pour le titre WBC Youth des poids légers."
         },
         {
           "statut": "Undercard",
@@ -237,9 +184,9 @@
           "combattant_b": "Ronelick Ballesteros",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids super-coqs (-55,3 kg)",
+          "categorie_kg": "Poids coqs (-53,5 kg)",
           "rounds": "8 rounds",
-          "enjeu_et_analyse": "Duel relevé."
+          "enjeu_et_analyse": "Choc explosif."
         },
         {
           "statut": "Undercard",
@@ -251,24 +198,24 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids super-mouches (-52,2 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Choc WBA."
+          "enjeu_et_analyse": "Championnat du monde WBA des super-mouches."
         }
       ]
     },
     {
-      "nom_gala": "Prime Video Boxing : Masuda vs. Tsutsumi",
+      "nom_gala": "Masuda vs. Tsutsumi & Jimenez vs. Akui",
       "promoteur": "Teiken Promotions",
       "date_iso": "2026-11-29",
       "date_paris": "Dimanche 29/11/2026",
       "lieu": "Ryogoku Kokugikan, Tokyo, Japon",
       "url_officielle": "https://boxmob.jp/sp/schedule/",
-      "poster_url": "logos/teiken.svg",
+      "poster_url": "logos/ohashi.png",
       "heure_debut_paris": "08h00",
-      "heure_ringwalk_paris": "vers 12h00",
-      "diffuseur_origine": "Prime Video Japan",
-      "diffuseur_france": "Aucun",
-      "enjeu_principal": "Championnat du monde WBA des poids coqs",
-      "presentation": "Gala XXL à Tokyo avec un triplé de championnats du monde très attendu par la scène japonaise, opposant les plus grands talents locaux.",
+      "heure_ringwalk_paris": "vers 12h30",
+      "diffuseur_origine": "Lemino / Prime Video",
+      "diffuseur_france": "N/C",
+      "enjeu_principal": "Triple championnat du monde WBA et WBC au Ryogoku Kokugikan",
+      "presentation": "Un des plus grands plateaux de l'année au Japon avec plusieurs championnats du monde majeurs au Ryogoku Kokugikan de Tokyo.",
       "combats": [
         {
           "statut": "Main Event",
@@ -280,7 +227,7 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids coqs (-53,5 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Troisième confrontation pour la suprématie mondiale WBA."
+          "enjeu_et_analyse": "Championnat du monde WBA des poids coqs dans une rivalité explosive."
         },
         {
           "statut": "Co-Main Event",
@@ -292,186 +239,36 @@
           "taille_b": "N/C",
           "categorie_kg": "Poids super-mouches (-52,2 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Titre mondial WBA des super-mouches."
+          "enjeu_et_analyse": "Championnat du monde WBA des super-mouches entre élites mondiales."
         },
         {
-          "statut": "Main Card",
+          "statut": "Undercard",
           "combattant_a": "Kenshiro Teraji",
           "palmares_a": "N/C",
           "taille_a": "N/C",
           "combattant_b": "Hasiel Amador",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids plumes (-57,1 kg)",
+          "categorie_kg": "Poids moyens (-72,5 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Titre OPBF des poids plumes en jeu."
+          "enjeu_et_analyse": "Championnat OPBF des poids moyens."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Agit Kabayel",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Nelson Hysa",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids super-moyens (-76,2 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Championnat international."
         }
       ]
     }
   ],
-  "ufc": [
-    {
-      "nom_gala": "UFC Fight Night: Procházka vs. Stirling",
-      "promoteur": "UFC",
-      "date_iso": "2026-11-21",
-      "date_paris": "Nuit du Samedi 21/11 au Dimanche 22/11/2026",
-      "lieu": "ABHA Arena, Doha, Qatar",
-      "url_officielle": "https://www.ufc.com/events",
-      "poster_url": "logos/ufc.png",
-      "heure_debut_paris": "16h00",
-      "heure_ringwalk_paris": "env. +3h après le début",
-      "diffuseur_origine": "ESPN+ / UFC Fight Pass",
-      "diffuseur_france": "RMC Sport / UFC Fight Pass",
-      "enjeu_principal": "Jiří Procházka vs. Navajo Stirling",
-      "presentation": "Événement officiel UFC Fight Night programmé à l'ABHA Arena de Doha au Qatar, avec une carte explosive comprenant de grands noms de la discipline.",
-      "combats": [
-        {
-          "statut": "Main Event",
-          "combattant_a": "Jiří Procházka",
-          "palmares_a": "32-7-1",
-          "taille_a": "N/C",
-          "combattant_b": "Navajo Stirling",
-          "palmares_b": "12-0-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "5 rounds",
-          "enjeu_et_analyse": "Choc au sommet chez les mi-lourds entre l'ancien champion Jiří Procházka et l'invaincu montant Navajo Stirling."
-        },
-        {
-          "statut": "Co-Main Event",
-          "combattant_a": "Aljamain Sterling",
-          "palmares_a": "26-6-0",
-          "taille_a": "N/C",
-          "combattant_b": "Kevin Vallejos",
-          "palmares_b": "19-1-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "L'ancien champion bantamweight Aljamain Sterling affronte le redoutable prospect Kevin Vallejos dans un test crucial."
-        },
-        {
-          "statut": "Main Card",
-          "combattant_a": "Brian Ortega",
-          "palmares_a": "16-6-0",
-          "taille_a": "N/C",
-          "combattant_b": "Dan Hooker",
-          "palmares_b": "25-15-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Guerre explosive garantie."
-        },
-        {
-          "statut": "Main Card",
-          "combattant_a": "Kyoji Horiguchi",
-          "palmares_a": "37-6-0",
-          "taille_a": "N/C",
-          "combattant_b": "Asu Almabayev",
-          "palmares_b": "24-4-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel technique de haut vol."
-        },
-        {
-          "statut": "Main Card",
-          "combattant_a": "Jared Cannonier",
-          "palmares_a": "18-11-0",
-          "taille_a": "N/C",
-          "combattant_b": "Ikram Aliskerov",
-          "palmares_b": "19-2-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Affrontement de puissance pure."
-        },
-        {
-          "statut": "Main Card",
-          "combattant_a": "Aleksandre Topuria",
-          "palmares_a": "7-2-0",
-          "taille_a": "N/C",
-          "combattant_b": "Santiago Luna",
-          "palmares_b": "9-1-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Test important pour les jeunes talents."
-        },
-        {
-          "statut": "Prelims",
-          "combattant_a": "Shamil Gaziev",
-          "palmares_a": "15-4-0",
-          "taille_a": "N/C",
-          "combattant_b": "Tallison Teixeira",
-          "palmares_b": "10-2-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Combat chez les lourds."
-        },
-        {
-          "statut": "Prelims",
-          "combattant_a": "Amir Albazi",
-          "palmares_a": "18-3-0",
-          "taille_a": "N/C",
-          "combattant_b": "Alessandro Costa",
-          "palmares_b": "17-6-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Explosion en perspective chez les mouches."
-        },
-        {
-          "statut": "Prelims",
-          "combattant_a": "Jake Matthews",
-          "palmares_a": "23-9-0",
-          "taille_a": "N/C",
-          "combattant_b": "Tahir Abdullayev",
-          "palmares_b": "21-3-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Affrontement tactique."
-        },
-        {
-          "statut": "Prelims",
-          "combattant_a": "Nikolas Motta",
-          "palmares_a": "15-7-0",
-          "taille_a": "N/C",
-          "combattant_b": "Dom Mar Fan",
-          "palmares_b": "10-3-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel intense en lightweight."
-        },
-        {
-          "statut": "Prelims",
-          "combattant_a": "Diyar Nurgozhay",
-          "palmares_a": "13-2-0",
-          "taille_a": "N/C",
-          "combattant_b": "Alik Lorenz",
-          "palmares_b": "8-3-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Opposition de style."
-        },
-        {
-          "statut": "Prelims",
-          "combattant_a": "Shoaib Yousaf",
-          "palmares_a": "14-4-0",
-          "taille_a": "N/C",
-          "combattant_b": "John Mitchell",
-          "palmares_b": "12-3-0",
-          "taille_b": "N/C",
-          "categorie_kg": "Catégorie officielle",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Ouverture des hostilités."
-        }
-      ]
-    }
-  ],
+  "ufc": [],
   "rizin": [],
   "bkfc": [],
   "glory": []
