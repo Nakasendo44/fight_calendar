@@ -73,72 +73,31 @@
   ],
   "boxe-japon": [
     {
-      "nom_gala": "Isabel Rivero vs. Sumire Yamanaka",
-      "promoteur": "JBC / Korakuen Hall",
-      "date_iso": "2026-11-22",
-      "date_paris": "Dimanche 22/11/2026",
-      "lieu": "Korakuen Hall, Tokyo, Japon",
-      "url_officielle": "https://boxmob.jp/sp/schedule/",
-      "poster_url": "logos/boxe-japon.svg",
-      "heure_debut_paris": "09h00",
-      "heure_ringwalk_paris": "vers 12h00",
-      "diffuseur_origine": "Boxmob",
-      "diffuseur_france": "Aucun",
-      "enjeu_principal": "Combat féminin de haut niveau",
-      "presentation": "Gala dominical au Korakuen Hall avec une affiche féminine importante. Sumire Yamanaka cherche à confirmer son statut face à Isabel Rivero.",
-      "combats": [
-        {
-          "statut": "Main Event",
-          "combattant_a": "Isabel Rivero",
-          "palmares_a": "N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Sumire Yamanaka",
-          "palmares_b": "N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "Poids mouches (-50,8 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Choc féminin pour le prestige et le classement dans la catégorie des poids mouches."
-        },
-        {
-          "statut": "Co-Main Event",
-          "combattant_a": "Riku Sasaki",
-          "palmares_a": "N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Ran Kamikaze",
-          "palmares_b": "N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "-66,7 kg",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Choc de titans nationaux."
-        }
-      ]
-    },
-    {
-      "nom_gala": "Yabuki vs. Fajardo & Ishii vs. Medesiro",
-      "promoteur": "Teiken Promotions",
+      "nom_gala": "Phoenix Battle 126 : Yabuki vs. Fajardo",
+      "promoteur": "Ohashi Promotions",
       "date_iso": "2026-11-26",
       "date_paris": "Jeudi 26/11/2026",
-      "lieu": "Ebara Wave, Ota City General Gymnasium, Tokyo, Japon",
-      "url_officielle": "https://boxmob.jp/sp/schedule/",
+      "lieu": "EBARA WAVE Arena Ota (Tokyo), Japon",
+      "url_officielle": "https://boxmob.jp/",
       "poster_url": "logos/ohashi.png",
       "heure_debut_paris": "10h00",
       "heure_ringwalk_paris": "vers 13h00",
       "diffuseur_origine": "Lemino",
       "diffuseur_france": "N/C",
-      "enjeu_principal": "Championnat du monde IBF des poids mouches et WBA des mini-mouches",
-      "presentation": "Réunion majeure au Japon avec des championnats du monde et des combats internationaux de premier plan organisés à l'Ebara Wave d'Ota.",
+      "enjeu_principal": "Championnat du monde IBF des poids mouches",
+      "presentation": "Grande soirée de championnat au Japon organisée par Ohashi Promotions, avec en tête d'affiche la défense du titre IBF de Masamichi Yabuki face au dangereux Miel Fajardo, ainsi que plusieurs combats de premier plan dont le retour de Yoshiki Takei.",
       "combats": [
         {
           "statut": "Main Event",
-          "combattant_a": "Masado Yabuki",
+          "combattant_a": "Masamichi Yabuki",
           "palmares_a": "N/C",
           "taille_a": "N/C",
           "combattant_b": "Miel Fajardo",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids mi-mouches (-48,9 kg)",
+          "categorie_kg": "Poids mouches (-50,8 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Championnat du monde WBA des poids mini-mouches avec une opposition très attendue."
+          "enjeu_et_analyse": "Championnat du monde IBF des poids mouches. Yabuki défend son titre face à un redoutable puncheur philippin."
         },
         {
           "statut": "Co-Main Event",
@@ -148,21 +107,33 @@
           "combattant_b": "Wacharaporn Namphon",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids mouches (-50,8 kg)",
+          "categorie_kg": "Poids léger-atomes (-46,3 kg)",
           "rounds": "10 rounds",
-          "enjeu_et_analyse": "Match éliminatoire WBA mondial féminin des poidsライトミニマム."
+          "enjeu_et_analyse": "Combat de éliminatoire mondiale WBA."
         },
         {
           "statut": "Undercard",
           "combattant_a": "Takeshi Ishii",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Zaivar John Medesiro",
+          "combattant_b": "Zayver John Medesiro",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids légers (-61,2 kg)",
+          "categorie_kg": "Poids coqs (-53,5 kg)",
           "rounds": "8 rounds",
-          "enjeu_et_analyse": "Combat de placement international."
+          "enjeu_et_analyse": "Combat de 8 rounds."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Masaaki Rikiishi",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Melchor Roda",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids super-plumes (-59,0 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Choc international."
         },
         {
           "statut": "Undercard",
@@ -172,9 +143,21 @@
           "combattant_b": "Kenshin Oshima",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids légers (-61,2 kg)",
-          "rounds": "10 rounds",
-          "enjeu_et_analyse": "Combat pour le titre WBC Youth des poids légers."
+          "categorie_kg": "Poids coqs (-53,5 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Combat de rentrée."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Seiya Nakayama",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Vincent Lacal",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids super-mouches (-52,2 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Affrontement relevé."
         },
         {
           "statut": "Undercard",
@@ -187,35 +170,23 @@
           "categorie_kg": "Poids coqs (-53,5 kg)",
           "rounds": "8 rounds",
           "enjeu_et_analyse": "Choc explosif."
-        },
-        {
-          "statut": "Undercard",
-          "combattant_a": "Masaaki Rikiishi",
-          "palmares_a": "N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Melchor Roda",
-          "palmares_b": "N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "Poids super-mouches (-52,2 kg)",
-          "rounds": "12 rounds",
-          "enjeu_et_analyse": "Championnat du monde WBA des super-mouches."
         }
       ]
     },
     {
-      "nom_gala": "Masuda vs. Tsutsumi & Jimenez vs. Akui",
+      "nom_gala": "Teiken Promotions : Masuda vs. Tsutsumi / Jimenez vs. Akui",
       "promoteur": "Teiken Promotions",
       "date_iso": "2026-11-29",
       "date_paris": "Dimanche 29/11/2026",
-      "lieu": "Ryogoku Kokugikan, Tokyo, Japon",
-      "url_officielle": "https://boxmob.jp/sp/schedule/",
-      "poster_url": "logos/ohashi.png",
+      "lieu": "Ryogoku Kokugikan (Tokyo), Japon",
+      "url_officielle": "https://boxmob.jp/",
+      "poster_url": "logos/teiken.svg",
       "heure_debut_paris": "08h00",
-      "heure_ringwalk_paris": "vers 12h30",
-      "diffuseur_origine": "Lemino / Prime Video",
+      "heure_ringwalk_paris": "vers 12h00",
+      "diffuseur_origine": "Prime Video Boxing",
       "diffuseur_france": "N/C",
-      "enjeu_principal": "Triple championnat du monde WBA et WBC au Ryogoku Kokugikan",
-      "presentation": "Un des plus grands plateaux de l'année au Japon avec plusieurs championnats du monde majeurs au Ryogoku Kokugikan de Tokyo.",
+      "enjeu_principal": "Championnat du monde WBA des poids bantam",
+      "presentation": "Triple championnat du monde de prestige à l'Arena du Ryogoku Kokugikan de Tokyo avec un sommet très attendu chez les poids bantams entre Riku Masuda et Seiya Tsutsumi, ainsi que le combat de David Jimenez face à Yurii Akui.",
       "combats": [
         {
           "statut": "Main Event",
@@ -225,21 +196,21 @@
           "combattant_b": "Seiya Tsutsumi",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids coqs (-53,5 kg)",
+          "categorie_kg": "Poids bantam (-53,5 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Championnat du monde WBA des poids coqs dans une rivalité explosive."
+          "enjeu_et_analyse": "Championnat du monde WBA des poids bantams. Une trilogie ou confrontation explosive entre deux rivaux nippons."
         },
         {
           "statut": "Co-Main Event",
           "combattant_a": "David Jimenez",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Seigo Yuri Akui",
+          "combattant_b": "Yurii Akui Seigo",
           "palmares_b": "N/C",
           "taille_b": "N/C",
           "categorie_kg": "Poids super-mouches (-52,2 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Championnat du monde WBA des super-mouches entre élites mondiales."
+          "enjeu_et_analyse": "Championnat du monde WBA des poids super-mouches. Akui tente la conquête d'une deuxième couronne mondiale."
         },
         {
           "statut": "Undercard",
