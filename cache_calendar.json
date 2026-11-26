@@ -174,19 +174,19 @@
       ]
     },
     {
-      "nom_gala": "Teiken Promotions : Masuda vs. Tsutsumi / Jimenez vs. Akui",
-      "promoteur": "Teiken Promotions",
+      "nom_gala": "Masuda Riku vs. Tsutsumi Seiya",
+      "promoteur": "Ohashi Promotions",
       "date_iso": "2026-11-29",
       "date_paris": "Dimanche 29/11/2026",
-      "lieu": "Ryogoku Kokugikan (Tokyo), Japon",
-      "url_officielle": "https://boxmob.jp/",
-      "poster_url": "logos/teiken.svg",
-      "heure_debut_paris": "08h00",
+      "lieu": "Ryogoku Kokugikan, Tokyo, Japon",
+      "url_officielle": "https://boxmob.jp/sp/schedule/",
+      "poster_url": "logos/ohashi.png",
+      "heure_debut_paris": "09h00",
       "heure_ringwalk_paris": "vers 12h00",
-      "diffuseur_origine": "Prime Video Boxing",
+      "diffuseur_origine": "Lemino",
       "diffuseur_france": "N/C",
-      "enjeu_principal": "Championnat du monde WBA des poids bantam",
-      "presentation": "Triple championnat du monde de prestige à l'Arena du Ryogoku Kokugikan de Tokyo avec un sommet très attendu chez les poids bantams entre Riku Masuda et Seiya Tsutsumi, ainsi que le combat de David Jimenez face à Yurii Akui.",
+      "enjeu_principal": "Titre mondial WBO Super-Mouches (-52,2 kg)",
+      "presentation": "Un choc majeur au sommet de la boxe japonaise entre Riku Masuda et Seiya Tsutsumi au prestigieux Ryogoku Kokugikan de Tokyo, avec un titre mondial WBO en jeu.",
       "combats": [
         {
           "statut": "Main Event",
@@ -196,33 +196,33 @@
           "combattant_b": "Seiya Tsutsumi",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids bantam (-53,5 kg)",
+          "categorie_kg": "Super-mouches (-52,2 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Championnat du monde WBA des poids bantams. Une trilogie ou confrontation explosive entre deux rivaux nippons."
+          "enjeu_et_analyse": "Combat pour le titre mondial WBO des super-mouches opposant deux redoutables techniciens japonais."
         },
         {
           "statut": "Co-Main Event",
           "combattant_a": "David Jimenez",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Yurii Akui Seigo",
+          "combattant_b": "Seigo Yuri Akui",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids super-mouches (-52,2 kg)",
+          "categorie_kg": "Bantamweight (-53,5 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Championnat du monde WBA des poids super-mouches. Akui tente la conquête d'une deuxième couronne mondiale."
+          "enjeu_et_analyse": "Affrontement international pour le titre mondial WBA des poids bantamweight entre le challenger costaricien et le champion local."
         },
         {
-          "statut": "Undercard",
+          "statut": "Main Card",
           "combattant_a": "Kenshiro Teraji",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Hasiel Amador",
+          "combattant_b": "Hassiel Amador",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids moyens (-72,5 kg)",
+          "categorie_kg": "Moyen (-72,6 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Championnat OPBF des poids moyens."
+          "enjeu_et_analyse": "Titre OPBF des poids moyens."
         },
         {
           "statut": "Undercard",
@@ -235,6 +235,71 @@
           "categorie_kg": "Poids super-moyens (-76,2 kg)",
           "rounds": "12 rounds",
           "enjeu_et_analyse": "Championnat international."
+        }
+      ]
+    },
+    {
+      "nom_gala": "Nakajima Kazuki vs. Owana Ryuto",
+      "promoteur": "Teiken Promotions",
+      "date_iso": "2026-12-03",
+      "date_paris": "Jeudi 03/12/2026",
+      "lieu": "Korakuen Hall, Tokyo, Japon",
+      "url_officielle": "https://boxmob.jp/sp/schedule/",
+      "poster_url": "logos/teiken.svg",
+      "heure_debut_paris": "10h00",
+      "heure_ringwalk_paris": "vers 13h00",
+      "diffuseur_origine": "Prime Video Boxing",
+      "diffuseur_france": "N/C",
+      "enjeu_principal": "Unification des titres OPBF et WBO-AP Minima-poids (-47,6 kg)",
+      "presentation": "Une grande soirée de boxe au Korakuen Hall de Tokyo mettant en vedette des combats de championnat et des tournois nationaux.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Kazuki Nakajima",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Ryuto Owana",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Paille (-47,6 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Combat d'unification des ceintures OPBF et WBO Asia-Pacific."
+        },
+        {
+          "statut": "Co-Main Event",
+          "combattant_a": "Kotaro Sekine",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Shota Tashita",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Super-plumes (-59,0 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Finale du tournoi à 10 millions de yens."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Haso Bek",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Mikio Sakai",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Plumes (-57,2 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Championnat OPBF."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Takeuro Kitano",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Joseph Smabon",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Super-légers (-63,5 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Éliminatoire Japon."
         }
       ]
     }
