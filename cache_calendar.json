@@ -175,18 +175,18 @@
     },
     {
       "nom_gala": "Masuda Riku vs. Tsutsumi Seiya",
-      "promoteur": "Ohashi Promotions",
+      "promoteur": "Teiken Promotions",
       "date_iso": "2026-11-29",
       "date_paris": "Dimanche 29/11/2026",
       "lieu": "Ryogoku Kokugikan, Tokyo, Japon",
-      "url_officielle": "https://boxmob.jp/sp/schedule/",
+      "url_officielle": "https://boxmob.jp/",
       "poster_url": "logos/ohashi.png",
       "heure_debut_paris": "09h00",
-      "heure_ringwalk_paris": "vers 12h00",
-      "diffuseur_origine": "Lemino",
+      "heure_ringwalk_paris": "vers 12h00 (estimation)",
+      "diffuseur_origine": "Lemino / Prime Video",
       "diffuseur_france": "N/C",
-      "enjeu_principal": "Titre mondial WBO Super-Mouches (-52,2 kg)",
-      "presentation": "Un choc majeur au sommet de la boxe japonaise entre Riku Masuda et Seiya Tsutsumi au prestigieux Ryogoku Kokugikan de Tokyo, avec un titre mondial WBO en jeu.",
+      "enjeu_principal": "Championnat du Monde WBA des Super-Mouches (-52,2 kg)",
+      "presentation": "Un triple championnat du monde explosif au Ryogoku Kokugikan de Tokyo, mettant en vedette des duels très attendus entre l'élite de la boxe japonaise et internationale.",
       "combats": [
         {
           "statut": "Main Event",
@@ -198,31 +198,31 @@
           "taille_b": "N/C",
           "categorie_kg": "Super-mouches (-52,2 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Combat pour le titre mondial WBO des super-mouches opposant deux redoutables techniciens japonais."
+          "enjeu_et_analyse": "Championnat du monde WBA. Revanche très attendue entre les deux hommes aux déclarations piquantes."
         },
         {
           "statut": "Co-Main Event",
-          "combattant_a": "David Jimenez",
+          "combattant_a": "Yuri Akui Seigo",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Seigo Yuri Akui",
+          "combattant_b": "David Jimenez",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Bantamweight (-53,5 kg)",
+          "categorie_kg": "Bantamam (-53,5 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Affrontement international pour le titre mondial WBA des poids bantamweight entre le challenger costaricien et le champion local."
+          "enjeu_et_analyse": "Championnat du monde WBA des poids coqs."
         },
         {
           "statut": "Main Card",
           "combattant_a": "Kenshiro Teraji",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Hassiel Amador",
+          "combattant_b": "Haciel Amador",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Moyen (-72,6 kg)",
+          "categorie_kg": "Paille (-47,6 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Titre OPBF des poids moyens."
+          "enjeu_et_analyse": "Unification OPBF et WBO-AP."
         },
         {
           "statut": "Undercard",
@@ -235,6 +235,83 @@
           "categorie_kg": "Poids super-moyens (-76,2 kg)",
           "rounds": "12 rounds",
           "enjeu_et_analyse": "Championnat international."
+        }
+      ]
+    },
+    {
+      "nom_gala": "Kitano Takeuro vs. Joseph Smabong",
+      "promoteur": "Ohashi Promotions",
+      "date_iso": "2026-12-03",
+      "date_paris": "Jeudi 03/12/2026",
+      "lieu": "Korakuen Hall, Tokyo, Japon",
+      "url_officielle": "https://boxmob.jp/",
+      "poster_url": "logos/ohashi.png",
+      "heure_debut_paris": "10h00",
+      "heure_ringwalk_paris": "vers 13h00 (estimation)",
+      "diffuseur_origine": "Lemino",
+      "diffuseur_france": "N/C",
+      "enjeu_principal": "Titres régionaux OPBF et tournois de promotion au Korakuen Hall",
+      "presentation": "Une réunion de gala riche en tournois et championnats régionaux dans la mythique salle du Korakuen Hall à Tokyo.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Takeuro Kitano",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Joseph Smabong",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Plumes (-57,2 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Combat pour le titre vacant OPBF des poids plumes."
+        },
+        {
+          "statut": "Co-Main Event",
+          "combattant_a": "Kazuki Nakajima",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Rito Owan",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Moyens (-72,6 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Championnat OPBF des poids moyens."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Haso Bek",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Mikio Sakai",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Super-plumes (-59,0 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Finale tournoi."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Kai Watanabe",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Riku Kitani",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Super-légers (-63,5 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Tournoi éliminatoire."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Kotaro Sekine",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Shota Teshita",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Cruiserweight (-90,7 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Choc national."
         }
       ]
     },
@@ -306,6 +383,168 @@
   ],
   "ufc": [],
   "rizin": [],
-  "bkfc": [],
+  "bkfc": [
+    {
+      "nom_gala": "BKFC Fight Night Hershey: Pague vs. Richman",
+      "promoteur": "BKFC",
+      "date_iso": "2026-12-04",
+      "date_paris": "Nuit du Vendredi 04/12 au Samedi 05/12/2026",
+      "lieu": "Giant Center, Hershey, PA, USA",
+      "url_officielle": "https://www.bkfc.com/events/bkfc-fight-night-hershey",
+      "poster_url": "logos/bkfc.png",
+      "heure_debut_paris": "01h00",
+      "heure_ringwalk_paris": "vers 04h00 (estimation)",
+      "diffuseur_origine": "BKFC App / TrillerTV",
+      "diffuseur_france": "BKFC App",
+      "enjeu_principal": "Choc explosif en poids moyens entre Dustin Pague et Mike Richman",
+      "presentation": "Le BKFC s'installe au Giant Center de Hershey pour une carte explosive de combats à mains nues, avec en tête d'affiche le duel très attendu entre Dustin Pague et Mike Richman.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Dustin Pague",
+          "palmares_a": "6-2-0",
+          "taille_a": "1m75",
+          "combattant_b": "Mike Richman",
+          "palmares_b": "8-4-0",
+          "taille_b": "1m75",
+          "categorie_kg": "Poids moyens (-74,8 kg)",
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Dustin Pague combat à domicile face au redoutable Mike Richman dans un duel de puncheurs sans concession."
+        },
+        {
+          "statut": "Co-Main Event",
+          "combattant_a": "Sam Alvey",
+          "palmares_a": "2-2-0",
+          "taille_a": "1m85",
+          "combattant_b": "Jonathan Miller",
+          "palmares_b": "0-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids lourds",
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Sam Alvey teste ses poings face aux débuts de Jonathan Miller."
+        },
+        {
+          "statut": "Featured Fight",
+          "combattant_a": "Matt Semelsberger",
+          "palmares_a": "2-2-0",
+          "taille_a": "1m80",
+          "combattant_b": "Michael Manno",
+          "palmares_b": "0-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids moyens (-74,8 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Combat explosif en poids moyens."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Benjamin Moser",
+          "palmares_a": "0-2-0",
+          "taille_a": "1m68",
+          "combattant_b": "Julian Valencia",
+          "palmares_b": "0-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids coqs (-61,2 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Duel en poids coqs."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Pat Carroll",
+          "palmares_a": "2-0-0",
+          "taille_a": "1m83",
+          "combattant_b": "Nelson Best",
+          "palmares_b": "0-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids lourds",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Affrontement chez les lourds."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Elijah Harris",
+          "palmares_a": "2-3-0",
+          "taille_a": "1m78",
+          "combattant_b": "Stevo Morris",
+          "palmares_b": "3-3-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids plumes (-65,8 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Guerre en poids plumes."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Jay Haas",
+          "palmares_a": "0-1-0",
+          "taille_a": "1m70",
+          "combattant_b": "Eduardo Peralta",
+          "palmares_b": "2-4-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids plumes (-65,8 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Combat de rebond."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Hunter Starner",
+          "palmares_a": "0-0-0",
+          "taille_a": "N/C",
+          "combattant_b": "Blaine Shutt",
+          "palmares_b": "0-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids coqs (-61,2 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "affrontement de techniciens."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Lex Ludlow",
+          "palmares_a": "4-1-0",
+          "taille_a": "1m75",
+          "combattant_b": "Mike Liberto",
+          "palmares_b": "1-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids lourds-légers (-88,5 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Duel chez les lourds-légers."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Zach Pannell",
+          "palmares_a": "1-6-0",
+          "taille_a": "N/C",
+          "combattant_b": "Zachary Shingara",
+          "palmares_b": "0-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids légers (-70,3 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Combat en poids légers."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Colin Reeser",
+          "palmares_a": "0-1-0",
+          "taille_a": "N/C",
+          "combattant_b": "Fabricio Berrun",
+          "palmares_b": "0-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids plumes (-65,8 kg)",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "affrontement de jeunes loups."
+        },
+        {
+          "statut": "Undercard",
+          "combattant_a": "Brian Newman",
+          "palmares_a": "1-0-0",
+          "taille_a": "1m83",
+          "combattant_b": "Dale Reed",
+          "palmares_b": "0-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids lourds",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Clôture de la sous-carte chez les lourds."
+        }
+      ]
+    }
+  ],
   "glory": []
 }
