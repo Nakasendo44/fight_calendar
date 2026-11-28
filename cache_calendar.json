@@ -1,47 +1,6 @@
 {
   "boxe-monde": [
     {
-      "nom_gala": "Yabuki vs Fajardo",
-      "promoteur": "Ohashi Promotions",
-      "date_iso": "2026-11-26",
-      "date_paris": "Jeudi 26/11/2026",
-      "lieu": "Ebara Wave Arena Ota, Ota-Ku, Japan",
-      "url_officielle": "https://box.live/fights/yabuki-vs-fajardo/",
-      "poster_url": "logos/ohashi.png",
-      "heure_debut_paris": "11h00",
-      "heure_ringwalk_paris": "vers 12h00",
-      "diffuseur_origine": "U-NEXT Boxing",
-      "diffuseur_france": "N/C",
-      "enjeu_principal": "Championnat du monde IBF des poids mouches (-50,8 kg)",
-      "presentation": "Masamichi Yabuki remet son titre mondial IBF des poids mouches en jeu face au redoutable cogneur philippin Miel Fajardo au Japon.",
-      "combats": [
-        {
-          "statut": "Main Event",
-          "combattant_a": "Masamichi Yabuki",
-          "palmares_a": "20-4-0, 18 KOs",
-          "taille_a": "1m66",
-          "combattant_b": "Miel Fajardo",
-          "palmares_b": "14-3-2, 12 KOs",
-          "taille_b": "1m63",
-          "categorie_kg": "-50,8 kg",
-          "rounds": "12 rounds",
-          "enjeu_et_analyse": "Yabuki défend sa ceinture IBF face à un challenger très dangereux avant tout par KO."
-        },
-        {
-          "statut": "Co-Main Event",
-          "combattant_a": "Takeshi Ishii",
-          "palmares_a": "12-1-0, N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Medecilo",
-          "palmares_b": "9-0-0, N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "-47,6 kg",
-          "rounds": "12 rounds",
-          "enjeu_et_analyse": "Championnat WBA des poids pailles."
-        }
-      ]
-    },
-    {
       "nom_gala": "Cruz vs Subkhankulov",
       "promoteur": "Top Rank",
       "date_iso": "2026-11-27",
@@ -69,107 +28,88 @@
           "enjeu_et_analyse": "Titre mondial vacant IBF en jeu dans un combat tactique de très haut niveau technique."
         }
       ]
+    },
+    {
+      "nom_gala": "Golden Boy: Amari Jones vs. DeAundre Pettus",
+      "promoteur": "Golden Boy",
+      "date_iso": "2026-11-28",
+      "date_paris": "Nuit du Samedi 28/11 au Dimanche 29/11/2026",
+      "lieu": "Fantasy Springs Resort Casino, Indio, Californie, États-Unis",
+      "url_officielle": "https://www.goldenboypromotions.com",
+      "poster_url": "logos/goldenboy.png",
+      "heure_debut_paris": "02h00",
+      "heure_ringwalk_paris": "vers 05h00 (estimation)",
+      "diffuseur_origine": "DAZN",
+      "diffuseur_france": "DAZN France",
+      "enjeu_principal": "Combat phare des poids moyens (-72,6 kg)",
+      "presentation": "Amari Jones affronte DeAundre Pettus dans le désert californien lors de cette soirée phare organisée par Golden Boy Promotions et retransmise sur DAZN.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Amari Jones",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "DeAundre Pettus",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Poids moyens (-72,6 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Un choc explosif chez les poids moyens pour asseoir sa suprématie sur le ring."
+        }
+      ]
     }
   ],
   "boxe-japon": [
     {
-      "nom_gala": "Phoenix Battle 126 : Yabuki vs. Fajardo",
-      "promoteur": "Ohashi Promotions",
-      "date_iso": "2026-11-26",
-      "date_paris": "Jeudi 26/11/2026",
-      "lieu": "EBARA WAVE Arena Ota (Tokyo), Japon",
-      "url_officielle": "https://boxmob.jp/",
+      "nom_gala": "Teraji vs. Amador & Himenez vs. Akuai & Masuda vs. Tsutsumi",
+      "promoteur": "Teiken Promotions",
+      "date_iso": "2026-11-29",
+      "date_paris": "Dimanche 29/11/2026",
+      "lieu": "Ryogoku Kokugikan, Tokyo, Japon",
+      "url_officielle": "https://boxmob.jp/sp/schedule/",
       "poster_url": "logos/ohashi.png",
-      "heure_debut_paris": "10h00",
-      "heure_ringwalk_paris": "vers 13h00",
-      "diffuseur_origine": "Lemino",
+      "heure_debut_paris": "08h00",
+      "heure_ringwalk_paris": "vers 12h00 (estimation)",
+      "diffuseur_origine": "Lemino / Prime Video",
       "diffuseur_france": "N/C",
-      "enjeu_principal": "Championnat du monde IBF des poids mouches",
-      "presentation": "Grande soirée de championnat au Japon organisée par Ohashi Promotions, avec en tête d'affiche la défense du titre IBF de Masamichi Yabuki face au dangereux Miel Fajardo, ainsi que plusieurs combats de premier plan dont le retour de Yoshiki Takei.",
+      "enjeu_principal": "Triple championnat mondial et unification OPBF/WBO-AP au Japon",
+      "presentation": "Une soirée historique au Ryogoku Kokugikan de Tokyo proposant un triple championnat majeur avec les figures de la boxe nippone.",
       "combats": [
         {
           "statut": "Main Event",
-          "combattant_a": "Masamichi Yabuki",
+          "combattant_a": "Kenshiro Teraji",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Miel Fajardo",
+          "combattant_b": "Haciel Amador",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids mouches (-50,8 kg)",
+          "categorie_kg": "Bantamweight (-53,5 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Championnat du monde IBF des poids mouches. Yabuki défend son titre face à un redoutable puncheur philippin."
+          "enjeu_et_analyse": "Championnat du monde WBA des poids coqs entre le prodige japonais et son opposant international."
         },
         {
           "statut": "Co-Main Event",
-          "combattant_a": "Madoka Wada",
+          "combattant_a": "David Jimenez",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Wacharaporn Namphon",
+          "combattant_b": "Seigo Yuri Akui",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids léger-atomes (-46,3 kg)",
-          "rounds": "10 rounds",
-          "enjeu_et_analyse": "Combat de éliminatoire mondiale WBA."
+          "categorie_kg": "Super-flyweight (-52,2 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Choc pour le titre mondial WBO des super-mouches avec de superbes enjeux tactiques."
         },
         {
-          "statut": "Undercard",
-          "combattant_a": "Takeshi Ishii",
+          "statut": "Main Card",
+          "combattant_a": "Riku Masuda",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Zayver John Medesiro",
+          "combattant_b": "Seiya Tsutsumi",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Poids coqs (-53,5 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Combat de 8 rounds."
-        },
-        {
-          "statut": "Undercard",
-          "combattant_a": "Masaaki Rikiishi",
-          "palmares_a": "N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Melchor Roda",
-          "palmares_b": "N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "Poids super-plumes (-59,0 kg)",
-          "rounds": "10 rounds",
-          "enjeu_et_analyse": "Choc international."
-        },
-        {
-          "statut": "Undercard",
-          "combattant_a": "Yoshiki Takei",
-          "palmares_a": "N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Kenshin Oshima",
-          "palmares_b": "N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "Poids coqs (-53,5 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Combat de rentrée."
-        },
-        {
-          "statut": "Undercard",
-          "combattant_a": "Seiya Nakayama",
-          "palmares_a": "N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Vincent Lacal",
-          "palmares_b": "N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "Poids super-mouches (-52,2 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Affrontement relevé."
-        },
-        {
-          "statut": "Undercard",
-          "combattant_a": "Yuga Fujiki",
-          "palmares_a": "N/C",
-          "taille_a": "N/C",
-          "combattant_b": "Ronelick Ballesteros",
-          "palmares_b": "N/C",
-          "taille_b": "N/C",
-          "categorie_kg": "Poids coqs (-53,5 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Choc explosif."
+          "categorie_kg": "Minimumweight (-47,6 kg)",
+          "rounds": "12 rounds",
+          "enjeu_et_analyse": "Unification OPBF et WBO-AP."
         }
       ]
     },
@@ -239,79 +179,79 @@
       ]
     },
     {
-      "nom_gala": "Kitano Takeuro vs. Joseph Smabong",
-      "promoteur": "Ohashi Promotions",
+      "nom_gala": "Korakuen Hall Dynamic Glove",
+      "promoteur": "JBC / Korakuen Hall",
       "date_iso": "2026-12-03",
       "date_paris": "Jeudi 03/12/2026",
       "lieu": "Korakuen Hall, Tokyo, Japon",
-      "url_officielle": "https://boxmob.jp/",
-      "poster_url": "logos/ohashi.png",
+      "url_officielle": "https://boxmob.jp/sp/schedule/",
+      "poster_url": "logos/teiken.svg",
       "heure_debut_paris": "10h00",
       "heure_ringwalk_paris": "vers 13h00 (estimation)",
-      "diffuseur_origine": "Lemino",
+      "diffuseur_origine": "N/C",
       "diffuseur_france": "N/C",
-      "enjeu_principal": "Titres régionaux OPBF et tournois de promotion au Korakuen Hall",
-      "presentation": "Une réunion de gala riche en tournois et championnats régionaux dans la mythique salle du Korakuen Hall à Tokyo.",
+      "enjeu_principal": "Titres régionaux OPBF et tournois nationaux",
+      "presentation": "Réunion traditionnelle au cœur de la Mecque de la boxe japonaise avec plusieurs combats de championnats régionaux et tournois de prospects.",
       "combats": [
         {
           "statut": "Main Event",
           "combattant_a": "Takeuro Kitano",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Joseph Smabong",
+          "combattant_b": "Joseph Smabon",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Plumes (-57,2 kg)",
+          "categorie_kg": "Featherweight (-57,2 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Combat pour le titre vacant OPBF des poids plumes."
+          "enjeu_et_analyse": "Match pour le titre vacant OPBF des poids plumes."
         },
         {
           "statut": "Co-Main Event",
           "combattant_a": "Kazuki Nakajima",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Rito Owan",
+          "combattant_b": "Raito Owan",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Moyens (-72,6 kg)",
+          "categorie_kg": "Middleweight (-72,6 kg)",
           "rounds": "12 rounds",
-          "enjeu_et_analyse": "Championnat OPBF des poids moyens."
+          "enjeu_et_analyse": "Défense de titre OPBF des poids moyens."
         },
         {
-          "statut": "Main Card",
-          "combattant_a": "Haso Bek",
+          "statut": "Undercard",
+          "combattant_a": "Haso Beku",
           "palmares_a": "N/C",
           "taille_a": "N/C",
           "combattant_b": "Mikio Sakai",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Super-plumes (-59,0 kg)",
+          "categorie_kg": "Super-featherweight (-59,0 kg)",
           "rounds": "8 rounds",
-          "enjeu_et_analyse": "Finale tournoi."
+          "enjeu_et_analyse": "Tournoi national."
         },
         {
-          "statut": "Prelims",
+          "statut": "Undercard",
           "combattant_a": "Kai Watanabe",
           "palmares_a": "N/C",
           "taille_a": "N/C",
           "combattant_b": "Riku Kitani",
           "palmares_b": "N/C",
           "taille_b": "N/C",
-          "categorie_kg": "Super-légers (-63,5 kg)",
+          "categorie_kg": "Super-lightweight (-63,5 kg)",
           "rounds": "8 rounds",
-          "enjeu_et_analyse": "Tournoi éliminatoire."
+          "enjeu_et_analyse": "Éliminatoire."
         },
         {
-          "statut": "Prelims",
+          "statut": "Undercard",
           "combattant_a": "Kotaro Sekine",
           "palmares_a": "N/C",
           "taille_a": "N/C",
-          "combattant_b": "Shota Teshita",
+          "combattant_b": "Shota Tashita",
           "palmares_b": "N/C",
           "taille_b": "N/C",
           "categorie_kg": "Cruiserweight (-90,7 kg)",
-          "rounds": "8 rounds",
-          "enjeu_et_analyse": "Choc national."
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Combat lourd."
         }
       ]
     },
@@ -379,9 +319,236 @@
           "enjeu_et_analyse": "Éliminatoire Japon."
         }
       ]
+    },
+    {
+      "nom_gala": "Japanese Youth & National Championships",
+      "promoteur": "JBC / Korakuen Hall",
+      "date_iso": "2026-12-05",
+      "date_paris": "Samedi 05/12/2026",
+      "lieu": "Korakuen Hall, Tokyo, Japon",
+      "url_officielle": "https://boxmob.jp/sp/schedule/",
+      "poster_url": "logos/boxe-japon.svg",
+      "heure_debut_paris": "10h00",
+      "heure_ringwalk_paris": "vers 13h00 (estimation)",
+      "diffuseur_origine": "N/C",
+      "diffuseur_france": "N/C",
+      "enjeu_principal": "Titres nationaux et jeunesse au Korakuen Hall",
+      "presentation": "Gala de clôture de semaine mettant en vedette la jeunesse de l'archipel pour des ceintures nationales très disputées.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Kenta Lee",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Masahiro Suzuki",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Featherweight (-57,2 kg)",
+          "rounds": "8 rounds",
+          "enjeu_et_analyse": "Tournoi pour le titre national Youth des poids plumes."
+        },
+        {
+          "statut": "Co-Main Event",
+          "combattant_a": "Tadayuki Yamamori",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Taiga Toyonaga",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "Lightweight (-61,2 kg)",
+          "rounds": "10 rounds",
+          "enjeu_et_analyse": "Championnat du Japon des poids légers."
+        }
+      ]
     }
   ],
-  "ufc": [],
+  "ufc": [
+    {
+      "nom_gala": "UFC Fight Night: Adesanya vs Magomedov",
+      "promoteur": "UFC",
+      "date_iso": "2026-12-05",
+      "date_paris": "Nuit du Samedi 05/12 au Dimanche 06/12/2026",
+      "lieu": "ANB Arena, Riyadh, Saudi Arabia",
+      "url_officielle": "https://www.ufc.com/events",
+      "poster_url": "logos/ufc.png",
+      "heure_debut_paris": "16h00",
+      "heure_ringwalk_paris": "env. +3h après le début",
+      "diffuseur_origine": "ESPN+ / UFC Fight Pass",
+      "diffuseur_france": "RMC Sport / UFC Fight Pass",
+      "enjeu_principal": "Israel Adesanya vs. Shara Magomedov",
+      "presentation": "Événement officiel UFC Fight Night: Adesanya vs Magomedov programmé à ANB Arena, Riyadh, Saudi Arabia avec 14 combats inscrits.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Israel Adesanya",
+          "palmares_a": "24-6-0",
+          "taille_a": "N/C",
+          "combattant_b": "Shara Magomedov",
+          "palmares_b": "17-1-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Choc au sommet entre l'ancien champion Israel Adesanya et le redoutable Shara Magomedov dans la division des poids moyens."
+        },
+        {
+          "statut": "Co-Main Event",
+          "combattant_a": "Yaroslav Amosov",
+          "palmares_a": "30-1-0",
+          "taille_a": "N/C",
+          "combattant_b": "Ian Machado Garry",
+          "palmares_b": "17-2-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Affrontement stratégique très attendu pour se rapprocher du sommet de la division."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Serghei Spivac",
+          "palmares_a": "18-7-0",
+          "taille_a": "N/C",
+          "combattant_b": "Mario Pinto",
+          "palmares_b": "13-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Combat chez les lourds."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Levan Chokheli",
+          "palmares_a": "15-3-0",
+          "taille_a": "N/C",
+          "combattant_b": "Islam Dulatov",
+          "palmares_b": "12-1-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Duel explosif."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Mairon Santos",
+          "palmares_a": "18-1-0",
+          "taille_a": "N/C",
+          "combattant_b": "Akbar Abdullaev",
+          "palmares_b": "14-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Opposition de styles."
+        },
+        {
+          "statut": "Main Card",
+          "combattant_a": "Ion Cutelaba",
+          "palmares_a": "20-12-1",
+          "taille_a": "N/C",
+          "combattant_b": "Magomed Tuchalov",
+          "palmares_b": "7-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Test crucial."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Bruno Silva",
+          "palmares_a": "15-9-2",
+          "taille_a": "N/C",
+          "combattant_b": "Jafel Filho",
+          "palmares_b": "17-5-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Prelims."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Uran Satybaldiev",
+          "palmares_a": "9-1-0",
+          "taille_a": "N/C",
+          "combattant_b": "Ivan Gnizditskiy",
+          "palmares_b": "7-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Prelims."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "JunYong Park",
+          "palmares_a": "19-7-0",
+          "taille_a": "N/C",
+          "combattant_b": "Marco Tulio",
+          "palmares_b": "14-3-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Prelims."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Mehemmedeli Osmanli",
+          "palmares_a": "12-2-0",
+          "taille_a": "N/C",
+          "combattant_b": "Pavel Andrusca",
+          "palmares_b": "9-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Prelims."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Matthieu Letho Duclos",
+          "palmares_a": "11-3-0",
+          "taille_a": "N/C",
+          "combattant_b": "Modestino Rodrigues",
+          "palmares_b": "8-1-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Prelims."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Abdul Hussein",
+          "palmares_a": "16-2-0",
+          "taille_a": "N/C",
+          "combattant_b": "Hecher Sosa",
+          "palmares_b": "15-1-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Prelims."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Gabriel Santos",
+          "palmares_a": "12-2-0",
+          "taille_a": "N/C",
+          "combattant_b": "Luke Riley",
+          "palmares_b": "14-0-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Prelims."
+        },
+        {
+          "statut": "Prelims",
+          "combattant_a": "Mateusz Rębecki",
+          "palmares_a": "21-5-0",
+          "taille_a": "N/C",
+          "combattant_b": "Elves Brener",
+          "palmares_b": "17-6-0",
+          "taille_b": "N/C",
+          "categorie_kg": "Catégorie officielle",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Prelims."
+        }
+      ]
+    }
+  ],
   "rizin": [],
   "bkfc": [
     {
@@ -394,10 +561,10 @@
       "poster_url": "logos/bkfc.png",
       "heure_debut_paris": "01h00",
       "heure_ringwalk_paris": "vers 04h00 (estimation)",
-      "diffuseur_origine": "BKFC App / TrillerTV",
-      "diffuseur_france": "BKFC App",
-      "enjeu_principal": "Choc explosif en poids moyens entre Dustin Pague et Mike Richman",
-      "presentation": "Le BKFC s'installe au Giant Center de Hershey pour une carte explosive de combats à mains nues, avec en tête d'affiche le duel très attendu entre Dustin Pague et Mike Richman.",
+      "diffuseur_origine": "BKFC App",
+      "diffuseur_france": "BKFC App / TrillerTV",
+      "enjeu_principal": "Choc explosif en poids moyens (-83,9 kg)",
+      "presentation": "Le BKFC pose ses valises à Hershey pour une soirée explosive emmenée par un affrontement de haut vol en poids moyens entre Dustin Pague et Mike Richman.",
       "combats": [
         {
           "statut": "Main Event",
@@ -407,9 +574,9 @@
           "combattant_b": "Mike Richman",
           "palmares_b": "8-4-0",
           "taille_b": "1m75",
-          "categorie_kg": "Poids moyens (-74,8 kg)",
+          "categorie_kg": "Poids moyens (-83,9 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Dustin Pague combat à domicile face au redoutable Mike Richman dans un duel de puncheurs sans concession."
+          "enjeu_et_analyse": "Un duel très attendu entre deux puncheurs cherchant à s'imposer au sommet de la division."
         },
         {
           "statut": "Co-Main Event",
@@ -419,9 +586,9 @@
           "combattant_b": "Jonathan Miller",
           "palmares_b": "0-0-0",
           "taille_b": "N/C",
-          "categorie_kg": "Poids lourds",
+          "categorie_kg": "Poids lourds légers (-93,0 kg)",
           "rounds": "5 rounds",
-          "enjeu_et_analyse": "Sam Alvey teste ses poings face aux débuts de Jonathan Miller."
+          "enjeu_et_analyse": "Affrontement test pour Alvey face au débutant Miller."
         },
         {
           "statut": "Featured Fight",
@@ -431,9 +598,9 @@
           "combattant_b": "Michael Manno",
           "palmares_b": "0-0-0",
           "taille_b": "N/C",
-          "categorie_kg": "Poids moyens (-74,8 kg)",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Combat explosif en poids moyens."
+          "categorie_kg": "Poids moyens (-83,9 kg)",
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Combat de classement."
         },
         {
           "statut": "Undercard",
@@ -444,8 +611,8 @@
           "palmares_b": "0-0-0",
           "taille_b": "N/C",
           "categorie_kg": "Poids coqs (-61,2 kg)",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel en poids coqs."
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Duel en coqs."
         },
         {
           "statut": "Undercard",
@@ -455,9 +622,9 @@
           "combattant_b": "Nelson Best",
           "palmares_b": "0-0-0",
           "taille_b": "N/C",
-          "categorie_kg": "Poids lourds",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Affrontement chez les lourds."
+          "categorie_kg": "Poids lourds (+120,2 kg)",
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Choc chez les lourds."
         },
         {
           "statut": "Undercard",
@@ -468,8 +635,8 @@
           "palmares_b": "3-3-0",
           "taille_b": "N/C",
           "categorie_kg": "Poids plumes (-65,8 kg)",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Guerre en poids plumes."
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Explosion en plumes."
         },
         {
           "statut": "Undercard",
@@ -480,8 +647,8 @@
           "palmares_b": "2-4-0",
           "taille_b": "N/C",
           "categorie_kg": "Poids plumes (-65,8 kg)",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Combat de rebond."
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Match de relance."
         },
         {
           "statut": "Undercard",
@@ -492,8 +659,8 @@
           "palmares_b": "0-0-0",
           "taille_b": "N/C",
           "categorie_kg": "Poids coqs (-61,2 kg)",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "affrontement de techniciens."
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Affrontement de novices."
         },
         {
           "statut": "Undercard",
@@ -503,9 +670,9 @@
           "combattant_b": "Mike Liberto",
           "palmares_b": "1-0-0",
           "taille_b": "N/C",
-          "categorie_kg": "Poids lourds-légers (-88,5 kg)",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Duel chez les lourds-légers."
+          "categorie_kg": "Poids lourds légers (-93,0 kg)",
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Test de solidité."
         },
         {
           "statut": "Undercard",
@@ -516,8 +683,8 @@
           "palmares_b": "0-0-0",
           "taille_b": "N/C",
           "categorie_kg": "Poids légers (-70,3 kg)",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Combat en poids légers."
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Bataille chez les légers."
         },
         {
           "statut": "Undercard",
@@ -528,8 +695,8 @@
           "palmares_b": "0-0-0",
           "taille_b": "N/C",
           "categorie_kg": "Poids plumes (-65,8 kg)",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "affrontement de jeunes loups."
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Recherche de première victoire."
         },
         {
           "statut": "Undercard",
@@ -539,12 +706,42 @@
           "combattant_b": "Dale Reed",
           "palmares_b": "0-0-0",
           "taille_b": "N/C",
-          "categorie_kg": "Poids lourds",
-          "rounds": "3 rounds",
-          "enjeu_et_analyse": "Clôture de la sous-carte chez les lourds."
+          "categorie_kg": "Poids lourds (+120,2 kg)",
+          "rounds": "5 rounds",
+          "enjeu_et_analyse": "Lourds en action."
         }
       ]
     }
   ],
-  "glory": []
+  "glory": [
+    {
+      "nom_gala": "GLORY Rivals 6: Ozcan vs. Afakir",
+      "promoteur": "Glory",
+      "date_iso": "2026-11-27",
+      "date_paris": "Vendredi 27/11/2026",
+      "lieu": "Pays-Bas",
+      "url_officielle": "https://glorykickboxing.com/events",
+      "poster_url": "logos/glory.webp",
+      "heure_debut_paris": "19h00",
+      "heure_ringwalk_paris": "vers 22h00",
+      "diffuseur_origine": "GLORY Fights / DAZN",
+      "diffuseur_france": "DAZN",
+      "enjeu_principal": "Combat de despedida de Tayfun Özcan",
+      "presentation": "GLORY Rivals 6 propose une carte excitante avec le combat d'adieu très attendu de Tayfun Özcan face à l'accrocheur Sofiane Afakir.",
+      "combats": [
+        {
+          "statut": "Main Event",
+          "combattant_a": "Tayfun Özcan",
+          "palmares_a": "N/C",
+          "taille_a": "N/C",
+          "combattant_b": "Sofiane Afakir",
+          "palmares_b": "N/C",
+          "taille_b": "N/C",
+          "categorie_kg": "-71 kg",
+          "rounds": "3 rounds",
+          "enjeu_et_analyse": "Combat de farewell pour Tayfun Özcan cherchant une dernière victoire marquante au Glory."
+        }
+      ]
+    }
+  ]
 }
